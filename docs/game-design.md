@@ -36,7 +36,7 @@ point between two rounds must be a clean place to stop and come back to later.
    and triggers in the shop, and seeing them go off in battle. Abilities should create
    choices, not just add raw stats.
 3. **Watchable, funny battles.** The battle playback should be worth watching, not
-   skipping: every exchange, choke and ability should read clearly on screen and land
+   skipping: every bar, choke and ability should read clearly on screen and land
    with a joke.
 
 ### Design principles
@@ -76,7 +76,7 @@ run over many short sittings. AI players fill the league up and stand in for abs
 | Area | Slots | Role |
 |---|---|---|
 | Stage (MC slots) | 3: **Opener** (slot 1, front), **Middle** (slot 2), **Closer** (slot 3) | MCs battle here, front first |
-| Support slots | 2 | Support units trigger abilities and never take hype damage |
+| Support slots | 2 | Support units trigger abilities and never take damage |
 | Bench | `BENCH_SIZE = 2` | Resting units. They take no part in the battle and recover stamina |
 
 - MC slots only take MCs and support slots only take support units. The bench takes both.
@@ -163,43 +163,82 @@ A brand new crew has no units, `STARTING_GOLD = 10` gold and skips the first upk
 ## 5. Battle: "front MCs clash"
 
 This is the first battle style (D-010). `simulateBattle` picks the resolver through a
-`BattleStyle` interface, so later styles (T-037) don't need special cases.
+`BattleStyle` interface, so later styles (T-037) don't need special cases. Settled with the
+user in T-046: the MCs **take turns** like in a real rap battle (D-033), a **hype meter** per
+crew powers the abilities (D-034), and every battle has a **winner** (D-035).
 
 ### Setup
 
 1. Tired units are marked (see [Stamina](#51-stamina-and-bench-rest)).
-2. A seeded coin flip picks the **first crew** for the whole battle. Whenever abilities of
-   both crews trigger at the same moment, the first crew's abilities resolve first. Within a
-   crew the order is MC slot 1, 2, 3, then support slot 1, 2.
-3. If a crew has no MC on stage, it loses at once. If neither has one, the battle is a draw.
-4. `battleStart` abilities trigger, then the front MC of each crew `takeFront`.
+2. Both crews' hype meters start at 0.
+3. A seeded coin flip picks the **opening crew**. It takes the first turn, and whenever
+   abilities of both crews trigger at the same moment, the opening crew's abilities resolve
+   first. Within a crew the order is MC slot 1, 2, 3, then support slot 1, 2. There is no
+   compensation for the other crew.
+4. If a crew has no MC on stage, it loses at once. If neither has one, the coin flip's
+   loser loses.
+5. `battleStart` abilities trigger, then the front MC of each crew triggers `takeFront`.
 
-### Exchanges
+### Turns
 
-The battle is a series of **exchanges**, repeated until it ends:
+The battle is a series of **turns**. The crews strictly alternate (opening crew, other crew,
+opening crew, …) for the whole battle, whatever happens on stage. On a crew's turn:
 
-1. Both front MCs drop bars **at the same time**. Each deals hype damage equal to its `flow`
-   to the other front MC's `confidence`.
-2. Each MC that dealt damage triggers `barLanded`. Each MC that took damage and still has
-   confidence above 0 triggers `hurt`.
-3. Every MC at 0 confidence **chokes** and leaves the stage. `choke` abilities trigger.
-4. For each crew whose front MC choked, the next MC moves up and triggers `takeFront`.
+1. Its front MC **drops a bar**: it deals damage equal to its `flow` to the enemy front
+   MC's `confidence`. The crew gains `HYPE_PER_BAR = 1` hype.
+2. The MC that dropped the bar triggers `barLanded`. The enemy front MC triggers `hurt` if
+   it still has confidence above 0.
+3. An MC at 0 confidence **chokes** and leaves the stage. `choke` abilities trigger. The
+   next MC of that crew moves up and triggers `takeFront`. It answers on its crew's next turn.
 
-Abilities can deal hype damage outside exchanges as well. Chokes are checked after every
+Abilities can deal damage outside the bars as well (`diss`). Chokes are checked after every
 single effect, so a choke caused by an ability triggers its own `choke` abilities.
 Triggered abilities go on one FIFO queue, which is processed until it is empty before the
-next exchange starts.
+next turn starts.
+
+### Hype meter
+
+Each crew has a **hype meter** from 0 to `HYPE_MAX = 10`: how hard the crowd is behind it.
+It lasts for one battle only. The crowd on screen reacts to both meters, and it is the main
+way a battle reads as going one way or the other.
+
+| Event | Hype change |
+|---|---|
+| The crew's MC drops a bar | `+HYPE_PER_BAR = 1` |
+| One of the crew's abilities deals `diss` damage | `+HYPE_PER_DISS = 1` |
+| An enemy MC chokes | `+HYPE_PER_CHOKE = 2` |
+| One of the crew's own MCs chokes | `-HYPE_LOSS_ON_CHOKE = 2` (never below 0) |
+
+**Hype affects every ability on its own terms.** Each ability has its own `hypeBonus` in
+its data: when it resolves in battle, its value goes up by `hypeBonus` for every full
+`HYPE_STEP = 5` hype its crew has, so by 1× at 5 hype and 2× at 10. A `buff` that gives flow and
+confidence adds the bonus to both. A `hypeBonus` of 0 means an ability ignores the crowd.
+Abilities that resolve outside a battle (`buy`, `upkeep`) always see 0 hype. The roster's
+values are placeholders until T-049.
 
 ### End
 
-- The battle ends when at least one crew has no MC left on stage. The crew that still has
-  one **wins**. If both are out at the same moment, it is a **draw**.
-- The battle also ends as a draw after `MAX_EXCHANGES = 30` exchanges, so every battle
-  terminates (the property test in T-015).
+- The battle ends as soon as one crew has no MC left on stage, and that crew **loses**.
+  Effects resolve one at a time, so one crew is always out first. An ability chain that
+  would knock out the winner too is stopped at that point.
+- After `MAX_TURNS = 40` turns the battle ends too, so every battle terminates (the
+  property test in T-015). Then the crew that **lost more confidence** in total loses
+  (the damage its MCs took, counting only confidence actually lost). If that is equal, the
+  crew that **lost confidence first** loses. If neither crew lost any, the coin flip's loser
+  loses.
+- A battle is **never a draw**. So league matches have no draws either (see [League](#7-league)).
 - **MC margin** = the winner's MCs still on stage. It is used as a league tiebreak.
 
 All random choices (coin flip, random targets) come from the seed through the seeded RNG
 (T-010). The same crews and seed always give the same `BattleEvent[]`.
+
+### Pacing
+
+- A battle should play back in **30 to 60 seconds** at normal speed, so a round still fits a
+  coffee break. Balancing (T-031) aims for a typical battle of about 12 to 24 turns, and
+  `MAX_TURNS` should almost never be reached.
+- Playback has a **2× speed** button. There is no skip, because the battle is a pillar.
+- Every bar, choke, ability and big hype swing gets its own beat on screen (T-022, T-050).
 
 ### 5.1 Stamina and bench rest
 
@@ -208,7 +247,7 @@ Performing costs stamina, which carries over between battles (D-011).
 | When | Stamina change |
 |---|---|
 | MC was on stage for the battle | `-STAMINA_COST_STAGE = 1` |
-| … and was the front MC in at least one exchange | `-STAMINA_COST_FRONT = 1` more |
+| … and was the front MC for at least one turn | `-STAMINA_COST_FRONT = 1` more |
 | … and choked | `-STAMINA_COST_CHOKE = 1` more |
 | Support unit was in a support slot | `-STAMINA_COST_SUPPORT = 1` |
 | Unit was on the bench | `+BENCH_RECOVERY = 3` |
@@ -279,7 +318,7 @@ A **member** is a crew plus who runs it:
 |---|---|
 | Length | A **double round robin** inside each division: every pair meets twice. If that is fewer than `MIN_SEASON_ROUNDS = 3` rounds, it repeats until the season reaches that many (2 members play a best of 3). 4 members play 6 rounds and 6 members play 10 |
 | Pairing | The circle method, rotated by the season seed, so the pairings are deterministic and fair. The second half repeats the first |
-| Points | Win `POINTS_WIN = 3`, draw `POINTS_DRAW = 1`, loss 0 |
+| Points | Win `POINTS_WIN = 3`, loss 0. Battles can't end drawn (D-035), so there are no draws |
 | Tiebreaks | Head-to-head points, then total MC margin, then a seeded coin flip |
 | Catch-up | None. Crews are meant to snowball (see [Pillars](#pillars)), and divisions keep strong and weak crews apart |
 
@@ -350,21 +389,23 @@ locked in, so the others wait (Q-014, D-032):
 11 units: 7 MCs and 4 support units across 3 tiers. The names are placeholders that fit the
 theme, not real artists. Stats are **L1 base stats** (`flow` / `confidence`); merging adds
 to them as described in [Merging](#merging-and-levels). Ability values are listed for
-L1 / L2 / L3. Everything in this table is tunable.
+L1 / L2 / L3. The **hype bonus** is added per full `HYPE_STEP` of crew hype (see
+[Hype meter](#hype-meter)). It is a placeholder of 1 for every battle ability until T-049,
+and shop and upkeep abilities have none. Everything in this table is tunable.
 
-| # | Unit | Tier | Role | Flow / Conf | Trigger | Ability | L1 / L2 / L3 |
-|---|---|---|---|---|---|---|---|
-| 1 | **Rookie Spitter** | 1 | MC | 2 / 3 | `buy` | Give one other random MC in the crew (stage or bench) +X confidence, permanently | 1 / 2 / 3 |
-| 2 | **Battle Kid** | 1 | MC | 3 / 2 | `takeFront` | Diss the enemy front MC for X hype damage | 1 / 2 / 3 |
-| 3 | **Street Poet** | 1 | MC | 1 / 4 | `choke` (self) | Pass the mic: the MC behind it gets +X flow and +X confidence | 1 / 2 / 3 |
-| 4 | **Beatboxer** | 1 | Support | – | `battleStart` | The front MC gets +X flow | 1 / 2 / 3 |
-| 5 | **Punchliner** | 2 | MC | 4 / 3 | `barLanded` (self) | Diss the enemy MC behind the enemy front for X | 1 / 2 / 3 |
-| 6 | **Freestyler** | 2 | MC | 3 / 4 | `battleStart`, if **Closer** | Gains +X flow and +X confidence | 2 / 3 / 4 |
-| 7 | **Hype Man** | 2 | Support | – | `choke` (friend) | The new front MC gets +X confidence | 2 / 4 / 6 |
-| 8 | **Vocal Coach** | 2 | Support | – | `upkeep` | Every MC in the crew (stage and bench) recovers X stamina | 1 / 2 / 3 |
-| 9 | **Headliner** | 3 | MC | 6 / 6 | `battleStart`, if **Opener** | Diss every enemy MC for X | 1 / 2 / 3 |
-| 10 | **The OG** | 3 | MC | 5 / 7 | `hurt` (self) | Every friendly MC behind it gets +X flow | 1 / 2 / 3 |
-| 11 | **DJ Turntablist** | 3 | Support | – | `barLanded` (friend) | The MC that landed the bar gets +X flow (the beat drops) | 1 / 2 / 3 |
+| # | Unit | Tier | Role | Flow / Conf | Trigger | Ability | L1 / L2 / L3 | Hype bonus |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **Rookie Spitter** | 1 | MC | 2 / 3 | `buy` | Give one other random MC in the crew (stage or bench) +X confidence, permanently | 1 / 2 / 3 | – |
+| 2 | **Battle Kid** | 1 | MC | 3 / 2 | `takeFront` | Diss the enemy front MC for X damage | 1 / 2 / 3 | 1 |
+| 3 | **Street Poet** | 1 | MC | 1 / 4 | `choke` (self) | Pass the mic: the MC behind it gets +X flow and +X confidence | 1 / 2 / 3 | 1 |
+| 4 | **Beatboxer** | 1 | Support | – | `battleStart` | The front MC gets +X flow | 1 / 2 / 3 | 1 |
+| 5 | **Punchliner** | 2 | MC | 4 / 3 | `barLanded` (self) | Diss the enemy MC behind the enemy front for X | 1 / 2 / 3 | 1 |
+| 6 | **Freestyler** | 2 | MC | 3 / 4 | `battleStart`, if **Closer** | Gains +X flow and +X confidence | 2 / 3 / 4 | 1 |
+| 7 | **Hype Man** | 2 | Support | – | `choke` (friend) | The new front MC gets +X confidence | 2 / 4 / 6 | 1 |
+| 8 | **Vocal Coach** | 2 | Support | – | `upkeep` | Every MC in the crew (stage and bench) recovers X stamina | 1 / 2 / 3 | – |
+| 9 | **Headliner** | 3 | MC | 6 / 6 | `battleStart`, if **Opener** | Diss every enemy MC for X | 1 / 2 / 3 | 1 |
+| 10 | **The OG** | 3 | MC | 5 / 7 | `hurt` (self) | Every friendly MC behind it gets +X flow | 1 / 2 / 3 | 1 |
+| 11 | **DJ Turntablist** | 3 | Support | – | `barLanded` (friend) | The MC that landed the bar gets +X flow (the beat drops) | 1 / 2 / 3 | 1 |
 
 Design notes:
 
@@ -377,9 +418,9 @@ Design notes:
 
 ## 9. Abilities
 
-An ability is **data**: a trigger, an optional condition, a named effect, a target and
-values per level. `core/` implements each effect and target once, as a small named
-function (T-013). A unit has exactly one ability in v0.
+An ability is **data**: a trigger, an optional condition, a named effect, a target,
+values per level and a `hypeBonus` (see [Hype meter](#hype-meter)). `core/` implements each
+effect and target once, as a small named function (T-013). A unit has exactly one ability in v0.
 
 ### Trigger types (7)
 
@@ -387,8 +428,8 @@ function (T-013). A unit has exactly one ability in v0.
 |---|---|---|
 | `battleStart` | once, after battle setup | – |
 | `takeFront` | this MC becomes the front MC, including the Opener at battle start | self |
-| `barLanded` | an MC deals exchange damage (ability damage doesn't count) | `self` or `friend` (any friendly MC) |
-| `hurt` | this MC takes hype damage from any source and still has confidence above 0 | self |
+| `barLanded` | an MC drops a bar on its turn (ability damage doesn't count) | `self` or `friend` (any friendly MC) |
+| `hurt` | this MC takes damage from any source and still has confidence above 0 | self |
 | `choke` | an MC reaches 0 confidence and leaves the stage | `self` or `friend` |
 | `buy` | this unit is bought, including when it is bought onto a merge | – |
 | `upkeep` | each upkeep, after income | – |
@@ -409,7 +450,7 @@ function (T-013). A unit has exactly one ability in v0.
 | Effect | What it does | In battle | In shop/upkeep |
 |---|---|---|---|
 | `buff` | adds flow and/or confidence to friendly MCs | until the battle ends | permanent |
-| `diss` | deals hype damage to enemy MCs | can trigger `hurt` and `choke` | – |
+| `diss` | deals damage to enemy MCs' confidence, and gives the crew hype | can trigger `hurt` and `choke` | – |
 | `restoreStamina` | adds stamina, up to `MAX_STAMINA` | – | permanent |
 
 ### Targets
@@ -423,9 +464,9 @@ function (T-013). A unit has exactly one ability in v0.
 
 ### Rules for new abilities
 
-- No effect may cause its own trigger again without an exchange in between (for example, no
+- No effect may cause its own trigger again without a turn in between (for example, no
   `hurt` ability that deals damage to friendly MCs). Then the FIFO queue from
-  [Exchanges](#exchanges) always runs empty, because each chain is bounded by the number of MCs.
+  [Turns](#turns) always runs empty, because each chain is bounded by the number of MCs.
 - New triggers, effects or targets are added to the tables above first, then to `core/`.
 
 A sketch of the data shape, for orientation only (T-011 and T-013 decide the real types):
@@ -442,6 +483,7 @@ const streetPoet: UnitDef = {
     trigger: { kind: 'choke', subject: 'self' },
     effect: 'buff',
     target: 'friendBehind',
+    hypeBonus: 1,
     values: [
       { flow: 1, confidence: 1 },
       { flow: 2, confidence: 2 },
@@ -470,7 +512,11 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `SELL_REFUND_PER_LEVEL` | 1 | Shop, Retirement |
 | `MERGE_STAT_BONUS` | 1 | Shop |
 | `XP_LEVEL2` / `XP_LEVEL3` | 2 / 5 | Shop |
-| `MAX_EXCHANGES` | 30 | Battle |
+| `MAX_TURNS` | 40 | Battle |
+| `HYPE_MAX` | 10 | Battle |
+| `HYPE_PER_BAR` / `HYPE_PER_DISS` / `HYPE_PER_CHOKE` | 1 / 1 / 2 | Battle |
+| `HYPE_LOSS_ON_CHOKE` | 2 | Battle |
+| `HYPE_STEP` | 5 | Battle |
 | `STAMINA_COST_STAGE` / `_FRONT` / `_CHOKE` | 1 / 1 / 1 | Stamina |
 | `STAMINA_COST_SUPPORT` | 1 | Stamina |
 | `BENCH_RECOVERY` | 3 | Stamina |
@@ -483,10 +529,12 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `FAREWELL_ROUNDS` | 2 | Retirement |
 | `DIVISION_MAX` | 6 | League |
 | `MIN_SEASON_ROUNDS` | 3 | League |
-| `POINTS_WIN` / `POINTS_DRAW` | 3 / 1 | League |
+| `POINTS_WIN` | 3 | League |
 | `PROMOTE_COUNT` | 1 | League |
 | `SHOP_TIMER_SECONDS` | 120 (off by default) | League |
 
 ## 11. Still open
 
+- Q-016: which abilities should add or drain hype, or trigger on hype thresholds? And how should
+  `battleStart` abilities, which always see 0 hype, benefit from the crowd?
 - Q-015: what happens when two sittings play the same league at the same time and their saves fork?

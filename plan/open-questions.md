@@ -7,7 +7,9 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 ## Open
 
 ### Game design
-- (none open; later M2 sessions add their own)
+- Q-016 Hype (D-034): should some abilities add or drain hype, or trigger when a crew's hype
+  reaches a threshold? `battleStart` abilities always see 0 hype, so should they get something
+  else from the crowd? For T-049.
 
 ### Tech / scope
 - Q-015 Two sittings could play the same league at the same time (e.g. two pairs of colleagues

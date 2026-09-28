@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-046, design session 3: the battle)
+- Ran design session 3 with the user over three rounds of questions and rewrote `docs/game-design.md` §5 (setup, turns, hype meter, end, pacing). §8 to §10 were updated to match.
+- The front MCs now **take turns** in strict alternation, with a seeded opener and no compensation (D-033); D-022 is superseded. `MAX_TURNS = 40` replaces `MAX_EXCHANGES`. Playback targets 30 to 60 s, with a 2× speed button and no skip. Stage positions stay ability conditions only.
+- **Hype meter** per crew (0 to 10) from bars, disses and chokes. Each ability scales by its own `hypeBonus` per 5 hype (D-034). The roster gets a placeholder hype bonus column. "Hype damage" is renamed to "damage".
+- **No draws** (D-035): the first crew wiped out loses, and at the turn limit the crew that lost more confidence loses. One battle per match, and `POINTS_DRAW` is removed. The user first wanted several battles per match, then changed their mind.
+- New Q-016 (hype effects and triggers, and `battleStart` abilities always seeing 0 hype), for T-049. T-013, T-014, T-015, T-022 and T-049 were reworded.
+- **Next:** T-047 (crew management).
+
 ## 2026-09-28 (T-045, design session 2: core loop, persistence and league)
 - Ran design session 2 with the user over four rounds of questions. Rewrote `docs/game-design.md` §7 and updated §1, §3, §6, §10 and §11.
 - **One league per friend group** (a football-style pyramid of divisions) and **one crew per player**. Seasons are a **double round robin** that spans sittings. The Q-011 defaults are confirmed (D-029). Divisions are kept even with auto-added bots, so there are no byes and `POINTS_BYE` is removed. Rep seeding is gone.

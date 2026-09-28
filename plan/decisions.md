@@ -104,7 +104,7 @@ and are marked "superseded by D-###".
   threshold an MC gets −1 flow and −1 confidence, and a support's abilities don't trigger.
   The alternatives, a sliding penalty per stamina point or natural recovery for everyone,
   were harder to read and weakened the reason to use the bench.
-- **D-022 (2026-09-28): Simultaneous exchanges, a seeded "first crew" and one FIFO ability
+- **D-022 (2026-09-28, superseded by D-033 and D-035): Simultaneous exchanges, a seeded "first crew" and one FIFO ability
   queue (T-008).** Both front MCs hit at the same time (a draw is possible). When abilities
   of both crews trigger together, a per-battle seeded coin flip decides which crew goes
   first; within a crew the order is by slot. This is simpler to reason about and to test than
@@ -178,3 +178,24 @@ and are marked "superseded by D-###".
   a sitting; when it runs out, the current lineup is locked in, and if the payroll isn't affordable
   units are sold cheapest first. A player who disconnects mid-round is treated the same way. The user
   chose "lock current lineup" over having the AI manager finish the shop.
+- **D-033 (2026-09-28): MCs take turns: strict alternation, a seeded opener and no compensation
+  (T-046).** Like in a real rap battle, one front MC drops a bar per turn and the crews alternate
+  for the whole battle. The user chose this over simultaneous hits (D-022) and over multi-bar verses, because
+  each hit gets its own on-screen beat (pillar 3). A seeded coin flip picks the opening crew,
+  which also resolves first when both crews' abilities trigger together. The user explicitly
+  wants no rule that makes up for the opener's edge "for now". `MAX_EXCHANGES = 30` becomes
+  `MAX_TURNS = 40`. Stage positions stay ability conditions only, with no built-in slot bonuses.
+  Playback targets 30 to 60 s at normal speed, with a 2× speed button and no skip.
+- **D-034 (2026-09-28): A hype meter per crew, and every ability scales with it on its own terms
+  (T-046).** The crowd is a mechanic, not only decoration. Each crew fills its own meter (0 to 10)
+  from bars, disses and enemy chokes, and loses hype when its own MC chokes. Each ability has its
+  own `hypeBonus`, added per full `HYPE_STEP = 5` hype. The alternatives were a single tug-of-war
+  meter, threshold triggers, a global "+1 at 5 hype" rule, and hype as a spendable currency. The user
+  wanted the effect to be per ability. Because "hype damage" would clash with the meter, bar and diss
+  damage is now just "damage". Hype-adding effects and hype triggers are open (Q-016, T-049).
+- **D-035 (2026-09-28): Every battle has a winner, and a league match is one battle, so the table
+  has no draws (T-046).** The first crew with no MC left loses. Effects resolve one at a time, so
+  someone is always out first. At the turn limit, the crew that lost more confidence loses; if equal,
+  the crew that lost confidence first loses; if neither lost any, the coin flip's loser. The user
+  first considered several battles per match (which would allow drawn matches), then settled on
+  one battle. `POINTS_DRAW` is removed, and points are now win 3, loss 0 (this changes the 3/1/0 in D-029).
