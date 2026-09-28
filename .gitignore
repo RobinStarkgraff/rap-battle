@@ -9,7 +9,8 @@
 # Claude notification port files
 .claude-notify-ports/
 # Claude Code project settings
-.claude/
+.claude/*
+!.claude/skills/
 
 # macOS folder metadata
 .DS_Store
