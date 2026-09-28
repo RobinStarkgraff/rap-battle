@@ -2,6 +2,15 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-049, design session 6: roster and abilities)
+- Ran design session 6 with the user over three rounds of questions. Rewrote `docs/game-design.md` §8 (archetypes, 32 abilities, stage names) and §9 (8 triggers, conditions, values, 5 effects, targets), and updated §2, §3 (upkeep order), §4 (rating), §5 (setup, hype meter), §5.1, §10 and §11.
+- **5 MC archetypes** (Lyricist, Battle Rapper, Storyteller, Freestyler, Hitmaker) with their own stat ranges and **5 support archetypes** (DJ, Hype Man, Producer, Vocal Coach, Manager). Each pool has 3 signature abilities plus one shared ability per role. Stats first, abilities spice (D-043).
+- **Q-016 answered:** `hypeBonus` and `HYPE_STEP` are gone. A few crowd abilities take their value from the hype (`⌊H / N⌋`), a `hype` effect gains hype or rarely drains it, and a `beforeBattle` trigger lets Hometown Crowd start a battle above 0. There is no threshold trigger (D-044).
+- New ability-model pieces: the `hype`, `gold` and `xp` effects; `friend` subjects for `takeFront` and `hurt`; new targets; `oncePerBattle` (Clapback can't ping-pong). The Manager's Negotiator brings gold back, small and capped; upkeep now runs income → abilities → cap. `upkeep` is used by 3 abilities, and Vocal Coach has real abilities (D-045).
+- **Youth premium:** rating +⌊seasons left / 2⌋ (D-046). **Stage names:** an optional prefix + a punny word from shared and per-archetype lists, unique per league, with no real artists (D-047).
+- T-012, T-013, T-016 and T-018 were reworded, and T-052 moved into Now. The paper playtest (T-051) should look at Drop the Beat stacking on every bar and at Studio Session speeding up second abilities.
+- **Next:** T-050 (presentation).
+
 ## 2026-09-28 (T-048, design session 5: shop and progression)
 - Ran design session 5 with the user over four rounds of questions. The user turned the shop into a **sports-manager transfer market**. Rewrote `docs/game-design.md` §4 (now "the player market"), §2 unit state, §3, §5.1, §6, §8 (now archetypes and an ability pool) and §9–§10, and updated CLAUDE.md (concept and the network rule).
 - **Unique units** generated from archetypes, in **one league-wide public list** fed by rookies each upkeep and by released free agents (D-039). This answers Q-017: progression comes from value-based prices and growth.

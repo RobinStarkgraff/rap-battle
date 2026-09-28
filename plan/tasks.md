@@ -5,25 +5,24 @@ Next free ID: **T-054**
 
 ## Now
 
-- [ ] T-049 (M2) Design session 6: roster and abilities. Unit by unit: names, personality, stats, abilities; the trigger, effect and target lists; which unit types are missing; hype effects and triggers and per-ability `hypeBonus` values (Q-016); the real archetypes (roles such as MC styles, DJ, hype man), their stat ranges and ability pools, and the rating formula behind ask and salary (D-039, D-042); stage name lists; a real ability for Vocal Coach and an ability that uses `upkeep` (D-036). After T-048
 - [ ] T-050 (M2) Design session 7: presentation. Look of the shape-art characters, the screens and their layout, sound (Q-010), the game title. After T-049
 - [ ] T-051 (M2) Paper playtest with the user: play at least 3 rounds between two crews by hand from `docs/game-design.md` and fix every gap or unclear rule found. After T-050
+- [ ] T-052 (M2) Design wrap-up: consistency pass over `docs/game-design.md` and the tunables table, then update the M3+ tasks in `tasks.md` and the exit criteria in `roadmap.md` to match the new design. After T-051
 
 ## Next
 
-- [ ] T-052 (M2) Design wrap-up: consistency pass over `docs/game-design.md` and the tunables table, then update the M3+ tasks in `tasks.md` and the exit criteria in `roadmap.md` to match the new design. After T-051
 - [ ] T-010 (M3) Seeded PRNG (e.g. mulberry32) with `fork()` for independent streams, plus tests
 - [ ] T-011 (M3) Core types: `ArchetypeDef`, `AbilityDef`, `Unit` (an individual: stats, 1–2 abilities with power, xp, age, salary, `stageName`, `record`), `Crew` (3 MC + 2 support + 3 bench, hall of fame), `BattleEvent` (a discriminated union)
-- [ ] T-012 (M3) Data tables for the archetypes and ability pool and the tunables table (`docs/game-design.md` §8, §10)
-- [ ] T-013 (M3) Ability and trigger system (e.g. on battle start, on bar landed, on leaving the stage, on sign), built from data plus named effect functions; support position-aware abilities and per-ability `hypeBonus` scaling (D-034), ability `power`, and units with two abilities (D-041)
+- [ ] T-012 (M3) Data tables for the 10 archetypes, the 32 abilities, the stage name lists and the tunables table (`docs/game-design.md` §8, §10; D-043, D-047)
+- [ ] T-013 (M3) Ability and trigger system (e.g. on battle start, on bar landed, on leaving the stage, on sign), built from data plus named effect functions; support position-aware and `oncePerBattle` abilities, fixed and hype-based values (D-044), the `buff`, `diss`, `hype`, `gold` and `xp` effects and the `beforeBattle` trigger (D-045), ability `power`, and units with two abilities (D-041)
 - [ ] T-014 (M3) `simulateBattle()` behind a `BattleStyle` interface with the "front MCs clash" style (D-010): alternating turns (D-033), hype meters (D-034) and the no-draw end rules (D-035); emits an event log
 - [ ] T-015 (M3) Tests: one or more per ability, same seed gives the same log, property test that every battle ends with exactly one winner
 
 ## Later
 
-- [ ] T-016 (M4) Player market in `core/`: unit generation from archetypes (stats, ability, weighted age, stage name), the public list (start pool, rookies, cap), rating, ask and personal scouting (D-039, D-040, D-042)
+- [ ] T-016 (M4) Player market in `core/`: unit generation from archetypes (stats, ability, weighted age, unique stage name), the public list (start pool, rookies, cap), rating with the youth premium, ask and personal scouting (D-039, D-040, D-042, D-046, D-047)
 - [ ] T-017 (M4) Bidding rounds as a pure function (affordability, highest bid, tie order, early end), scouted signings, release to the pool, and arranging slots and bench (D-040)
-- [ ] T-018 (M4) Crew upkeep: gold income and salary payments each round; xp and growth steps and the second ability after battles (D-041); at the season end, retirement (crews and pool), ageing, farewell-tour announcements, salary renegotiation and the hall of fame (D-038, D-042)
+- [ ] T-018 (M4) Crew upkeep: gold income, `upkeep` abilities, the wallet cap and salary payments each round; xp and growth steps and the second ability after battles (D-041); at the season end, retirement (crews and pool), ageing, farewell-tour announcements, salary renegotiation and the hall of fame (D-038, D-042)
 - [ ] T-019 (M4) AI manager (simple greedy bidding and scouting policy, seeded) that runs filler bots and absent players' crews (D-030), plus a headless test where AI managers play a multi-season league
 - [ ] T-034 (M4) League rules in `core/`: divisions with even counts (auto-added bots), double round robin pairing, standings and tiebreaks, season end with promotion, relegation and titles, newcomer takes over a bot, a leaving player's crew becomes a bot (§7, D-029)
 - [ ] T-035 (M4) League state save format (all members and crews, schedule, results; zod-validated, versioned) and localStorage save/load in `app/` (D-031)
@@ -48,6 +47,7 @@ Next free ID: **T-054**
 
 ## Done
 
+- [x] T-049 (M2) Design session 6: roster and abilities. 5 MC and 5 support archetypes with 32 abilities, crowd abilities valued from hype instead of `hypeBonus`, 3 new effects and a `beforeBattle` trigger, a youth premium in the rating, stage name lists (D-043 to D-047, Q-016) (2026-09-28)
 - [x] T-048 (M2) Design session 5: shop and progression. A league-wide market of unique generated units, sealed bidding rounds, personal scouting, no merging or levels, growth by playing with a random second ability, value-based ask and salary (D-039 to D-042) (2026-09-28)
 - [x] T-047 (M2) Design session 4: crew management. Stamina cut, bench of 3 as storage, no unit tiers with per-unit salary, age in seasons with a known retirement age by role, a farewell season and a hall of fame (D-036 to D-038) (2026-09-28)
 - [x] T-046 (M2) Design session 3: the battle. Alternating turns, a hype meter per crew that scales each ability, no draws, 30–60 s playback (D-033 to D-035) (2026-09-28)

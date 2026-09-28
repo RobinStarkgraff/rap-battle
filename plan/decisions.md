@@ -115,7 +115,7 @@ and are marked "superseded by D-###".
   Together with salary this is the power-creep limit from D-012: strong units cost more
   and stay for less time. Merging keeps the target's age, so it can't reset the clock.
   Retiring pays out like a sale.
-- **D-024 (2026-09-28, amended by D-039 and D-041: `buy` is now `sign`, and a unit can learn a second ability): Ability model: one ability per unit, built from 7 trigger types, 3
+- **D-024 (2026-09-28, amended by D-039 and D-041: `buy` is now `sign`, and a unit can learn a second ability; extended by D-045: 8 triggers, 5 effects including `gold`): Ability model: one ability per unit, built from 7 trigger types, 3
   effects and a fixed list of targets (T-009).** Triggers: `battleStart`, `takeFront`,
   `barLanded`, `hurt`, `choke` (with subject `self`/`friend`), `buy`, `upkeep`. Effects: `buff`,
   `diss`, `restoreStamina`. Buffs in battle last for that battle; in the shop and at upkeep they are
@@ -186,7 +186,7 @@ and are marked "superseded by D-###".
   wants no rule that makes up for the opener's edge "for now". `MAX_EXCHANGES = 30` becomes
   `MAX_TURNS = 40`. Stage positions stay ability conditions only, with no built-in slot bonuses.
   Playback targets 30 to 60 s at normal speed, with a 2× speed button and no skip.
-- **D-034 (2026-09-28): A hype meter per crew, and every ability scales with it on its own terms
+- **D-034 (2026-09-28, ability scaling superseded by D-044): A hype meter per crew, and every ability scales with it on its own terms
   (T-046).** The crowd is a mechanic, not only decoration. Each crew fills its own meter (0 to 10)
   from bars, disses and enemy chokes, and loses hype when its own MC chokes. Each ability has its
   own `hypeBonus`, added per full `HYPE_STEP = 5` hype. The alternatives were a single tug-of-war
@@ -252,7 +252,7 @@ and are marked "superseded by D-###".
   ability from its archetype's pool (chosen over a visible "potential" and over a choice of
   two). The user first wanted growth by both experience and age, then dropped the youth boost,
   so age still only decides retirement (D-038).
-- **D-042 (2026-09-28): Value-based ask and salary; salaries are renegotiated each season;
+- **D-042 (2026-09-28, amended by D-046: the rating has a youth premium): Value-based ask and salary; salaries are renegotiated each season;
   releasing and retiring pay nothing (T-048).** A unit's rating (stats plus ability power) sets its
   ask (the minimum bid) and its salary, with placeholder formulas in `docs/game-design.md` §4 and
   §5.1. Salary is fixed at signing and recomputed at each season end, so a unit that grew costs
@@ -260,3 +260,46 @@ and are marked "superseded by D-###".
   Releasing is free with no refund (chosen over 1 gold or half the ask), and retirement pays
   nothing either. Gold is meant to feel tight. `STARTING_GOLD` goes up to 25 so a new crew can
   sign a first lineup.
+- **D-043 (2026-09-28): Five MC and five support archetypes, each with signature abilities plus
+  one shared ability per role; stats first, abilities spice (T-049).** MC archetypes: Lyricist,
+  Battle Rapper, Storyteller, Freestyler and Hitmaker, each with its own stat ranges. Support
+  archetypes: DJ, Hype Man, Producer, Vocal Coach and Manager. Each pool holds 3 signature
+  abilities plus Clapback (MC) or Shout-out (support), 32 abilities in all. The user chose about
+  5 + 4 archetypes over 3 + 3 and 8 + 6, then added the Manager as a fifth support. They chose
+  "mostly own, a few shared" over strictly own pools and over one big pool per role, and they
+  chose "stats first, abilities spice" over abilities carrying the game and over an even split.
+  The old 11 abilities are kept in the pools (Beatboxer became Beatmaker, DJ Turntablist Drop the
+  Beat, Rookie Spitter Feature Verse). Vocal Coach gets real abilities (Breathe!, Voice Lessons),
+  and `upkeep` is used by Studio Session, Voice Lessons and Negotiator. All numbers are
+  placeholders for T-031. Replaces the placeholder archetypes from D-039.
+- **D-044 (2026-09-28): Hype changes abilities only through crowd abilities whose value is taken
+  from the hype; no global step and no threshold trigger; hype can be gained, and drained on
+  rare occasions (T-049, Q-016).** `hypeBonus` and `HYPE_STEP` are removed. Most abilities ignore
+  the crowd. A few crowd abilities have the value `⌊H / N⌋` (plus a number per power). A new
+  `hype` effect adds hype to the ability's own crew or drains the enemy's. Only two abilities
+  drain (chosen over drain as a common effect and over no drain). A `beforeBattle` trigger lets
+  the Manager's Hometown Crowd start the battle above 0, so `battleStart` crowd abilities can
+  see hype. The user first picked a hype-threshold trigger as well, then said "there is no
+  global hype threshold, only abilities should be able to scale with hype". The alternatives were
+  a per-ability hype rate for every ability, and keeping `hypeBonus` next to the crowd abilities.
+  Supersedes the ability scaling in D-034; the hype meter itself stays.
+- **D-045 (2026-09-28): The ability model gets 3 more effects, a `beforeBattle` trigger, `friend`
+  subjects for `takeFront` and `hurt`, new targets and a `oncePerBattle` condition (T-049).**
+  The effects `hype`, `gold` and `xp` trigger nothing, so they can't start chains. An ability that
+  answers `hurt` with a `diss` must be `oncePerBattle`, so two Clapbacks can't ping-pong. `gold`
+  is allowed again, which D-024 left out: the user chose a Manager with crowd abilities plus
+  **one** light money ability (Negotiator: +1/1/2 gold at upkeep, still under the wallet cap)
+  over crowd-only and over an economy-focused Manager. To make the cap apply, upkeep now runs
+  income, then `upkeep` abilities, then the wallet cap. The next MC now moves up as soon as
+  an MC chokes, before the queued `choke` abilities resolve.
+- **D-046 (2026-09-28): The rating has a youth premium of +1 per 2 seasons left (T-049).** Like in
+  a sports manager, young units ask for more and earn more: `⌊(retirement age − age) / 2⌋`, so at most +2 for an
+  MC and +3 for a support unit. The premium shrinks at each season-end renegotiation. The user
+  chose this over no age term (the recommendation), over +1 per season left (max +3) and over a
+  strong +2 per season. A per-archetype value offset was not chosen.
+- **D-047 (2026-09-28): Stage names are an optional prefix plus a punny word, flavoured by
+  archetype, and unique within a league (T-049).** Shared and per-archetype prefix and word
+  lists are in `docs/game-design.md` §8; the prefix chance is `NAME_PREFIX_CHANCE = 0.6`. The
+  user wanted the broad pun style, not office in-jokes, and chose one or two parts over adding
+  suffixes and over plain adjective + noun names. Taken names are rolled again, then numbered
+  (*Biscuit II*). Words that would make a real artist's name with a prefix are left out.

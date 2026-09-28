@@ -7,9 +7,6 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 ## Open
 
 ### Game design
-- Q-016 Hype (D-034): should some abilities add or drain hype, or trigger when a crew's hype
-  reaches a threshold? `battleStart` abilities always see 0 hype, so should they get something
-  else from the crowd? For T-049.
 - Q-018 Divisions can have different sizes (9 members split 6 + 4 after bots), so their double
   round robins have different lengths (10 vs 6 rounds). The season end (ageing, retirement,
   promotion) is league-wide. Does the shorter division wait, play extra rounds, or does each
@@ -24,6 +21,10 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 
 ## Answered
 
+- **Q-016** Hype changes abilities only through a few **crowd abilities** whose value is taken
+  from the hype (`⌊H / N⌋`). There is no global step or threshold trigger. A `hype` effect gains
+  hype, and on rare occasions drains the enemy's. A `beforeBattle` trigger (Manager's Hometown
+  Crowd) lets a battle start above 0 hype. (2026-09-28) → D-044, D-045
 - **Q-017** The shop no longer has tiers, so progression comes from **value-based prices** and from units
   **growing** over their careers. The shop itself became a league-wide player market with sealed
   bidding rounds, personal scouting and no fixed slot count. (2026-09-28) → D-039 to D-042

@@ -103,7 +103,7 @@ keeps this state for its whole career:
 | `xp` | Battles played in an active slot (see [Growth](#growth)) |
 | `age` | In years; one season is one year. Rolled from the seeded RNG when the unit is generated, with younger ages more likely (see [Age and retirement](#6-age-and-retirement)) |
 | `salary` | Set from the unit's value when it is signed, and renegotiated at each season end (see [Salary](#51-salary)) |
-| `stageName` | A generated stage name, rolled from the seeded RNG when the unit is generated and kept for its whole career. The name lists are content (T-049) |
+| `stageName` | A generated stage name, rolled from the seeded RNG when the unit is generated and kept for its whole career (see [Stage names](#stage-names)) |
 | `record` | Career stats: battles played, bars landed, chokes, wins, and the crews it played for. Shown on the unit, and kept in the crew's hall of fame after it retires |
 
 Buffs that happen **in battle** last until the end of that battle. Buffs that happen in the
@@ -117,10 +117,10 @@ phases, with the AI making the shop decisions:
 
 1. **Upkeep** (automatic)
    1. Income: `BASE_INCOME = 10` gold, plus `WIN_BONUS = 2` if the crew won its last battle.
-      There is no catch-up income for losing crews (see [Pillars](#pillars)). The wallet is
-      then capped at `WALLET_CAP = 20`, and anything above is lost.
-   2. `upkeep` abilities trigger.
-   3. New rookies enter the player market (see [Supply](#supply)).
+      There is no catch-up income for losing crews (see [Pillars](#pillars)).
+   2. `upkeep` abilities trigger (for example Negotiator's gold or Studio Session's xp).
+   3. The wallet is capped at `WALLET_CAP = 20`, and anything above is lost.
+   4. New rookies enter the player market (see [Supply](#supply)).
 2. **Shop**: the [player market](#4-shop-phase-the-player-market) runs its bidding rounds;
    in between, each player can scout, sign scouted units, release units and arrange the
    lineup. The UI always shows the **payroll** that is due at lock-in. There is no timer by
@@ -162,13 +162,17 @@ choice between a signing, a scout and a better unit's salary.
 | **Release** | Free, with **no refund**. The unit returns to the public list as a free agent, with its stats, abilities, age, record and stage name |
 | **Arrange** | Free. Units move between MC slots, support slots (by role) and the bench |
 
-There is no freeze. A unit's **value** sets both its ask and its salary (placeholder
-formula until T-049 and T-031):
+There is no freeze. A unit's **value** sets both its ask and its salary (settled in T-049,
+D-046; the numbers are placeholders for T-031):
 
 - `rating` = `flow + confidence` for an MC, `SUPPORT_BASE_RATING = 4` for a support unit,
-  plus `ABILITY_RATING = 2` per point of ability `power`;
-- ask = `ceil(rating × ASK_PER_RATING)`, with `ASK_PER_RATING = 0.5`; for example, a 3 / 3 MC
-  with one power-1 ability has a rating of 8 and asks 4 gold.
+  plus `ABILITY_RATING = 2` per point of ability `power`,
+  plus a **youth premium** of `⌊seasons left / YOUTH_SEASONS_PER_RATING⌋`, with
+  `YOUTH_SEASONS_PER_RATING = 2`. *Seasons left* is the role's retirement age minus the unit's
+  age (1 on the farewell tour), so a young MC adds up to +2 and a young support unit up to +3;
+- ask = `ceil(rating × ASK_PER_RATING)`, with `ASK_PER_RATING = 0.5`. For example, an
+  18-year-old 3 / 3 MC with one ability has a rating of 3 + 3 + 2 + 2 = 10 and asks 5 gold;
+  the same MC at 22 has a rating of 8 and asks 4.
 
 ### Bidding rounds
 
@@ -230,7 +234,8 @@ crew powers the abilities (D-034), and every battle has a **winner** (D-035).
    compensation for the other crew.
 3. If a crew has no MC on stage, it loses at once. If neither has one, the coin flip's
    loser loses.
-4. `battleStart` abilities trigger, then the front MC of each crew triggers `takeFront`.
+4. `beforeBattle` abilities trigger (for example Hometown Crowd, so a crew can start with
+   hype), then `battleStart` abilities, then the front MC of each crew triggers `takeFront`.
 
 ### Turns
 
@@ -262,12 +267,16 @@ way a battle reads as going one way or the other.
 | An enemy MC chokes | `+HYPE_PER_CHOKE = 2` |
 | One of the crew's own MCs chokes | `-HYPE_LOSS_ON_CHOKE = 2` (never below 0) |
 
-**Hype affects every ability on its own terms.** Each ability has its own `hypeBonus` in
-its data: when it resolves in battle, its value goes up by `hypeBonus` for every full
-`HYPE_STEP = 5` hype its crew has, so by 1× at 5 hype and 2× at 10. A `buff` that gives flow and
-confidence adds the bonus to both. A `hypeBonus` of 0 means an ability ignores the crowd.
-Abilities that resolve outside a battle (`sign`, `upkeep`) always see 0 hype. The ability table's
-values are placeholders until T-049.
+Abilities can also change hype directly: the `hype` effect adds hype to the ability's own
+crew or drains it from the enemy crew (see [Effects](#effects-5)). Drain is rare on purpose.
+The hype change from a choke happens as the MC chokes, before any `choke` ability resolves.
+
+**Hype powers the crowd abilities** (D-044). There is no global hype threshold and no
+general hype bonus: most abilities ignore the crowd, and a few **crowd abilities** take their
+value from the hype itself, as `⌊H / N⌋` of their crew's current hype *H* (for example
+Wordplay diss for ⌊H / 3⌋; see [Values](#values)). So every point of hype counts a little,
+and a crew built around the crowd wants to get loud early. Abilities that resolve outside a
+battle (`sign`, `upkeep`) never use hype.
 
 ### End
 
@@ -298,10 +307,11 @@ All random choices (coin flip, random targets) come from the seed through the se
 Every unit in the crew costs its `salary` at each lock-in (D-012):
 
 - A unit's salary is set from its value when it is signed: `ceil(rating × SALARY_PER_RATING)`,
-  with `SALARY_PER_RATING = 0.25` (see [The market](#the-market) for `rating`). A 3 / 3 MC with
-  one power-1 ability costs 2.
+  with `SALARY_PER_RATING = 0.25` (see [The market](#the-market) for `rating`). An
+  18-year-old 3 / 3 MC with one power-1 ability (rating 10) costs 3.
 - It stays fixed during the season and is **renegotiated at each season end**: it is
-  recomputed from the unit's value then, so a unit that grew costs more next season (D-042).
+  recomputed from the unit's value then, so a unit that grew costs more next season, and the
+  youth premium shrinks as the unit ages (D-042, D-046).
 - On the bench a unit costs half, rounded down (`BENCH_SALARY_FACTOR = 0.5`), so a benched
   unit with salary 1 is free.
 
@@ -444,99 +454,201 @@ locked in, so the others wait (Q-014, D-032):
 
 ## 8. Starting archetypes and abilities
 
-Units are individuals generated from **archetypes** (D-039). An archetype has a role, stat
-ranges and an **ability pool**: a new unit rolls its first ability from the pool, and later
-learns a second one from it (see [Growth](#growth)). The placeholder below has one archetype
-per role, and its abilities are the 11 abilities of the old fixed roster, keeping their old
-unit names. T-049 designs the real archetypes (for example MC styles, DJ, hype man, producer)
-and their pools. Everything here is tunable.
+Settled with the user in T-049 (D-043 to D-047). Units are individuals generated from
+**archetypes** (D-039). An archetype has a role, stat ranges and an **ability pool**: a new
+unit rolls its first ability from the pool, and later learns a second one from it (see
+[Growth](#growth)). Each pool holds the archetype's **signature** abilities plus the one
+**shared** ability of its role, so the archetype tells you the plan and the rolled ability
+tells you the details.
 
-| Archetype | Role | Flow | Confidence | Ability pool |
+**Stats first, abilities spice.** Flow and confidence decide most battles. Abilities swing the
+close ones and make the combos (pillar 2), but a single ability should rarely beat a clearly
+bigger crew on its own. Every number here is a placeholder for the balance pass (T-031).
+
+### MC archetypes
+
+Stats are rolled uniformly within the range.
+
+| Archetype | Personality | Flow | Confidence | Pool |
 |---|---|---|---|---|
-| **MC** | MC | 1–4 | 2–5 | abilities 1 to 7 below |
-| **Support** | Support | – | – | abilities 8 to 11 below |
+| **Lyricist** | Wordy glass cannon: huge bars, folds under pressure | 3–5 | 1–3 | Punchliner, Wordplay, Multisyllabic, Clapback |
+| **Battle Rapper** | Aggressive opener who lives for the first exchange | 2–4 | 2–4 | Battle Kid, Headliner, Comeback Line, Clapback |
+| **Storyteller** | Slow-burning tank who protects the crew | 1–3 | 3–6 | Street Poet, The OG, Long Verse, Clapback |
+| **Freestyler** | Anything can happen: wide rolls, a clutch Closer | 1–5 | 1–5 | Off the Top, Crowd Surfer, Wildcard, Clapback |
+| **Hitmaker** | The crowd's favourite: modest stats, feeds the hype | 2–3 | 2–4 | Chart Topper, Feature Verse, Encore, Clapback |
 
-Stats are rolled uniformly within the range. Ability values are listed for power 1 / 2 / 3.
-The **hype bonus** is added per full `HYPE_STEP` of crew hype (see [Hype meter](#hype-meter)).
-It is a placeholder of 1 for every battle ability until T-049, and `sign` and `upkeep`
-abilities have none.
+### Support archetypes
 
-| # | Ability | Role | Trigger | Effect | Power 1 / 2 / 3 | Hype bonus |
-|---|---|---|---|---|---|---|
-| 1 | **Rookie Spitter** | MC | `sign` | Give one other random MC in the crew (stage or bench) +X confidence, permanently | 1 / 2 / 3 | – |
-| 2 | **Battle Kid** | MC | `takeFront` | Diss the enemy front MC for X damage | 1 / 2 / 3 | 1 |
-| 3 | **Street Poet** | MC | `choke` (self) | Pass the mic: the MC behind it gets +X flow and +X confidence | 1 / 2 / 3 | 1 |
-| 4 | **Punchliner** | MC | `barLanded` (self) | Diss the enemy MC behind the enemy front for X | 1 / 2 / 3 | 1 |
-| 5 | **Freestyler** | MC | `battleStart`, if **Closer** | Gains +X flow and +X confidence | 2 / 3 / 4 | 1 |
-| 6 | **Headliner** | MC | `battleStart`, if **Opener** | Diss every enemy MC for X | 1 / 2 / 3 | 1 |
-| 7 | **The OG** | MC | `hurt` (self) | Every friendly MC behind it gets +X flow | 1 / 2 / 3 | 1 |
-| 8 | **Beatboxer** | Support | `battleStart` | The front MC gets +X flow | 1 / 2 / 3 | 1 |
-| 9 | **Hype Man** | Support | `choke` (friend) | The new front MC gets +X confidence | 2 / 4 / 6 | 1 |
-| 10 | **Vocal Coach** | Support | `battleStart` | Warm-up: the front MC gets +X confidence | 1 / 2 / 3 | 1 |
-| 11 | **DJ Turntablist** | Support | `barLanded` (friend) | The MC that landed the bar gets +X flow (the beat drops) | 1 / 2 / 3 | 1 |
+| Archetype | Personality | Pool |
+|---|---|---|
+| **DJ** | Rewards every bar and scratches in on entrances | Drop the Beat, Scratch, Crowd Mix, Shout-out |
+| **Hype Man** | Crowd control: keeps the energy up when things go wrong | Get Up!, Make Some Noise!, Hype Wave, Shout-out |
+| **Producer** | The long game: better beats and growth in the studio | Beatmaker, Studio Session, Remix, Shout-out |
+| **Vocal Coach** | Keeps MCs standing and trains them between rounds | Warm-up, Breathe!, Voice Lessons, Shout-out |
+| **Manager** | Brings the hometown crowd, pays hecklers, haggles for gold | Hometown Crowd, Paid Hecklers, Negotiator, Shout-out |
+
+### Abilities
+
+*H* is the ability's crew's current hype when the ability resolves (see [Hype meter](#hype-meter)),
+and ⌊ ⌋ rounds down. MC abilities never gain power (MCs grow through stats, see
+[Growth](#growth)), so they have a single value. Support abilities list their value at power
+1 / 2 / 3. **Once** means once per battle (see [Conditions](#conditions)).
+
+MC abilities:
+
+| Ability | Archetype | Trigger | Effect | Value |
+|---|---|---|---|---|
+| **Punchliner** | Lyricist | `barLanded` (self) | Diss the enemy MC behind the enemy front | 1 |
+| **Wordplay** | Lyricist | `barLanded` (self) | Diss the enemy front MC | ⌊H / 3⌋ |
+| **Multisyllabic** | Lyricist | `takeFront` (self) | Gains flow | 1 |
+| **Battle Kid** | Battle Rapper | `takeFront` (self) | Diss the enemy front MC | 2 |
+| **Headliner** | Battle Rapper | `battleStart`, if **Opener** | Diss every enemy MC | 1 |
+| **Comeback Line** | Battle Rapper | `hurt` (self) | The enemy crew loses hype | 1 |
+| **Street Poet** | Storyteller | `choke` (self) | Pass the mic: the MC behind it gets flow and confidence | 2 |
+| **The OG** | Storyteller | `hurt` (self) | Every friendly MC behind it gets flow | 1 |
+| **Long Verse** | Storyteller | `battleStart`, if **Middle** | Gains confidence | 2 |
+| **Off the Top** | Freestyler | `battleStart`, if **Closer** | Gains flow and confidence | 2 |
+| **Crowd Surfer** | Freestyler | `takeFront` (self) | Gains flow | ⌊H / 3⌋ |
+| **Wildcard** | Freestyler | `barLanded` (self) | Diss a random enemy MC on stage | 1 |
+| **Chart Topper** | Hitmaker | `barLanded` (self) | Its crew gains hype | 1 |
+| **Feature Verse** | Hitmaker | `sign` | One other random MC in the crew (stage or bench) gets confidence, permanently | 1 |
+| **Encore** | Hitmaker | `choke` (self) | Goes out with a bang: diss the enemy front MC | ⌊H / 2⌋ |
+| **Clapback** | shared (MC) | `hurt` (self), once | Diss the enemy front MC | 1 |
+
+Support abilities:
+
+| Ability | Archetype | Trigger | Effect | Power 1 / 2 / 3 |
+|---|---|---|---|---|
+| **Drop the Beat** | DJ | `barLanded` (friend) | The MC that landed the bar gets flow | 1 / 2 / 3 |
+| **Scratch** | DJ | `takeFront` (friend) | Diss the enemy front MC | 1 / 2 / 3 |
+| **Crowd Mix** | DJ | `battleStart` | Its crew gains hype | 1 / 2 / 3 |
+| **Get Up!** | Hype Man | `choke` (friend) | The new front MC gets confidence | 2 / 4 / 6 |
+| **Make Some Noise!** | Hype Man | `takeFront` (friend) | Its crew gains hype | 1 / 2 / 3 |
+| **Hype Wave** | Hype Man | `choke` (friend) | The new front MC gets flow | ⌊H / 3⌋ + 0 / 1 / 2 |
+| **Beatmaker** | Producer | `battleStart` | The front MC gets flow | 1 / 2 / 3 |
+| **Studio Session** | Producer | `upkeep` | A random MC in the crew (stage or bench) gets xp | 1 / 1 / 2 |
+| **Remix** | Producer | `choke` (friend) | The new front MC gets flow | 1 / 2 / 3 |
+| **Warm-up** | Vocal Coach | `battleStart` | The front MC gets confidence | 1 / 2 / 3 |
+| **Breathe!** | Vocal Coach | `hurt` (friend), once | The hurt MC gets confidence | 2 / 3 / 4 |
+| **Voice Lessons** | Vocal Coach | `upkeep` | A random MC in the crew (stage or bench) gets confidence, permanently | 1 / 1 / 2 |
+| **Hometown Crowd** | Manager | `beforeBattle` | Its crew gains hype, so the battle starts above 0 | 1 / 2 / 3 |
+| **Paid Hecklers** | Manager | `choke` (friend) | The enemy crew loses hype | 1 / 2 / 3 |
+| **Negotiator** | Manager | `upkeep` | The crew gains gold (the wallet cap still applies) | 1 / 1 / 2 |
+| **Shout-out** | shared (support) | `battleStart` | A random friendly MC on stage gets confidence | 1 / 2 / 3 |
 
 Design notes:
 
-- Every trigger type except `upkeep` is used at least once, and the two position conditions
-  (Opener, Closer) each have an ability. Until T-049 adds an `upkeep` ability, tests cover
-  that trigger with a test-only ability.
-- MC abilities keep their power for good, because MCs grow through stats; support
-  abilities grow in power (see [Growth](#growth)). A unit with two abilities makes combos
-  inside one unit possible (pillar 2).
-- Vocal Coach lost its stamina ability when stamina was cut (D-036). Its warm-up buff is a
-  placeholder.
+- Every trigger, subject and position condition is used by at least one ability.
+- **Crowd abilities** (Wordplay, Crowd Surfer, Encore, Hype Wave) take their value from the
+  hype itself; every other ability ignores the crowd (D-044). Hype gain comes from Chart
+  Topper, Crowd Mix, Make Some Noise! and Hometown Crowd. Hype drain is rare on purpose: only
+  Comeback Line and Paid Hecklers take hype from the enemy.
+- `sign` abilities always resolve at power 1, because a unit is signed before it can grow,
+  and a second ability is learned after the unit joined, so it never triggers `sign`.
+- The only gold effect is Negotiator's (D-045). It stays small and capped, so salary is still
+  the soft cap on crew power.
+
+### Stage names
+
+A unit's `stageName` is rolled when it is generated (D-028, D-047): an optional **prefix**
+(with chance `NAME_PREFIX_CHANCE = 0.6`) and one **word**. The prefix comes from the shared
+prefixes plus the archetype's own; the word comes from the shared words plus the archetype's
+own, uniformly. Examples: *Lil Syntax*, *MC Thunderclap*, *Big Mood*, *Beats by Snare*, *Biscuit*.
+
+- No two units in a league share a stage name. If a roll is taken, it is rolled again, up
+  to 10 times; after that the smallest free numeral is added (*Biscuit II*, *Biscuit III*).
+- Names are invented and never the name of a real artist (see [Non-goals](#non-goals)). Words
+  that complete a real artist's name with one of the prefixes are left out of the lists.
+
+| List | Entries |
+|---|---|
+| Shared prefixes | Lil, Big, Young, King, Queen, Lady, Kid, Doctor, Professor, Captain, Sir, Baby, Grand, Mister, Miss, Uncle, Auntie |
+| Shared words | Biscuit, Static, Thunderclap, Mood, Waffle, Echo, Velvet, Pixel, Comet, Pretzel, Glitter, Tornado, Noodle, Jackpot, Avalanche, Cactus, Meteor, Sprinkles, Voltage, Marmalade |
+| MC prefixes (all MC archetypes) | MC |
+| Lyricist words | Syntax, Thesaurus, Metaphor, Haiku, Footnote, Semicolon, Vocab, Sonnet, Punctuation, Quill, Alliteration, Paragraph |
+| Battle Rapper words | Knuckles, Uppercut, Roast, Smackdown, Brawl, Grudge, Spicy, Venom, Rumble, Headlock, Mayhem, Sucker Punch |
+| Storyteller words | Chapter, Campfire, Fable, Legend, Saga, Narrator, Folklore, Epilogue, Almanac, Memoir, Lantern, Riddle |
+| Freestyler words | Improv, Dice, Shuffle, Offbeat, Zigzag, Tangent, Curveball, Hiccup, Jazzhands, Whim, Coinflip, Plot Twist |
+| Hitmaker words | Platinum, Chorus, Hook, Replay, Earworm, Jingle, Spotlight, Glamour, Top Ten, Bling, Sparkle, Radio Edit |
+| DJ prefix / words | DJ / Scratchcard, Vinyl, Crossfade, Bassline, Needle, Wax, Turntable, Subwoofer, Loop, Rewind, Wobble, Fader |
+| Hype Man prefix / words | Hype / Megaphone, Confetti, Foghorn, Airhorn, Stadium, Holler, Pompom, Firework, Hoopla, Ruckus, Jumbotron, Mosh Pit |
+| Producer prefix / words | Beats by / Metronome, Sampler, Mixdown, Reverb, Snare, Knob, Waveform, Kickdrum, Mastertape, Plugin, Hi-Hat, Low End |
+| Vocal Coach prefix / words | Coach / Larynx, Honey, Lozenge, Scales, Falsetto, Whistle, Humidifier, Tonsil, Chamomile, Octave, Vibrato, Harmony |
+| Manager prefix / words | Boss / Contract, Briefcase, Invoice, Handshake, Loophole, Paperclip, Royalty, Fine Print, Percentage, Rolodex, Clipboard, Spreadsheet |
 
 ## 9. Abilities
 
-An ability is **data**: a trigger, an optional condition, a named effect, a target,
-values per `power` and a `hypeBonus` (see [Hype meter](#hype-meter)). `core/` implements each
-effect and target once, as a small named function (T-013). A unit has one ability, and a
-second one once it reaches `SECOND_ABILITY_XP` (see [Growth](#growth)). A unit's abilities
-resolve in the order it learned them.
+An ability is **data**: a trigger, optional conditions, a named effect, a target and a value
+(fixed per `power`, or taken from the crowd's hype). `core/` implements each effect and target
+once, as a small named function (T-013). A unit has one ability, and a second one once it
+reaches `SECOND_ABILITY_XP` (see [Growth](#growth)). A unit's abilities resolve in the order it
+learned them.
 
-### Trigger types (7)
+### Trigger types (8)
 
 | Trigger | Fires when | Subject |
 |---|---|---|
-| `battleStart` | once, after battle setup | – |
-| `takeFront` | this MC becomes the front MC, including the Opener at battle start | self |
-| `barLanded` | an MC drops a bar on its turn (ability damage doesn't count) | `self` or `friend` (any friendly MC) |
-| `hurt` | this MC takes damage from any source and still has confidence above 0 | self |
+| `beforeBattle` | once, after battle setup and before `battleStart` | – |
+| `battleStart` | once, after `beforeBattle` | – |
+| `takeFront` | an MC becomes the front MC, including the Opener at battle start | `self` or `friend` (any friendly MC) |
+| `barLanded` | an MC drops a bar on its turn (ability damage doesn't count) | `self` or `friend` |
+| `hurt` | an MC takes damage from any source and still has confidence above 0 | `self` or `friend` |
 | `choke` | an MC reaches 0 confidence and leaves the stage | `self` or `friend` |
 | `sign` | this unit joins a crew, by a won bid or a scouted signing | – |
-| `upkeep` | each upkeep, after income | – |
+| `upkeep` | each upkeep, after income and before the wallet cap | – |
 
-- Support units never take damage, so for them `barLanded` and `choke` only make sense with
-  the subject `friend`.
+- Support units never take the stage, so for them `takeFront`, `barLanded`, `hurt` and
+  `choke` only make sense with the subject `friend`.
 - Benched units' abilities don't trigger, except `sign` (a unit signed straight onto the
   bench still triggers it).
 - An MC that has choked doesn't trigger anything afterwards, except its own `choke`.
+- When an MC chokes, the next MC of its crew moves up **at once**, before the queued `choke`
+  abilities resolve, so "the new front MC" is already in place for them. Its `takeFront` goes on
+  the queue after those `choke` abilities.
 
 ### Conditions
 
 - `inSlot: opener | middle | closer`: the MC's starting slot (see [Crew](#2-crew)).
+- `oncePerBattle`: the ability resolves at most once per battle for this unit; later triggers
+  are ignored.
 
-### Effects (2)
+### Values
 
-| Effect | What it does | In battle | In shop/upkeep |
+- **Fixed**: one number per `power` (1 to `MAX_POWER`). MC abilities only ever use power 1.
+- **From hype**: `⌊H / N⌋` plus a number per `power`, where *H* is the crew's hype when the
+  ability resolves and `N` is part of the ability's data. This is the only way hype changes an
+  ability (D-044).
+- A value of 0 still resolves (it shows on screen) but changes nothing.
+
+### Effects (5)
+
+| Effect | What it does | In battle | Outside battle (`sign`, `upkeep`) |
 |---|---|---|---|
 | `buff` | adds flow and/or confidence to friendly MCs | until the battle ends | permanent |
-| `diss` | deals damage to enemy MCs' confidence, and gives the crew hype | can trigger `hurt` and `choke` | – |
+| `diss` | deals damage to enemy MCs' confidence, and gives the crew `HYPE_PER_DISS` hype | can trigger `hurt` and `choke` | – |
+| `hype` | its own crew gains hype, or the enemy crew loses hype (within 0 to `HYPE_MAX`) | yes | – |
+| `gold` | the crew gains gold | – | yes; the wallet cap applies after all `upkeep` abilities |
+| `xp` | the target gains xp; growth steps and the second ability apply at once (see [Growth](#growth)) | – | yes |
 
 ### Targets
 
 - Friendly: `self`, `frontFriend`, `friendBehind` (the next MC behind this one on stage),
   `allFriendsBehind`, `triggeringFriend` (the MC that caused the trigger),
-  `randomOtherCrewMC` (stage or bench), `allCrewMCs` (stage and bench).
-- Enemy: `enemyFront`, `enemyBehindFront` (the second enemy MC on stage), `allEnemies`.
+  `randomFriendOnStage`, `randomOtherCrewMC` (stage or bench, not this unit),
+  `randomCrewMC` (stage or bench), `allCrewMCs` (stage and bench).
+- Enemy: `enemyFront`, `enemyBehindFront` (the second enemy MC on stage), `randomEnemy` (on
+  stage), `allEnemies`.
+- Crews (for `hype` and `gold`): `ownCrew`, `enemyCrew`.
 - If a target doesn't exist (for example, no MC behind), the effect does nothing.
   Random targets use the seeded RNG.
 
 ### Rules for new abilities
 
 - No effect may cause its own trigger again without a turn in between (for example, no
-  `hurt` ability that deals damage to friendly MCs). Then the FIFO queue from
-  [Turns](#turns) always runs empty, because each chain is bounded by the number of MCs.
+  `hurt` ability that deals damage to friendly MCs). An ability that answers `hurt` with a
+  `diss` must be `oncePerBattle`, so two of them can't ping-pong (Clapback). Then the FIFO
+  queue from [Turns](#turns) always runs empty, because each chain is bounded.
+- `hype`, `gold` and `xp` effects trigger nothing, so they can't start a chain.
 - New triggers, effects or targets are added to the tables above first, then to `core/`.
 
 A sketch of the data shape, for orientation only (T-011 and T-013 decide the real types):
@@ -549,21 +661,28 @@ const streetPoet: AbilityDef = {
   trigger: { kind: 'choke', subject: 'self' },
   effect: 'buff',
   target: 'friendBehind',
-  hypeBonus: 1,
-  valuesByPower: [
-    { flow: 1, confidence: 1 },
-    { flow: 2, confidence: 2 },
-    { flow: 3, confidence: 3 },
-  ],
+  value: { kind: 'fixed', byPower: [{ flow: 2, confidence: 2 }] },
 };
 
-const mc: ArchetypeDef = {
-  id: 'mc',
-  name: 'MC',
+const hypeWave: AbilityDef = {
+  id: 'hype-wave',
+  name: 'Hype Wave',
+  role: 'support',
+  trigger: { kind: 'choke', subject: 'friend' },
+  effect: 'buff',
+  target: 'frontFriend',
+  value: { kind: 'fromHype', divisor: 3, byPower: [{ flow: 0 }, { flow: 1 }, { flow: 2 }] },
+};
+
+const storyteller: ArchetypeDef = {
+  id: 'storyteller',
+  name: 'Storyteller',
   role: 'mc',
-  flow: { min: 1, max: 4 },
-  confidence: { min: 2, max: 5 },
-  abilityPool: ['rookie-spitter', 'battle-kid', 'street-poet' /* … */],
+  flow: { min: 1, max: 3 },
+  confidence: { min: 3, max: 6 },
+  abilityPool: ['street-poet', 'the-og', 'long-verse', 'clapback'],
+  namePrefixes: [],
+  nameWords: ['Chapter', 'Campfire' /* … */],
 };
 ```
 
@@ -583,6 +702,7 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `SUPPORT_BASE_RATING` | 4 | Market |
 | `ABILITY_RATING` | 2 | Market |
 | `ASK_PER_RATING` | 0.5 (rounded up) | Market |
+| `YOUTH_SEASONS_PER_RATING` | 2 (rounded down) | Market |
 | `POOL_START_PER_MEMBER` | 4 | Market |
 | `ROOKIES_PER_ROUND` | 3 | Market |
 | `POOL_MAX` | 16 | Market |
@@ -593,10 +713,10 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `HYPE_MAX` | 10 | Battle |
 | `HYPE_PER_BAR` / `HYPE_PER_DISS` / `HYPE_PER_CHOKE` | 1 / 1 / 2 | Battle |
 | `HYPE_LOSS_ON_CHOKE` | 2 | Battle |
-| `HYPE_STEP` | 5 | Battle |
 | `SALARY_PER_RATING` | 0.25 (rounded up) | Salary |
 | `BENCH_SALARY_FACTOR` | 0.5 (rounded down) | Salary |
 | `SIGN_AGE_MIN` | 18 | Retirement |
+| `NAME_PREFIX_CHANCE` | 0.6 | Stage names |
 | `MC_RETIRE_AGE` / `SUPPORT_RETIRE_AGE` | 23 / 25 | Retirement |
 | `DIVISION_MAX` | 6 | League |
 | `MIN_SEASON_ROUNDS` | 3 | League |
@@ -606,6 +726,4 @@ Every name above with its default. `core/` keeps them in one typed table.
 
 ## 11. Still open
 
-- Q-016: which abilities should add or drain hype, or trigger on hype thresholds? And how should
-  `battleStart` abilities, which always see 0 hype, benefit from the crowd?
 - Q-015: what happens when two sittings play the same league at the same time and their saves fork?
