@@ -86,3 +86,8 @@ and are marked "superseded by D-###".
   has network access, and sets `PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright`. Like D-015 this
   is local only, because `.devcontainer/` is gitignored. Changing the Playwright version means
   rebuilding the container.
+- **D-019 (2026-09-28): CI is a GitHub Actions workflow, not a pre-commit hook (T-007).**
+  The repo is on GitHub, and a hook would need an extra tool (husky) or a per-clone setup
+  step. `.github/workflows/ci.yml` runs `make install`, `make check` and `make build` in one
+  job, and `make test-e2e` in a second job that downloads Chromium itself (CI has open
+  network access). Node 20 matches the dev container.

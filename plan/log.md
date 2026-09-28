@@ -2,6 +2,11 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-007)
+- Added `.github/workflows/ci.yml` (D-019). The `check` job runs `make install`, `make check` and `make build`; the `e2e` job installs Chromium and runs `make test-e2e`, and uploads the Playwright results when it fails. Node 20, npm cache, actions v7 (the latest releases).
+- Verified locally: the YAML parses, and a fresh clone passes `make install`, `make check` (30 tests) and `make build`. The workflow itself has not run yet, because nothing has been pushed. Follow-up T-042: push, and confirm CI is green.
+- **Next:** milestone wrap-up.
+
 ## 2026-09-28 (T-006)
 - Rewrote `.gitignore`: removed the leftovers from another project (`public/` comments, `deploy.log`) and the duplicate entries, grouped the rest, and added `coverage/`, `test-results/`, `playwright-report/`, `blob-report/`, `.vscode/` and `*.log`. `.devcontainer/` stays ignored (D-015, D-018); T-041 asks whether `.devcontainer/project/` should be committed. `git status --ignored` shows only the expected paths.
 - **Next:** T-007 (CI).
