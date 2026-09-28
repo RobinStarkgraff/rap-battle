@@ -5,17 +5,16 @@ Next free ID: **T-054**
 
 ## Now
 
-- [ ] T-047 (M2) Design session 4: crew management. Stamina and bench rest, salary, age and retirement, and whether they make for fun decisions or chores. Targets for how long a unit stays and how often players rotate. After T-046
-- [ ] T-048 (M2) Design session 5: shop and progression. Tiers and unlocks, shop size, buy/roll/sell costs, freeze, merging and levels, the gold economy (no catch-up gold, D-027). After T-047
-- [ ] T-049 (M2) Design session 6: roster and abilities. Unit by unit: names, personality, stats, abilities; the trigger, effect and target lists; which unit types are missing; hype effects and triggers and per-unit `hypeBonus` values (Q-016). After T-048
+- [ ] T-048 (M2) Design session 5: shop and progression. Progression without tiers (Q-017, D-037), shop size, buy/roll/sell costs, freeze, merging and levels, the gold economy (no catch-up gold, D-027). After T-047
+- [ ] T-049 (M2) Design session 6: roster and abilities. Unit by unit: names, personality, stats, abilities; the trigger, effect and target lists; which unit types are missing; hype effects and triggers and per-unit `hypeBonus` values (Q-016); per-unit base salaries (D-037); a real ability for Vocal Coach and a unit that uses `upkeep` (D-036). After T-048
+- [ ] T-050 (M2) Design session 7: presentation. Look of the shape-art characters, the screens and their layout, sound (Q-010), the game title. After T-049
 
 ## Next
 
-- [ ] T-050 (M2) Design session 7: presentation. Look of the shape-art characters, the screens and their layout, sound (Q-010), the game title. After T-049
 - [ ] T-051 (M2) Paper playtest with the user: play at least 3 rounds between two crews by hand from `docs/game-design.md` and fix every gap or unclear rule found. After T-050
 - [ ] T-052 (M2) Design wrap-up: consistency pass over `docs/game-design.md` and the tunables table, then update the M3+ tasks in `tasks.md` and the exit criteria in `roadmap.md` to match the new design. After T-051
 - [ ] T-010 (M3) Seeded PRNG (e.g. mulberry32) with `fork()` for independent streams, plus tests
-- [ ] T-011 (M3) Core types: `UnitDef`, `UnitInstance` (with stamina, age, salary, `stageName`, `record`), `Crew` (3 MC + 2 support + bench), `BattleEvent` (a discriminated union)
+- [ ] T-011 (M3) Core types: `UnitDef` (with base salary, no tier), `UnitInstance` (with age in years, `stageName`, `record`), `Crew` (3 MC + 2 support + 3 bench, hall of fame), `BattleEvent` (a discriminated union)
 - [ ] T-012 (M3) Data tables for the roster from T-009 and the tunables table (`docs/game-design.md` §8, §10)
 - [ ] T-013 (M3) Ability and trigger system (e.g. on battle start, on bar landed, on leaving the stage, on buy), built from data plus named effect functions; support position-aware abilities and per-ability `hypeBonus` scaling (D-034)
 - [ ] T-014 (M3) `simulateBattle()` behind a `BattleStyle` interface with the "front MCs clash" style (D-010): alternating turns (D-033), hype meters (D-034) and the no-draw end rules (D-035); emits an event log
@@ -23,9 +22,9 @@ Next free ID: **T-054**
 
 ## Later
 
-- [ ] T-016 (M4) Shop generation by tier and round, plus roll and freeze
+- [ ] T-016 (M4) Shop generation from the whole roster with seeded signing ages (D-037, D-038), plus roll and freeze
 - [ ] T-017 (M4) Buy, sell, reorder, bench, merge and level-up rules
-- [ ] T-018 (M4) Crew upkeep between rounds: gold income, salary payments, stamina use and bench recovery, ageing and retirement
+- [ ] T-018 (M4) Crew upkeep: gold income and salary payments each round; at the season end, retirement, ageing, farewell-tour announcements and the hall of fame (D-038)
 - [ ] T-019 (M4) AI manager (simple greedy shop policy, seeded) that runs filler bots and absent players' crews (D-030), plus a headless test where AI managers play a multi-season league
 - [ ] T-034 (M4) League rules in `core/`: divisions with even counts (auto-added bots), double round robin pairing, standings and tiebreaks, season end with promotion, relegation and titles, newcomer takes over a bot, a leaving player's crew becomes a bot (§7, D-029)
 - [ ] T-035 (M4) League state save format (all members and crews, schedule, results; zod-validated, versioned) and localStorage save/load in `app/` (D-031)
@@ -50,6 +49,7 @@ Next free ID: **T-054**
 
 ## Done
 
+- [x] T-047 (M2) Design session 4: crew management. Stamina cut, bench of 3 as storage, no unit tiers with per-unit salary, age in seasons with a known retirement age by role, a farewell season and a hall of fame (D-036 to D-038) (2026-09-28)
 - [x] T-046 (M2) Design session 3: the battle. Alternating turns, a hype meter per crew that scales each ability, no draws, 30–60 s playback (D-033 to D-035) (2026-09-28)
 - [x] T-045 (M2) Design session 2: core loop, persistence and league. One league per group and one crew per player, double-round-robin seasons over sittings, AI managers, a copied league state, and an optional shop timer (D-029 to D-032) (2026-09-28)
 - [x] T-044 (M2) Design session 1: vision and pillars. Pillars section at the top of `docs/game-design.md` (D-026 to D-028) (2026-09-28)

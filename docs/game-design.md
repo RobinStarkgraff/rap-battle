@@ -60,11 +60,11 @@ point between two rounds must be a clean place to stop and come back to later.
 ## 1. Overview
 
 Each player manages a **rap crew**: 3 MCs who battle on stage, 2 support members who buff
-and trigger, and a small bench for resting. A league round has a **shop phase**, where the
+and trigger, and a bench for units that sit a battle out. A league round has a **shop phase**, where the
 player buys, sells and arranges the crew, and an **automatic battle** against another
-player's crew. The crew **persists**. It keeps its members, their stamina, age and levels,
-and its gold between rounds and sittings. Members cost a salary, get tired and eventually
-retire, so crews keep changing and power can't pile up forever.
+player's crew. The crew **persists**. It keeps its members, their age and levels,
+and its gold between rounds and sittings. Members cost a salary, get a year older every
+season and retire at a known age, so crews keep changing and power can't pile up forever.
 
 Each player owns **exactly one crew**, and it plays in the friend group's **one league**: a
 pyramid of divisions with promotion and relegation, like a football league system. Seasons
@@ -77,7 +77,7 @@ run over many short sittings. AI players fill the league up and stand in for abs
 |---|---|---|
 | Stage (MC slots) | 3: **Opener** (slot 1, front), **Middle** (slot 2), **Closer** (slot 3) | MCs battle here, front first |
 | Support slots | 2 | Support units trigger abilities and never take damage |
-| Bench | `BENCH_SIZE = 2` | Resting units. They take no part in the battle and recover stamina |
+| Bench | `BENCH_SIZE = 3` | Storage at half salary: counter-picks, merges in progress, units waiting for a slot. Benched units take no part in the battle |
 
 - MC slots only take MCs and support slots only take support units. The bench takes both.
 - **Stage positions** are the slot an MC holds in the locked-in lineup. Abilities that
@@ -88,18 +88,18 @@ run over many short sittings. AI players fill the league up and stand in for abs
 
 ### Unit state
 
-A unit definition (`UnitDef`) is fixed data: name, role (`mc` or `support`), tier, base
-stats and ability. An owned unit (`UnitInstance`) adds persistent state:
+A unit definition (`UnitDef`) is fixed data: name, role (`mc` or `support`), base salary,
+base stats and ability. Units have **no tiers** (D-037). An owned unit (`UnitInstance`)
+adds persistent state:
 
 | Field | Meaning |
 |---|---|
 | `flow` | MCs only. Hype damage dealt per bar |
 | `confidence` | MCs only. Hype damage an MC can take before choking |
 | `level`, `xp` | From merging duplicates (see [Shop](#4-shop-phase)) |
-| `stamina` | 0 to `MAX_STAMINA = 10`. New units arrive at `MAX_STAMINA` |
-| `age` | League rounds this unit has spent in the crew. New units arrive at 0 |
+| `age` | In years; one season is one year. Rolled from the seeded RNG when the unit is signed, with younger ages more likely (see [Age and retirement](#6-age-and-retirement)). Shown on the unit |
 | `stageName` | A generated stage name, rolled from the seeded RNG when the unit is bought and kept for its whole career. The name lists are content (T-049) |
-| `record` | Career stats: battles played, bars landed, chokes, wins with the crew. Shown on the unit and in its retirement farewell |
+| `record` | Career stats: battles played, bars landed, chokes, wins with the crew. Shown on the unit, and kept in the crew's hall of fame after it retires |
 
 Buffs that happen **in battle** last until the end of that battle. Buffs that happen in the
 **shop or upkeep** are permanent.
@@ -111,28 +111,28 @@ machine in T-023). Crews run by an AI (see [AI managers](#ai-managers)) go throu
 phases, with the AI making the shop decisions:
 
 1. **Upkeep** (automatic)
-   1. Every unit's `age` goes up by 1. Units that reach their tier's retirement age retire
-      (see [Age and retirement](#6-age-and-retirement)).
-   2. Income: `BASE_INCOME = 10` gold, plus `WIN_BONUS = 2` if the crew won its last battle.
+   1. Income: `BASE_INCOME = 10` gold, plus `WIN_BONUS = 2` if the crew won its last battle.
       There is no catch-up income for losing crews (see [Pillars](#pillars)). The wallet is
       then capped at `WALLET_CAP = 20`, and anything above is lost.
-   3. `upkeep` abilities trigger.
-   4. A new shop is rolled. Frozen shop slots stay.
+   2. `upkeep` abilities trigger.
+   3. A new shop is rolled. Frozen shop slots stay.
 2. **Shop**: buy, sell, roll, freeze, merge, reorder and bench, in any order. The UI always
    shows the **payroll** that is due at lock-in. There is no timer by default (see
    [Slow players](#slow-players-and-the-optional-timer)). The shop's random draws come from a seed
    derived from the league seed, the round and the crew, so replaying a round gives the same shops.
-3. **Lock-in**: the payroll (see [Salary](#52-salary)) is paid from the wallet. Lock-in
+3. **Lock-in**: the payroll (see [Salary](#51-salary)) is paid from the wallet. Lock-in
    is only possible while `wallet >= payroll`. Selling always makes that reachable, because
    it adds gold and lowers the payroll. The locked crew is a snapshot that is sent to the
    opponent (D-004).
 4. **Battle**: once **every** crew in the league has locked in, all of the round's battles
    start. `simulateBattle(crewA, crewB, seed)` runs on the peers and the event log is played
    back. Everyone watches their own battle at the same time.
-5. **Result**: league points are awarded, then stamina is spent and recovered (see
-   [Stamina](#51-stamina-and-bench-rest)). The host sends the new league state to every
-   member, and everyone saves it (see [League state](#league-state-and-hosting)). After the
-   result is saved the round is complete, and it's a clean place to stop.
+5. **Result**: league points are awarded and the units' `record`s are updated. If this was
+   the last round of the season, the **season end** runs next: retirements, then ageing (see
+   [Age and retirement](#6-age-and-retirement)), then promotion and relegation (see
+   [Seasons](#seasons)). The host sends the new league state to every member, and everyone
+   saves it (see [League state](#league-state-and-hosting)). After the result is saved the
+   round is complete, and it's a clean place to stop.
 
 A brand new crew has no units, `STARTING_GOLD = 10` gold and skips the first upkeep.
 
@@ -140,9 +140,8 @@ A brand new crew has no units, `STARTING_GOLD = 10` gold and skips the first upk
 
 | Action | Rule |
 |---|---|
-| Shop size | `SHOP_SLOTS_T1 = 3` slots, `SHOP_SLOTS_T2 = 4` once tier 2 unlocks, `SHOP_SLOTS_T3 = 5` once tier 3 unlocks |
-| Tier unlocks | By the crew's **career round** (league rounds played by this crew): tier 2 from round `TIER2_ROUND = 3`, tier 3 from round `TIER3_ROUND = 6`. Crews persist, so after a few rounds every tier is open for good |
-| Shop draw | Each slot draws a unit def uniformly from the unlocked tiers, using the seeded RNG. If both roles are unlocked, at least one slot is an MC and one is a support unit |
+| Shop size | `SHOP_SLOTS = 5` (placeholder: the old tier rules reached 5 slots for good after round 6; T-048 settles it, Q-017) |
+| Shop draw | Each slot draws a unit def uniformly from the whole roster, using the seeded RNG. There are no tiers or unlocks (D-037). At least one slot is an MC and one is a support unit. Each offered unit already has its rolled `age`, shown before buying |
 | Buy | `BUY_COST = 3` gold. The unit goes to a free slot of its role or to the bench. It can't be bought if there is no room and no copy to merge with |
 | Roll | `ROLL_COST = 1` gold. Rerolls every slot that isn't frozen |
 | Freeze | Free. A frozen slot keeps its unit through rolls and into the next round's shop |
@@ -152,8 +151,9 @@ A brand new crew has no units, `STARTING_GOLD = 10` gold and skips the first upk
 
 ### Merging and levels
 
-- The merged unit keeps the **target's** `age` and `stamina`, so a fresh copy can't reset
-  either.
+- The merged unit keeps the **target's** `age`, so a copy can't reset the clock. When
+  dropping one owned unit onto another, the player picks which one is the target, so the
+  younger copy is usually the better one to keep.
 - Stats: the higher `flow` and the higher `confidence` of the two, then `+MERGE_STAT_BONUS = 1` each.
 - `xp` = target xp + source xp + 1. Level 2 at `XP_LEVEL2 = 2`, level 3 at `XP_LEVEL3 = 5`.
   Level 3 is the maximum, and a level-3 unit can't be merged further.
@@ -169,15 +169,14 @@ crew powers the abilities (D-034), and every battle has a **winner** (D-035).
 
 ### Setup
 
-1. Tired units are marked (see [Stamina](#51-stamina-and-bench-rest)).
-2. Both crews' hype meters start at 0.
-3. A seeded coin flip picks the **opening crew**. It takes the first turn, and whenever
+1. Both crews' hype meters start at 0.
+2. A seeded coin flip picks the **opening crew**. It takes the first turn, and whenever
    abilities of both crews trigger at the same moment, the opening crew's abilities resolve
    first. Within a crew the order is MC slot 1, 2, 3, then support slot 1, 2. There is no
    compensation for the other crew.
-4. If a crew has no MC on stage, it loses at once. If neither has one, the coin flip's
+3. If a crew has no MC on stage, it loses at once. If neither has one, the coin flip's
    loser loses.
-5. `battleStart` abilities trigger, then the front MC of each crew triggers `takeFront`.
+4. `battleStart` abilities trigger, then the front MC of each crew triggers `takeFront`.
 
 ### Turns
 
@@ -240,50 +239,47 @@ All random choices (coin flip, random targets) come from the seed through the se
 - Playback has a **2× speed** button. There is no skip, because the battle is a pillar.
 - Every bar, choke, ability and big hype swing gets its own beat on screen (T-022, T-050).
 
-### 5.1 Stamina and bench rest
-
-Performing costs stamina, which carries over between battles (D-011).
-
-| When | Stamina change |
-|---|---|
-| MC was on stage for the battle | `-STAMINA_COST_STAGE = 1` |
-| … and was the front MC for at least one turn | `-STAMINA_COST_FRONT = 1` more |
-| … and choked | `-STAMINA_COST_CHOKE = 1` more |
-| Support unit was in a support slot | `-STAMINA_COST_SUPPORT = 1` |
-| Unit was on the bench | `+BENCH_RECOVERY = 3` |
-
-Stamina stays within 0 and `MAX_STAMINA`. A unit is **tired** when its stamina is at or
-below `TIRED_THRESHOLD = 3` at battle start:
-
-- a tired MC performs with `-TIRED_FLOW_PENALTY = 1` flow and `-TIRED_CONFIDENCE_PENALTY = 1`
-  confidence (never below 1) for that battle;
-- a tired support unit's abilities don't trigger in that battle.
-
-A front MC that chokes loses 3 stamina, so it can play about 3 battles before it is tired.
-With only `BENCH_SIZE` bench slots, rotating tired units out is part of the game.
-
-### 5.2 Salary
+### 5.1 Salary
 
 Every unit in the crew costs a salary at each lock-in (D-012):
 
-- salary on stage or in a support slot = `SALARY_BY_TIER = [1, 2, 3]` for tiers 1 to 3,
-  `+SALARY_PER_LEVEL = 1` per level above 1;
+- salary on stage or in a support slot = the unit's **base salary** from the
+  [roster](#8-starting-roster) (its `salary` in the `UnitDef`), `+SALARY_PER_LEVEL = 1` per
+  level above 1. Stronger units have a higher base salary (D-037);
 - salary on the bench = half of that, rounded down (`BENCH_SALARY_FACTOR = 0.5`), so a
-  benched level-1 tier-1 unit is free.
+  benched level-1 unit with base salary 1 is free.
 
-With `BASE_INCOME = 10`, a crew full of high-tier, high-level units costs more than the
-income. That is intended: salary is the soft cap on crew power.
+With `BASE_INCOME = 10`, a crew full of expensive, high-level units costs more than the
+income. That is intended: salary is the soft cap on crew power (T-047).
 
 ## 6. Age and retirement
 
-`age` counts league rounds in the crew, including bench time and rounds in which an AI
-managed the crew for an absent player. A unit retires
-during upkeep when its age reaches its tier's retirement age: `RETIRE_AGE_BY_TIER =
-[20, 16, 12]` for tiers 1 to 3. Stars shine brightly but briefly. For the last
-`FAREWELL_ROUNDS = 2` rounds the UI shows a "farewell tour" badge; the rules don't change.
+Settled with the user in T-047 (D-038). Age is the only thing that limits how long a unit
+stays, and it only decides *when* a unit retires: a 22-year-old plays exactly like an
+18-year-old copy of the same unit.
 
-A retiring unit leaves the crew and pays out like a sale (`SELL_REFUND_PER_LEVEL` per
-level), so players don't need to sell it by hand just before it retires.
+- **Age is in years, and one season is one year.** Every unit in the crew gets one year
+  older at the season end, including benched units and crews an AI managed for an absent
+  player.
+- **Signing age.** When the shop rolls a unit, its age is drawn from the seeded RNG between
+  `SIGN_AGE_MIN = 18` and its role's retirement age − 1. Younger is more likely: the weights
+  fall linearly, so the youngest age has the highest weight and the oldest a weight of 1.
+  The age is shown in the shop before buying.
+- **Retirement age** is global, known and depends on the **role**: `MC_RETIRE_AGE = 23`
+  and `SUPPORT_RETIRE_AGE = 25`. So an MC stays 1 to 5 seasons (about 3.7 on average) and
+  a support unit 1 to 7 (about 5). A unit signed in a season counts that season as its first.
+- **Farewell tour.** A unit whose age is its retirement age − 1 is in its **last season**.
+  It shows a "farewell tour" badge for that whole season; the rules don't change. Units
+  normally reach it at a season end, where it is announced along with the season results. A
+  unit signed at that age starts its farewell tour right away.
+- **Season end**, after the season's last round, in this order: every unit on its farewell
+  tour **retires**; then every remaining unit's age goes up by 1, and the units whose last
+  season starts now are announced.
+- A retiring unit leaves the crew and pays out like a sale (`SELL_REFUND_PER_LEVEL` per
+  level), so players don't need to sell it by hand before it retires.
+- **Hall of fame.** Each crew keeps a hall of fame: every retired unit's `stageName`, unit
+  name, level, seasons with the crew and final `record`. It is shown in the crew screen and
+  saved with the crew in the league state. It has no effect on the rules (pillar 1).
 
 ## 7. League
 
@@ -322,8 +318,10 @@ A **member** is a crew plus who runs it:
 | Tiebreaks | Head-to-head points, then total MC margin, then a seeded coin flip |
 | Catch-up | None. Crews are meant to snowball (see [Pillars](#pillars)), and divisions keep strong and weak crews apart |
 
-A season usually spans several sittings. A season ends after its last round; the next one
-starts at the next round, with promotion, relegation and a new split applied.
+A season usually spans several sittings, and one season is one year of the units' age. A
+season ends after its last round. The season end first retires the units on their farewell
+tour and ages everyone else (see [Age and retirement](#6-age-and-retirement)), then applies
+promotion, relegation and a new split; the next season starts at the next round.
 
 ### Joining and leaving
 
@@ -342,19 +340,19 @@ AI players are part of the real game (Q-008), not only a test tool. One simple A
 
 - **Bots** always.
 - **Absent players**, fully (D-030). It shops, pays salaries and rotates the bench under the same
-  rules as a human, so the crew ages, tires and earns as usual. When the player comes back,
+  rules as a human, so the crew ages and earns as usual. When the player comes back,
   they take over the crew as the AI left it. A "while you were away" summary lists the rounds
   and changes.
 
 The AI plays the real economy with a simple greedy policy: buy the best affordable unit,
-merge when possible, bench tired units, and lock in once gold runs low. It should be beatable by
+merge when possible, prefer younger copies, and lock in once gold runs low. It should be beatable by
 a thoughtful human, but not silly. Its decisions come from seeded randomness, so every peer
 gets the same result.
 
 ### League state and hosting
 
 The **league state** is the whole league: the members, every crew (units, wallet, frozen shop
-slots), the divisions, the season schedule, the results so far, the standings and the
+slots, hall of fame), the divisions, the season schedule, the results so far, the standings and the
 number of the last completed round. It is also each player's save (D-031):
 
 - After every completed round the host sends the new league state to every connected member,
@@ -386,14 +384,15 @@ locked in, so the others wait (Q-014, D-032):
 
 ## 8. Starting roster
 
-11 units: 7 MCs and 4 support units across 3 tiers. The names are placeholders that fit the
-theme, not real artists. Stats are **L1 base stats** (`flow` / `confidence`); merging adds
+11 units: 7 MCs and 4 support units. There are no tiers (D-037); each unit has its own base
+salary instead (placeholders taken from the old tiers until T-049). The names are
+placeholders that fit the theme, not real artists. Stats are **L1 base stats** (`flow` / `confidence`); merging adds
 to them as described in [Merging](#merging-and-levels). Ability values are listed for
 L1 / L2 / L3. The **hype bonus** is added per full `HYPE_STEP` of crew hype (see
 [Hype meter](#hype-meter)). It is a placeholder of 1 for every battle ability until T-049,
 and shop and upkeep abilities have none. Everything in this table is tunable.
 
-| # | Unit | Tier | Role | Flow / Conf | Trigger | Ability | L1 / L2 / L3 | Hype bonus |
+| # | Unit | Salary | Role | Flow / Conf | Trigger | Ability | L1 / L2 / L3 | Hype bonus |
 |---|---|---|---|---|---|---|---|---|
 | 1 | **Rookie Spitter** | 1 | MC | 2 / 3 | `buy` | Give one other random MC in the crew (stage or bench) +X confidence, permanently | 1 / 2 / 3 | – |
 | 2 | **Battle Kid** | 1 | MC | 3 / 2 | `takeFront` | Diss the enemy front MC for X damage | 1 / 2 / 3 | 1 |
@@ -402,19 +401,21 @@ and shop and upkeep abilities have none. Everything in this table is tunable.
 | 5 | **Punchliner** | 2 | MC | 4 / 3 | `barLanded` (self) | Diss the enemy MC behind the enemy front for X | 1 / 2 / 3 | 1 |
 | 6 | **Freestyler** | 2 | MC | 3 / 4 | `battleStart`, if **Closer** | Gains +X flow and +X confidence | 2 / 3 / 4 | 1 |
 | 7 | **Hype Man** | 2 | Support | – | `choke` (friend) | The new front MC gets +X confidence | 2 / 4 / 6 | 1 |
-| 8 | **Vocal Coach** | 2 | Support | – | `upkeep` | Every MC in the crew (stage and bench) recovers X stamina | 1 / 2 / 3 | – |
+| 8 | **Vocal Coach** | 2 | Support | – | `battleStart` | Warm-up: the front MC gets +X confidence | 1 / 2 / 3 | 1 |
 | 9 | **Headliner** | 3 | MC | 6 / 6 | `battleStart`, if **Opener** | Diss every enemy MC for X | 1 / 2 / 3 | 1 |
 | 10 | **The OG** | 3 | MC | 5 / 7 | `hurt` (self) | Every friendly MC behind it gets +X flow | 1 / 2 / 3 | 1 |
 | 11 | **DJ Turntablist** | 3 | Support | – | `barLanded` (friend) | The MC that landed the bar gets +X flow (the beat drops) | 1 / 2 / 3 | 1 |
 
 Design notes:
 
-- Every trigger type is used at least once, and the two position conditions (Opener,
-  Closer) each have a unit, so M3 tests can cover the whole trigger system with this roster.
-- Tier 1 teaches the basics (entry damage, a choke hand-off, a simple buff). Tier 2 adds
-  positioning (Freestyler wants to close, Punchliner reaches past the front). Tier 3 units
-  are the strongest but retire soonest (D-023).
-- Vocal Coach is the only stamina tool. It trades a support slot for fewer bench rotations.
+- Every trigger type except `upkeep` is used at least once, and the two position conditions
+  (Opener, Closer) each have a unit. Until T-049 adds an `upkeep` unit, tests cover that
+  trigger with a test-only unit def.
+- The salary-1 units teach the basics (entry damage, a choke hand-off, a simple buff). The
+  salary-2 units add positioning (Freestyler wants to close, Punchliner reaches past the
+  front). The salary-3 units are the strongest and the most expensive to keep.
+- Vocal Coach lost its stamina ability when stamina was cut (D-036). Its warm-up buff is a
+  placeholder, and no unit uses the `upkeep` trigger until T-049.
 
 ## 9. Abilities
 
@@ -438,20 +439,18 @@ effect and target once, as a small named function (T-013). A unit has exactly on
   the subject `friend`.
 - Benched units' abilities don't trigger, except `buy` (a unit bought straight onto the
   bench still triggers it).
-- Tired support units don't trigger in battle (D-021). `buy` and `upkeep` still work.
 - An MC that has choked doesn't trigger anything afterwards, except its own `choke`.
 
 ### Conditions
 
 - `inSlot: opener | middle | closer`: the MC's starting slot (see [Crew](#2-crew)).
 
-### Effects (3)
+### Effects (2)
 
 | Effect | What it does | In battle | In shop/upkeep |
 |---|---|---|---|
 | `buff` | adds flow and/or confidence to friendly MCs | until the battle ends | permanent |
 | `diss` | deals damage to enemy MCs' confidence, and gives the crew hype | can trigger `hurt` and `choke` | – |
-| `restoreStamina` | adds stamina, up to `MAX_STAMINA` | – | permanent |
 
 ### Targets
 
@@ -476,7 +475,7 @@ const streetPoet: UnitDef = {
   id: 'street-poet',
   name: 'Street Poet',
   role: 'mc',
-  tier: 1,
+  salary: 1,
   flow: 1,
   confidence: 4,
   ability: {
@@ -499,14 +498,12 @@ Every name above with its default. `core/` keeps them in one typed table.
 
 | Name | Default | Section |
 |---|---|---|
-| `BENCH_SIZE` | 2 | Crew |
-| `MAX_STAMINA` | 10 | Crew, Stamina |
+| `BENCH_SIZE` | 3 | Crew |
 | `STARTING_GOLD` | 10 | Round flow |
 | `BASE_INCOME` | 10 | Round flow |
 | `WIN_BONUS` | 2 | Round flow |
 | `WALLET_CAP` | 20 | Round flow |
-| `SHOP_SLOTS_T1` / `_T2` / `_T3` | 3 / 4 / 5 | Shop |
-| `TIER2_ROUND` / `TIER3_ROUND` | 3 / 6 | Shop |
+| `SHOP_SLOTS` | 5 (placeholder until T-048) | Shop |
 | `BUY_COST` | 3 | Shop |
 | `ROLL_COST` | 1 | Shop |
 | `SELL_REFUND_PER_LEVEL` | 1 | Shop, Retirement |
@@ -517,16 +514,10 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `HYPE_PER_BAR` / `HYPE_PER_DISS` / `HYPE_PER_CHOKE` | 1 / 1 / 2 | Battle |
 | `HYPE_LOSS_ON_CHOKE` | 2 | Battle |
 | `HYPE_STEP` | 5 | Battle |
-| `STAMINA_COST_STAGE` / `_FRONT` / `_CHOKE` | 1 / 1 / 1 | Stamina |
-| `STAMINA_COST_SUPPORT` | 1 | Stamina |
-| `BENCH_RECOVERY` | 3 | Stamina |
-| `TIRED_THRESHOLD` | 3 | Stamina |
-| `TIRED_FLOW_PENALTY` / `TIRED_CONFIDENCE_PENALTY` | 1 / 1 | Stamina |
-| `SALARY_BY_TIER` | 1 / 2 / 3 | Salary |
 | `SALARY_PER_LEVEL` | 1 | Salary |
 | `BENCH_SALARY_FACTOR` | 0.5 (rounded down) | Salary |
-| `RETIRE_AGE_BY_TIER` | 20 / 16 / 12 | Retirement |
-| `FAREWELL_ROUNDS` | 2 | Retirement |
+| `SIGN_AGE_MIN` | 18 | Retirement |
+| `MC_RETIRE_AGE` / `SUPPORT_RETIRE_AGE` | 23 / 25 | Retirement |
 | `DIVISION_MAX` | 6 | League |
 | `MIN_SEASON_ROUNDS` | 3 | League |
 | `POINTS_WIN` | 3 | League |
@@ -537,4 +528,6 @@ Every name above with its default. `core/` keeps them in one typed table.
 
 - Q-016: which abilities should add or drain hype, or trigger on hype thresholds? And how should
   `battleStart` abilities, which always see 0 hype, benefit from the crowd?
+- Q-017: without tiers, what gives the shop a sense of progression, and should the shop size
+  still grow over a crew's career? (T-048)
 - Q-015: what happens when two sittings play the same league at the same time and their saves fork?

@@ -34,7 +34,7 @@ and are marked "superseded by D-###".
   the last crew with an MC standing wins. `simulateBattle` goes through a `BattleStyle`
   interface (style ID → pure resolver) so other styles can be added later without
   special cases.
-- **D-011 (2026-09-28): Meta layer = stage positions + stamina / voice fatigue (Q-005).**
+- **D-011 (2026-09-28, stamina part superseded by D-036): Meta layer = stage positions + stamina / voice fatigue (Q-005).**
   Abilities can care about slot position (e.g. opener, closer). Performing costs stamina,
   which carries over between battles and recovers on the bench.
 - **D-012 (2026-09-28): Persistent crews with salary, age and retirement (Q-005, Q-006).**
@@ -98,7 +98,7 @@ and are marked "superseded by D-###".
   lose units without warning. Selling always makes the payroll affordable. Benched units cost
   half their salary (rounded down), so resting a unit is cheaper than fielding it. Details
   and numbers are in `docs/game-design.md` §3–§5.
-- **D-021 (2026-09-28): Stamina is spent per battle by role and recovered only on the bench;
+- **D-021 (2026-09-28, superseded by D-036): Stamina is spent per battle by role and recovered only on the bench;
   tired is a single threshold (T-008).** On stage costs 1 stamina, being front MC costs 1
   more and choking 1 more. Supports pay 1, and a benched unit recovers 3. At or below the
   threshold an MC gets −1 flow and −1 confidence, and a support's abilities don't trigger.
@@ -110,7 +110,7 @@ and are marked "superseded by D-###".
   first; within a crew the order is by slot. This is simpler to reason about and to test than
   Super Auto Pets' attack-based ordering, and it is still deterministic. Battles end in a draw
   after `MAX_EXCHANGES`, so they always terminate.
-- **D-023 (2026-09-28): Retirement age depends on tier: higher tiers retire sooner (T-008).**
+- **D-023 (2026-09-28, superseded by D-037 and D-038): Retirement age depends on tier: higher tiers retire sooner (T-008).**
   Age counts league rounds in the crew; the default retirement ages are 20/16/12 for tiers 1–3.
   Together with salary this is the power-creep limit from D-012: strong units cost more
   and stay for less time. Merging keeps the target's age, so it can't reset the clock.
@@ -199,3 +199,30 @@ and are marked "superseded by D-###".
   the crew that lost confidence first loses; if neither lost any, the coin flip's loser. The user
   first considered several battles per match (which would allow drawn matches), then settled on
   one battle. `POINTS_DRAW` is removed, and points are now win 3, loss 0 (this changes the 3/1/0 in D-029).
+- **D-036 (2026-09-28): Stamina is cut; the bench is storage with 3 slots at half salary
+  (T-047).** The user chose to drop stamina, tiredness and bench recovery entirely rather than
+  tune them lighter, keep the heavy rotation, or cost stamina only on chokes, because they risked being a chore.
+  This changes the user's own Q-005 answer. The bench stays as cheap storage for counter-picks
+  and merges in progress, and grows from 2 to `BENCH_SIZE = 3` (chosen over 4, over pausing age
+  on the bench, and over no bench). The `restoreStamina` effect is removed, and Vocal Coach gets a
+  placeholder `battleStart` warm-up (+X confidence to the front MC) until T-049. No unit uses
+  the `upkeep` trigger for now. Supersedes D-021 and the stamina part of D-011; D-009's bench
+  is no longer "for resting".
+- **D-037 (2026-09-28): Units have no tiers; each unit def has its own base salary (T-047).**
+  The user said "there are no tiers", and confirmed it applies to the whole game: no tier
+  unlocks in the shop (every slot draws from the whole roster), no tier-based salary and no
+  tier-based retirement. Salary is the unit's base salary plus `SALARY_PER_LEVEL` per level
+  (chosen over level-only salary), and it stays the soft cap on crew power (confirmed over
+  veteran raises, a flat small salary, or no salary). The roster's base salaries are the old
+  tiers (1/2/3) as placeholders. What replaces tiers as shop progression is Q-017 (T-048);
+  `SHOP_SLOTS = 5` is a placeholder until then.
+- **D-038 (2026-09-28): Age is in years, one season is one year; the retirement age is known
+  and depends on the role; one farewell season; a hall of fame (T-047).** A unit's signing age
+  is rolled from 18 to its retirement age − 1, weighted linearly towards young. MCs retire at
+  23, support units at 25, so an MC lasts 1 to 5 seasons (about 3.7) and support 1 to 7 (about 5).
+  A unit in its last season is on a "farewell tour" for that season; at the season end it
+  retires and the next farewell tours are announced. Age affects nothing else (chosen over
+  veterans with bonus stats or a higher salary). Retirees go into the crew's hall of fame,
+  with no gameplay effect (chosen over a mentor gift or payout only). The user first picked a
+  hidden seeded retirement window, then settled on a known global age by role with a seeded
+  signing age instead. Supersedes D-023.

@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-047, design session 4: crew management)
+- Ran design session 4 with the user over four rounds of questions. Rewrote `docs/game-design.md` §6 and §5.1 (salary; the old §5.1 stamina section is gone) and updated §1–§4, §7–§11.
+- **Stamina is cut** (D-036), which changes the user's own Q-005 answer: no tiredness, no bench recovery, no `restoreStamina` effect. The bench is storage at half salary and grows to 3 slots. Vocal Coach gets a placeholder `battleStart` warm-up; no unit uses `upkeep` until T-049.
+- **No unit tiers anywhere** (D-037): the shop draws from the whole roster, and salary is a per-unit base salary plus level (the old tiers are placeholder salaries). `SHOP_SLOTS = 5` is a placeholder; progression without tiers is the new Q-017 for T-048.
+- **Age in years, one season = one year** (D-038): the signing age is seeded between 18 and the retirement age − 1, weighted towards young. MCs retire at 23 and support units at 25 (known, global), after a one-season farewell tour; retirement and ageing run at the season end. Retirees go into a crew hall of fame. Age affects nothing else. The user first picked a hidden seeded window, then went with this instead.
+- New Q-018 (divisions of different sizes have different season lengths, but the season end is league-wide), for T-051/T-052. T-011, T-016, T-018, T-048 and T-049 were reworded, and the M4 exit criteria in `roadmap.md` now leave out stamina and tiers.
+- **Next:** T-048 (shop and progression).
+
 ## 2026-09-28 (T-046, design session 3: the battle)
 - Ran design session 3 with the user over three rounds of questions and rewrote `docs/game-design.md` §5 (setup, turns, hype meter, end, pacing). §8 to §10 were updated to match.
 - The front MCs now **take turns** in strict alternation, with a seeded opener and no compensation (D-033); D-022 is superseded. `MAX_TURNS = 40` replaces `MAX_EXCHANGES`. Playback targets 30 to 60 s, with a 2× speed button and no skip. Stage positions stay ability conditions only.
