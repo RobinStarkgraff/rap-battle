@@ -1,0 +1,28 @@
+# DevContainer — local dev environment, not part of the site
+# Recreate with: bash quick-install.sh --repo=<base-repo-url>
+.devcontainer/
+# Local make targets (devcontainer bootstrap); the Makefile itself belongs in the repo
+/Makefile.local
+
+# MCP artifacts and logs
+.downloads/
+# Claude notification port files
+.claude-notify-ports/
+# Claude Code project settings
+.claude/
+
+# macOS folder metadata
+.DS_Store
+**/.DS_Store
+
+# JetBrains IDE project files
+.idea/
+
+# public/ is deliberately NOT listed here: the folder is the site itself and
+# belongs in the repo. There is no build that generates it any more — what
+# lies there gets served, and what gets served lies there.
+
+# Log from tools/deploy.sh — recreated on every server and has no business in
+# the repo: a committed log would make netcup's next `git pull` on the
+# webspace collide with local changes.
+deploy.log
