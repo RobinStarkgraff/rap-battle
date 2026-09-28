@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-038)
+- The user rebuilt the container. Chromium 1243 is in `/opt/ms-playwright` and `PLAYWRIGHT_BROWSERS_PATH` is set. `make test-e2e` passes (the smoke test sees the Phaser canvas and no console errors), and `make check` passes (30 tests).
+- All M0 exit criteria are now met. M0 stays **in progress** only until T-042 (confirm CI is green).
+- `origin/master` already has 51c5172, so the M0 commits are pushed. I could not check the CI result, because `gh` is not in the container.
+- **Next:** T-042 (the user checks the Actions tab), then T-008 (M1 design doc).
+
 ## 2026-09-28 (M0 run wrap-up)
 - `/milestone M0 --commit` worked through T-004, T-038, T-005, T-039, T-040, T-006 and T-007.
 - Exit criteria: `make check`, `make dev` and `make build` work, and `core/`'s `clamp()` has passing tests. **Not met yet:** `make test-e2e`, and seeing the Phaser scene draw in a browser (the smoke test covers it). Both wait for the container rebuild (T-038).

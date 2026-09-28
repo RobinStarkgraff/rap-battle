@@ -5,13 +5,12 @@ Next free ID: **T-043**
 
 ## Now
 
-- [~] T-038 (M0) Make Playwright browsers available in the dev container: the firewall blocks `npx playwright install chromium` (download fails). The user chose to bake Chromium into the image; the build step is in `.devcontainer/project/Dockerfile.project` (local only, as `.devcontainer/` is gitignored). **Waiting for the user to run `make dev-rebuild` on the host.** Done when the e2e smoke test from T-004 (`npm run test:e2e`) passes inside the rebuilt container
-- [ ] T-042 (M0) Push to GitHub and confirm the CI workflow (T-007) is green on its first run; the local commits have not been pushed yet
+- [ ] T-042 (M0) Confirm the CI workflow (T-007) is green on its first run. The commits up to 51c5172 are already on `origin/master`; `gh` is not installed in the container, so check the Actions tab (or push this commit and check its run)
 - [ ] T-008 (M1) Write `docs/game-design.md` from the answered questions (D-007 to D-013): shop and round flow, the front-MC clash battle, stage positions, stamina and bench rest, salary, age and retirement, economy, and the division league. Propose tunable defaults for Q-011
+- [ ] T-009 (M1) Design the starting roster (about 10 units, MCs and support, 3 tiers) and 5–8 ability trigger types
 
 ## Next
 
-- [ ] T-009 (M1) Design the starting roster (about 10 units, MCs and support, 3 tiers) and 5–8 ability trigger types
 - [ ] T-010 (M2) Seeded PRNG (e.g. mulberry32) with `fork()` for independent streams, plus tests
 - [ ] T-011 (M2) Core types: `UnitDef`, `UnitInstance` (with stamina, age, salary), `Crew` (3 MC + 2 support + bench), `BattleEvent` (a discriminated union)
 - [ ] T-012 (M2) Data tables for the roster from T-009
@@ -47,6 +46,7 @@ Next free ID: **T-043**
 
 ## Done
 
+- [x] T-038 (M0) Make Playwright browsers available in the dev container: Chromium is baked into the image (D-018) and `make test-e2e` passes inside the rebuilt container (2026-09-28)
 - [x] T-007 (M0) GitHub Actions workflow that runs `make check`, `make build` and `make test-e2e` (2026-09-28)
 - [x] T-006 (M0) Clean up `.gitignore` (2026-09-28)
 - [x] T-040 (M0) Type-check `core/` with its own tsconfig that has no `DOM` lib (2026-09-28)
