@@ -17,8 +17,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
   },
   test: {
-    // Unit tests sit next to the code they test. Browser tests live in e2e/ (Playwright).
-    include: ['src/**/*.test.ts'],
+    // Unit tests sit next to the code they test; tooling/ tests the lint setup itself.
+    // Browser tests live in e2e/ (Playwright).
+    include: ['src/**/*.test.ts', 'tooling/**/*.test.ts'],
     environment: 'node',
   },
 });

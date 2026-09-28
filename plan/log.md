@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-039)
+- Added `tooling/eslint-boundaries.test.ts`: it lints 25 snippets through the ESLint Node API as if they lived in `src/{core,net,render,app}` and checks which boundary rule fires (20 forbidden cases, 5 allowed ones). Type-aware rules are switched off for the snippets, because they are not real files.
+- `tooling/` is covered by `tsconfig.node.json` and by the Vitest `include`. Mutation check: removing `Date` from the core globals and `render` from the net layer rule made exactly those 3 cases fail.
+- `make check` passes (30 tests).
+- **Next:** T-040 (core tsconfig without DOM), T-006 (`.gitignore`).
+
 ## 2026-09-28 (T-005)
 - Added the project targets `install`, `dev`, `check`, `test`, `test-e2e`, `build` and `format` to the existing `Makefile`. Each one calls the matching npm script. The devcontainer targets are unchanged, `make help` lists both groups, and no names clash with the included `dev-*.mk` files.
 - Filled in the Commands section of CLAUDE.md and added the Chromium and clock-skew notes to Environment notes.
