@@ -26,6 +26,10 @@ Before you start any work, read these:
    answers to questions marked **blocking**. Ask the user instead.
 4. `plan/decisions.md`: decisions already made. Don't reopen them without a reason.
 
+The game rules (round flow, battle, economy, league, roster, abilities and all tunable numbers)
+are in `docs/game-design.md`. `core/` must match it. If you change a rule, change the document in
+the same change.
+
 When you finish a unit of work, update `plan/tasks.md` and add an entry to `plan/log.md`.
 The full workflow is in `plan/README.md`.
 

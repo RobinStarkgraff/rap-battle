@@ -10,7 +10,9 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 - Q-008 Should single-player against a bot or ghost crews be part of the final game, or only a way to test?
 - Q-011 How do divisions work with a small friend group (e.g. 2–4 players)? One division
   until enough players join? Division size, rounds per season, how many move up or down.
-  T-008 should propose tunable defaults; the user confirms.
+  T-008 should propose tunable defaults; the user confirms. **Proposal written** in
+  `docs/game-design.md` §7 (one division of up to 6, round robin with at least 3 rounds,
+  3/1/0 points, bye = 1 point, 1 up / 1 down, catch-up gold). Waiting for the user to confirm.
 - Q-012 Crews are saved locally, so a player could edit their save. Is that acceptable
   among friends, or should the host validate crews (e.g. salary cap, legal units)?
 

@@ -91,3 +91,43 @@ and are marked "superseded by D-###".
   step. `.github/workflows/ci.yml` runs `make install`, `make check` and `make build` in one
   job, and `make test-e2e` in a second job that downloads Chromium itself (CI has open
   network access). Node 20 matches the dev container.
+- **D-020 (2026-09-28): Economy: a persistent wallet, with the payroll due at lock-in (T-008).**
+  Gold carries over between rounds (capped at `WALLET_CAP`) instead of resetting each round
+  as in Super Auto Pets, because crews persist (D-012). Salaries are paid at lock-in, not
+  at upkeep, and lock-in needs `wallet >= payroll`, so a player can never go into debt or
+  lose units without warning. Selling always makes the payroll affordable. Benched units cost
+  half their salary (rounded down), so resting a unit is cheaper than fielding it. Details
+  and numbers are in `docs/game-design.md` §3–§5.
+- **D-021 (2026-09-28): Stamina is spent per battle by role and recovered only on the bench;
+  tired is a single threshold (T-008).** On stage costs 1 stamina, being front MC costs 1
+  more and choking 1 more. Supports pay 1, and a benched unit recovers 3. At or below the
+  threshold an MC gets −1 flow and −1 confidence, and a support's abilities don't trigger.
+  The alternatives, a sliding penalty per stamina point or natural recovery for everyone,
+  were harder to read and weakened the reason to use the bench.
+- **D-022 (2026-09-28): Simultaneous exchanges, a seeded "first crew" and one FIFO ability
+  queue (T-008).** Both front MCs hit at the same time (a draw is possible). When abilities
+  of both crews trigger together, a per-battle seeded coin flip decides which crew goes
+  first; within a crew the order is by slot. This is simpler to reason about and to test than
+  Super Auto Pets' attack-based ordering, and it is still deterministic. Battles end in a draw
+  after `MAX_EXCHANGES`, so they always terminate.
+- **D-023 (2026-09-28): Retirement age depends on tier: higher tiers retire sooner (T-008).**
+  Age counts league rounds in the crew; the default retirement ages are 20/16/12 for tiers 1–3.
+  Together with salary this is the power-creep limit from D-012: strong units cost more
+  and stay for less time. Merging keeps the target's age, so it can't reset the clock.
+  Retiring pays out like a sale.
+- **D-024 (2026-09-28): Ability model: one ability per unit, built from 7 trigger types, 3
+  effects and a fixed list of targets (T-009).** Triggers: `battleStart`, `takeFront`,
+  `barLanded`, `hurt`, `choke` (with subject `self`/`friend`), `buy`, `upkeep`. Effects: `buff`,
+  `diss`, `restoreStamina`. Buffs in battle last for that battle; in the shop and at upkeep they are
+  permanent (as in Super Auto Pets). Position conditions check the locked-in slot. No ability may
+  re-trigger itself without an exchange, so the ability queue always runs empty. The starting
+  roster has 11 units (7 MCs, 4 support) that together use every trigger and both position
+  conditions (`docs/game-design.md` §8–§9). A separate `sell` trigger and a `gainGold` effect were
+  left out: no v0 unit needs them, and gold abilities fight the salary soft cap (D-020).
+- **D-025 (2026-09-28): A design iteration milestone with the user comes before the core
+  implementation; later milestones move up by one number.** The user asked to work through the design
+  together, from the broad view to the details. M3 (was M2) implements exactly these rules, so
+  the design is settled first rather than rebuilt later. The new milestone is M2; the old
+  M2–M7 are now M3–M8 in `roadmap.md` and `tasks.md`. Log entries written before this date use
+  the old numbers. The sessions run from broad to detailed: vision, loop and league, battle, crew
+  management, shop, roster, presentation, then a paper playtest and a wrap-up.

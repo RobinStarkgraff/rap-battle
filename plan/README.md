@@ -5,7 +5,7 @@ memory between AI sessions, so keep it current.
 
 | File | Contents | Update when |
 |---|---|---|
-| `roadmap.md` | Milestones M0–M7 with goals and exit criteria | a milestone starts or finishes, or scope changes |
+| `roadmap.md` | Milestones M0–M8 with goals and exit criteria | a milestone starts or finishes, or scope changes |
 | `tasks.md` | Concrete tasks with IDs, grouped into Now / Next / Later | you start or finish a task, or find new work |
 | `open-questions.md` | Unanswered design and product questions | a question comes up or gets answered |
 | `decisions.md` | Log of decisions made, with reasons | a decision is made, even a small one |

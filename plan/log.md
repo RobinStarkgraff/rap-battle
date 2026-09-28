@@ -2,6 +2,26 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (new milestone M2: design iteration)
+- The user asked for a milestone that works through the design together with them, from the broad view to the details. Added **M2: Design iteration with the user** (method and exit criteria in `roadmap.md`) with nine tasks: T-044 to T-050 are design sessions (vision → loop and league → battle → crew management → shop → roster → presentation), T-051 is a paper playtest and T-052 a wrap-up.
+- Renumbered the later milestones: the old M2–M7 are now M3–M8 (D-025). **Log entries below this one use the old numbers.** T-043 (confirm Q-011) is folded into T-045.
+- M2 is **in progress**; M3 (battle sim) is **not started** again.
+- **Next:** T-044 (vision and pillars). The design sessions are conversations, so run them with `/next-task` one at a time.
+
+## 2026-09-28 (T-009, M1 finished)
+- Added the starting roster to `docs/game-design.md` §8: 11 units (7 MCs and 4 support units across 3 tiers) with base stats and L1/L2/L3 ability values. Added the ability model in §9: 7 trigger types, a position condition, 3 effects, the targets, and a rule that keeps the ability queue finite (D-024). Every trigger and both position conditions are used by at least one unit.
+- Made "stage position" precise: it is the locked-in slot and doesn't change when MCs move up.
+- `make check` passes (30 tests).
+- **M1 is done.** Every exit criterion is met by `docs/game-design.md` (§3 round structure, §5 battle, §2 positions, §5.1 stamina, §5.2 salary, §6 age and retirement, §3–§4 economy, §7 league, §8 roster, all numbers named tunables). Q-011 (league defaults) still needs the user's confirmation (T-043, before T-034). **M2 is now in progress.**
+- `/milestone M1` ran T-008 and T-009 without committing.
+- **Next:** T-010 (seeded PRNG), T-011 (core types), T-012 (data tables).
+
+## 2026-09-28 (T-008)
+- Wrote `docs/game-design.md`: crew and unit state, round flow (upkeep → shop → lock-in → battle → result), shop and merging, the front-MC clash battle (simultaneous exchanges, trigger order, FIFO ability queue, exchange limit), stamina and bench rest, salary, age and retirement, the league, and a tunables table. Every number is a named tunable.
+- Decisions D-020 (persistent wallet, payroll at lock-in), D-021 (stamina model), D-022 (battle resolution order) and D-023 (retirement age by tier).
+- Q-011: the league defaults are proposed in §7 and need the user's confirmation (follow-up T-043, before T-034). `make check` passes (30 tests).
+- **Next:** T-009 (starting roster and trigger types).
+
 ## 2026-09-28 (T-042)
 - The repo is public, so I checked CI through the GitHub REST API with `curl` (no `gh` needed). CI run #1 (51c5172) and run #2 (a4881ac) both passed: in the `check` job, `make install`, `make check` and `make build` passed; in the `e2e` job, the Chromium install and `make test-e2e` passed. `make check` passes locally (30 tests).
 - **M0 is done.** Every exit criterion is met.
