@@ -77,7 +77,8 @@ and are marked "superseded by D-###".
   `tsconfig.json` is now a solution file: `tsconfig.app.json` covers `src/` (DOM lib, no Node
   types) and `tsconfig.node.json` covers the config files and `e2e/` (Node types, no DOM), both
   extending `tsconfig.base.json`. `npm run typecheck` is `tsc -b`, so `process` and other Node
-  globals stay out of `src/`.
+  globals stay out of `src/`. `tsconfig.core.json` (T-040) checks `src/core/` a second
+  time with only the ES2022 lib, so DOM and Node *types* are rejected there too.
 - **D-018 (2026-09-28): Chromium for Playwright is baked into the dev container image (T-038).**
   The user's choice over allowlisting the Playwright CDN or running e2e only on the host.
   `.devcontainer/project/Dockerfile.project` reads the exact `@playwright/test` version from

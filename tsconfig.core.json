@@ -1,0 +1,11 @@
+{
+  // core/ is pure (D-005): no DOM lib and no Node types, so browser and runtime types
+  // like HTMLElement or process fail to type-check here, not only their globals at lint time.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.core.tsbuildinfo",
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/core"]
+}

@@ -6,14 +6,12 @@ Next free ID: **T-041**
 ## Now
 
 - [~] T-038 (M0) Make Playwright browsers available in the dev container: the firewall blocks `npx playwright install chromium` (download fails). The user chose to bake Chromium into the image; the build step is in `.devcontainer/project/Dockerfile.project` (local only, as `.devcontainer/` is gitignored). **Waiting for the user to run `make dev-rebuild` on the host.** Done when the e2e smoke test from T-004 (`npm run test:e2e`) passes inside the rebuilt container
-
-- [ ] T-040 (M0) Type-check `core/` with its own tsconfig that has no `DOM` lib, so DOM *types* (e.g. `HTMLElement`) are also rejected there; the lint rule only blocks DOM globals
-
 - [ ] T-006 (M0) Clean up `.gitignore` (it still has entries from another project, e.g. `public/` and `deploy.log`); add `node_modules/`, `dist/`, `test-results/`
+
+- [ ] T-007 (M0) Optional: pre-commit hook or GitHub Actions workflow that runs `make check`
 
 ## Next
 
-- [ ] T-007 (M0) Optional: pre-commit hook or GitHub Actions workflow that runs `make check`
 - [ ] T-008 (M1) Write `docs/game-design.md` from the answered questions (D-007 to D-013): shop and round flow, the front-MC clash battle, stage positions, stamina and bench rest, salary, age and retirement, economy, and the division league. Propose tunable defaults for Q-011
 - [ ] T-009 (M1) Design the starting roster (about 10 units, MCs and support, 3 tiers) and 5–8 ability trigger types
 - [ ] T-010 (M2) Seeded PRNG (e.g. mulberry32) with `fork()` for independent streams, plus tests
@@ -50,6 +48,7 @@ Next free ID: **T-041**
 
 ## Done
 
+- [x] T-040 (M0) Type-check `core/` with its own tsconfig that has no `DOM` lib (2026-09-28)
 - [x] T-039 (M0) Regression test for the lint boundary rules via the ESLint Node API (2026-09-28)
 - [x] T-005 (M0) Add Makefile targets `install`, `dev`, `check`, `test-e2e`, `build`; fill in the Commands section of CLAUDE.md (2026-09-28)
 - [x] T-004 (M0) Add Vitest with a first `core/` test; add Playwright with a smoke test that loads the page (2026-09-28; the e2e run is verified in T-038)
