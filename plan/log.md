@@ -2,6 +2,10 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-006)
+- Rewrote `.gitignore`: removed the leftovers from another project (`public/` comments, `deploy.log`) and the duplicate entries, grouped the rest, and added `coverage/`, `test-results/`, `playwright-report/`, `blob-report/`, `.vscode/` and `*.log`. `.devcontainer/` stays ignored (D-015, D-018); T-041 asks whether `.devcontainer/project/` should be committed. `git status --ignored` shows only the expected paths.
+- **Next:** T-007 (CI).
+
 ## 2026-09-28 (T-040)
 - Added `tsconfig.core.json` (only the ES2022 lib, no `types`) as a third project reference, so `tsc -b` also checks `src/core/` without DOM or Node types. A probe file that used `HTMLElement` and `KeyboardEvent` failed with TS2304, as intended. Vitest's types work without DOM, so the core tests still type-check. Recorded in D-017.
 - `make check` and `make build` pass.

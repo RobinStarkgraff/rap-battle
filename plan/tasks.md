@@ -1,12 +1,11 @@
 # Tasks
 
 States: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped.
-Next free ID: **T-041**
+Next free ID: **T-042**
 
 ## Now
 
 - [~] T-038 (M0) Make Playwright browsers available in the dev container: the firewall blocks `npx playwright install chromium` (download fails). The user chose to bake Chromium into the image; the build step is in `.devcontainer/project/Dockerfile.project` (local only, as `.devcontainer/` is gitignored). **Waiting for the user to run `make dev-rebuild` on the host.** Done when the e2e smoke test from T-004 (`npm run test:e2e`) passes inside the rebuilt container
-- [ ] T-006 (M0) Clean up `.gitignore` (it still has entries from another project, e.g. `public/` and `deploy.log`); add `node_modules/`, `dist/`, `test-results/`
 
 - [ ] T-007 (M0) Optional: pre-commit hook or GitHub Actions workflow that runs `make check`
 
@@ -45,9 +44,11 @@ Next free ID: **T-041**
 - [ ] T-031 (M6) Balance pass using headless bot-vs-bot win-rate statistics, including salary and retirement pacing
 - [ ] T-032 (M7) Deploy a static build; test P2P across two real networks; decide whether a TURN server is needed
 - [ ] T-033 (M7) Write the jam submission page and a known-issues list
+- [ ] T-041 (M7) Decide with the user whether to commit `.devcontainer/project/` (the Chromium build step, D-018, and the `node_modules` volume, D-015) so other machines get them; today all of `.devcontainer/` is gitignored
 
 ## Done
 
+- [x] T-006 (M0) Clean up `.gitignore` (2026-09-28)
 - [x] T-040 (M0) Type-check `core/` with its own tsconfig that has no `DOM` lib (2026-09-28)
 - [x] T-039 (M0) Regression test for the lint boundary rules via the ESLint Node API (2026-09-28)
 - [x] T-005 (M0) Add Makefile targets `install`, `dev`, `check`, `test-e2e`, `build`; fill in the Commands section of CLAUDE.md (2026-09-28)
