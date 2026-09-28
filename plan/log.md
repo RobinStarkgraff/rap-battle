@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-045, design session 2: core loop, persistence and league)
+- Ran design session 2 with the user over four rounds of questions. Rewrote `docs/game-design.md` §7 and updated §1, §3, §6, §10 and §11.
+- **One league per friend group** (a football-style pyramid of divisions) and **one crew per player**. Seasons are a **double round robin** that spans sittings. The Q-011 defaults are confirmed (D-029). Divisions are kept even with auto-added bots, so there are no byes and `POINTS_BYE` is removed. Rep seeding is gone.
+- **AI managers** are part of the game: persistent greedy filler bots, and full stand-ins for absent players. A newcomer can take over a bot's slot mid-season (D-030).
+- The **league state** (including every crew) is the save, copied to all members after each round. Any member can host. A host drop voids the round. Friends are trusted: schema validation only (D-031). There's **no timer by default**, plus nudges and an optional host timer that locks the current lineup (D-032).
+- Q-008, Q-011, Q-012, Q-013 and Q-014 are answered. There's a new Q-015 (forked league saves, for M6). T-019, T-028, T-034, T-035 and T-036 were reworded to match, and T-053 was added (timer and nudge). CLAUDE.md now describes the league and the network rule. The M4–M6 exit criteria in `roadmap.md` still say "session league / crew save / vs bot"; T-052 updates them.
+- **Next:** T-046 (the battle).
+
 ## 2026-09-28 (T-044, design session 1: vision and pillars)
 - Ran design session 1 with the user over three rounds of questions. Added a **Pillars** section at the top of `docs/game-design.md`. The fantasy is the label boss, the tone is affectionate comedy, and the players are 2–6 colleagues in breaks, with no target session length. The pillars are crew attachment, clever combos, and watchable, funny battles. The game is skill-led with some luck, and the shop has no timer. Non-goals: not a rhythm game, no real rappers or lyrics, not a grindy F2P game (D-026).
 - "Let it snowball": catch-up gold is removed from §3, §7 and the tunables, while ageing, retirement and divisions stay (D-027). Owned units get a `stageName` and a `record` (D-028), and T-011 is updated to match.

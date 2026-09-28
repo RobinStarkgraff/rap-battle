@@ -7,27 +7,28 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 ## Open
 
 ### Game design
-- Q-008 Should single-player against a bot or ghost crews be part of the final game, or only a way to test?
-- Q-011 How do divisions work with a small friend group (e.g. 2–4 players)? One division
-  until enough players join? Division size, rounds per season, how many move up or down.
-  T-008 should propose tunable defaults; the user confirms. **Proposal written** in
-  `docs/game-design.md` §7 (one division of up to 6, round robin with at least 3 rounds,
-  3/1/0 points, bye = 1 point, 1 up / 1 down). Catch-up gold was dropped in T-044 (D-027).
-  Waiting for the user to confirm the rest in T-045.
-- Q-014 The shop has no timer (D-026). In a league round every pair must lock in before
-  their battle runs. What happens when one player takes much longer or walks away mid-round:
-  others just wait, a "nudge", an optional host-set timer, or an auto-lock of the last lineup?
-  For T-045.
-- Q-012 Crews are saved locally, so a player could edit their save. Is that acceptable
-  among friends, or should the host validate crews (e.g. salary cap, legal units)?
+- (none open; later M2 sessions add their own)
 
 ### Tech / scope
+- Q-015 Two sittings could play the same league at the same time (e.g. two pairs of colleagues
+  host separately), so the saved league states fork at the same round number. Which copy wins,
+  or can it be prevented (e.g. a lobby warns when another copy has the same round)? For M6 (T-036).
 - Q-009 Is the free public PeerJS signalling server acceptable, or should we host our own?
 - Q-010 Is sound in scope (procedural WebAudio), or should we cut it?
-- Q-013 If the league host disconnects, does the session end, or does another peer take over as host?
 
 ## Answered
 
+- **Q-008** AI players are part of the real game, not only a test tool: persistent filler bots
+  that play the real economy with a simple policy, and full stand-ins that manage absent
+  players' crews. (2026-09-28) → D-030
+- **Q-011** The §7 defaults are confirmed (divisions of up to 6, 3/1/0 points, 1 up / 1 down). There is one
+  league per friend group (a pyramid like football) and one crew per player. Seasons are a double round robin
+  that spans sittings. Bots keep division counts even, so there are no byes. (2026-09-28) → D-029
+- **Q-012** Friends are trusted: schema validation only, with no crew legality check. (2026-09-28) → D-031
+- **Q-013** The league state is copied to every member after each round, and any member can host. If the host
+  drops mid-round, the round is voided and anyone re-hosts from the last completed round. (2026-09-28) → D-031
+- **Q-014** No timer by default, and anyone can nudge. The host can turn on an optional shop timer
+  (120 s); when it runs out, the current lineup is locked in. (2026-09-28) → D-032
 - **Q-001** Jam: **InnoJam**, no fixed deadline, no theme or constraints mentioned. (2026-09-28)
 - **Q-002** Platform: **desktop browser only**. (2026-09-28) → D-008
 - **Q-003** Sport: **none**. It is not a sports manager; it is a **rap battle**. (2026-09-28) → D-007

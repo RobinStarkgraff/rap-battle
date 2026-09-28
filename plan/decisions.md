@@ -147,3 +147,34 @@ and are marked "superseded by D-###".
   no bio (T-044).** This serves the crew-attachment pillar. `stageName` is rolled from the seeded
   RNG at buy time; `record` tracks battles, bars landed, chokes and wins. The user picked
   "name + record" over "name + record + bio" and over type names only (the Super Auto Pets way).
+- **D-029 (2026-09-28): One league per friend group, one crew per player; seasons span sittings;
+  the §7 league defaults are confirmed (T-045, Q-011).** The user wants "one league system, like
+  real football leagues": a pyramid of divisions (up to 6 members each, 1 up / 1 down, 3/1/0
+  points). Each player owns exactly one crew for good, and it belongs to that one league. A
+  season is a **double round robin** (6 rounds with 4 members, 10 with 6) that spans several
+  sittings, and any round boundary is a clean stop. The alternatives were a season per sitting
+  (short, no saved season state) and an endless ladder with no seasons; a global league was
+  rejected because it needs a server (D-003). Divisions always have an even count (auto-added
+  bots), so there are no byes and `POINTS_BYE` is removed. Rep-based seeding is gone, because
+  the pyramid itself persists. Extends D-013.
+- **D-030 (2026-09-28): AI managers are part of the game: persistent filler bots, and full
+  stand-ins for absent players (T-045, Q-008).** One simple greedy AI manager (T-019) plays the
+  real economy. Bots are persistent crews in the league: the host picks how many, one is added
+  automatically for odd divisions, and a newcomer can take over a bot's slot mid-season (keeping
+  the slot's points). An absent player's crew is managed fully (shop, salary, ageing), and the
+  player takes it back as it is. The user chose this over playing a frozen lineup and over
+  stateless or preset bots.
+- **D-031 (2026-09-28): The league state (including every crew) is the save, copied to every
+  member after each round; any member can host; friends are trusted (T-045, Q-012, Q-013).**
+  The newest completed round wins when a sitting starts. If the host drops mid-round, the round
+  is voided and anyone re-hosts from the last completed round. Shop seeds are derived from the
+  league seed, the round and the crew, so a replayed round offers the same shops. Saves and
+  messages are validated only by their zod schema, with no legality check. Host-only saves and a
+  host legality check were the alternatives. This widens D-004: besides lineups, seeds and
+  lock-ins, the host now also sends the league state snapshot, but still never battle state.
+- **D-032 (2026-09-28): No shop timer by default; nudges; an optional host timer that locks the
+  current lineup (T-045, Q-014).** A round's battles start once every crew has locked in. Anyone
+  can nudge a player who is still shopping. The host can turn on `SHOP_TIMER_SECONDS = 120` for
+  a sitting; when it runs out, the current lineup is locked in, and if the payroll isn't affordable
+  units are sold cheapest first. A player who disconnects mid-round is treated the same way. The user
+  chose "lock current lineup" over having the AI manager finish the shop.

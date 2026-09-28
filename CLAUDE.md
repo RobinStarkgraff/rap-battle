@@ -7,8 +7,9 @@ Guidance for Claude Code (and any other AI agent) working in this repository.
 A **peer-to-peer multiplayer auto-battler** built for InnoJam. The concept mixes a
 **rap crew manager** with **Super Auto Pets**: players draft and arrange a crew of MCs and
 support members (DJ, hype man…) in a shop phase, then two crews face off in a rap battle
-that is simulated automatically. Crews persist, cost salary and age, and friends play an
-endless session league with divisions (see `plan/decisions.md`, D-007 to D-013).
+that is simulated automatically. Crews persist, cost salary and age. Each player owns one crew
+in their friend group's league, a pyramid of divisions whose seasons span many short sittings, with
+AI managers for bots and absent players (see `plan/decisions.md`, D-007 to D-013 and D-029 to D-032).
 
 - **All code and art is AI-generated.** Art is made from simple shapes drawn procedurally
   at runtime. There are no image assets unless a decision in `plan/decisions.md` says otherwise.
@@ -58,7 +59,8 @@ src/
    `Math.random`, `Date` or timers. All randomness comes from the seeded RNG that is passed in.
 2. **The battle sim is a pure function**: `simulateBattle(crewA, crewB, seed) → BattleEvent[]`.
    Both peers run it locally. The only things sent over the network are crew lineups, seeds,
-   lock-in messages and the league host's pairings and standings, never battle state.
+   lock-in messages and the league state snapshot the host sends after each round (standings,
+   schedule, crews; D-031), never battle state.
 3. **`render/` only visualises.** It consumes event logs and core state and never
    decides game outcomes.
 4. Dependencies only point inward: `app → render/net → core`. `core` depends on nothing in the project.

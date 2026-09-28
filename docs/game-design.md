@@ -24,7 +24,7 @@ lineup, pay the salaries, and then watch your crew go to war on stage.
 names, silly disses, big egos. It's never mean about the culture it borrows from.
 
 **Players: 2 to 6 colleagues** who play short sessions in breaks, online at the same time,
-over weeks. A session has **no target length**: players stop whenever they like, so every
+over weeks. A sitting has **no target length**: players stop whenever they like, so every
 point between two rounds must be a clean place to stop and come back to later.
 
 ### The three pillars
@@ -63,8 +63,13 @@ Each player manages a **rap crew**: 3 MCs who battle on stage, 2 support members
 and trigger, and a small bench for resting. A league round has a **shop phase**, where the
 player buys, sells and arranges the crew, and an **automatic battle** against another
 player's crew. The crew **persists**. It keeps its members, their stamina, age and levels,
-and its gold between rounds and sessions. Members cost a salary, get tired and eventually
+and its gold between rounds and sittings. Members cost a salary, get tired and eventually
 retire, so crews keep changing and power can't pile up forever.
+
+Each player owns **exactly one crew**, and it plays in the friend group's **one league**: a
+pyramid of divisions with promotion and relegation, like a football league system. Seasons
+run over many short sittings. AI players fill the league up and stand in for absent members
+(see [League](#7-league)).
 
 ## 2. Crew
 
@@ -101,7 +106,9 @@ Buffs that happen **in battle** last until the end of that battle. Buffs that ha
 
 ## 3. Round flow
 
-One league round runs these phases in order (the `app/` state machine in T-023):
+One league round runs these phases in order for every crew in the league (the `app/` state
+machine in T-023). Crews run by an AI (see [AI managers](#ai-managers)) go through the same
+phases, with the AI making the shop decisions:
 
 1. **Upkeep** (automatic)
    1. Every unit's `age` goes up by 1. Units that reach their tier's retirement age retire
@@ -112,15 +119,20 @@ One league round runs these phases in order (the `app/` state machine in T-023):
    3. `upkeep` abilities trigger.
    4. A new shop is rolled. Frozen shop slots stay.
 2. **Shop**: buy, sell, roll, freeze, merge, reorder and bench, in any order. The UI always
-   shows the **payroll** that is due at lock-in.
+   shows the **payroll** that is due at lock-in. There is no timer by default (see
+   [Slow players](#slow-players-and-the-optional-timer)). The shop's random draws come from a seed
+   derived from the league seed, the round and the crew, so replaying a round gives the same shops.
 3. **Lock-in**: the payroll (see [Salary](#52-salary)) is paid from the wallet. Lock-in
    is only possible while `wallet >= payroll`. Selling always makes that reachable, because
    it adds gold and lowers the payroll. The locked crew is a snapshot that is sent to the
    opponent (D-004).
-4. **Battle**: `simulateBattle(crewA, crewB, seed)` runs on both peers and the event log is
-   played back.
+4. **Battle**: once **every** crew in the league has locked in, all of the round's battles
+   start. `simulateBattle(crewA, crewB, seed)` runs on the peers and the event log is played
+   back. Everyone watches their own battle at the same time.
 5. **Result**: league points are awarded, then stamina is spent and recovered (see
-   [Stamina](#51-stamina-and-bench-rest)).
+   [Stamina](#51-stamina-and-bench-rest)). The host sends the new league state to every
+   member, and everyone saves it (see [League state](#league-state-and-hosting)). After the
+   result is saved the round is complete, and it's a clean place to stop.
 
 A brand new crew has no units, `STARTING_GOLD = 10` gold and skips the first upkeep.
 
@@ -225,7 +237,8 @@ income. That is intended: salary is the soft cap on crew power.
 
 ## 6. Age and retirement
 
-`age` counts league rounds in the crew, including byes and bench time. A unit retires
+`age` counts league rounds in the crew, including bench time and rounds in which an AI
+managed the crew for an absent player. A unit retires
 during upkeep when its age reaches its tier's retirement age: `RETIRE_AGE_BY_TIER =
 [20, 16, 12]` for tiers 1 to 3. Stars shine brightly but briefly. For the last
 `FAREWELL_ROUNDS = 2` rounds the UI shows a "farewell tour" badge; the rules don't change.
@@ -235,23 +248,102 @@ level), so players don't need to sell it by hand just before it retires.
 
 ## 7. League
 
-A **session league** among friends (D-013). One peer hosts it; the rules below are pure
-`core/` functions (T-034).
+A friend group has **one league** (D-029): a pyramid of divisions with promotion and
+relegation, like a football league system. Each player owns **exactly one crew**, and that
+crew is a member of this league for its whole life. There is no server (D-004). The league is
+a saved state that every member keeps a copy of, and any member can host a sitting. The rules
+below are pure `core/` functions (T-034). Settled with the user in T-045 (Q-011 confirmed).
 
-> **Status: proposal.** Q-011 asks for these defaults, and the user still has to confirm
-> them. Until then, treat this section as the working default for M4.
+### Members
 
-| Topic | Proposed rule |
+A **member** is a crew plus who runs it:
+
+- **Player**: a human-owned crew. When the player isn't at a sitting, an
+  [AI manager](#ai-managers) runs the crew for them.
+- **Bot**: a filler crew that an AI manager always runs. When the league is created, the host
+  picks how many bots to add, and more can be added between seasons.
+
+### Divisions
+
+| Topic | Rule |
 |---|---|
-| Divisions | One division holds up to `DIVISION_MAX = 6` players. With more players the league splits into the fewest divisions that keep everyone at or below `DIVISION_MAX`, sized as evenly as possible. A group of 2 to 6 friends plays in one division |
-| Seeding | At session start, players are sorted by **rep** (the league points their crew earned in its last season, stored in the save, 0 for a new crew), and ties are broken by a seeded coin flip. Divisions are filled from the top |
-| Season | A round robin inside each division: every pair meets once. With an odd number of players, one player gets a bye each round. If that is fewer than `MIN_SEASON_ROUNDS = 3` rounds, the round robin repeats until the season reaches at least that many (2 players play a best of 3) |
-| Pairing | The circle method, rotated by the season seed, so the pairings are deterministic and fair |
-| Points | Win `POINTS_WIN = 3`, draw `POINTS_DRAW = 1`, loss 0, bye `POINTS_BYE = 1`. A bye still runs upkeep and ageing, and every unit counts as benched |
+| Size | A division holds up to `DIVISION_MAX = 6` members. A group of 2 to 6 plays in one division |
+| Splitting | When the league is created, and at each season start, the league uses the fewest divisions that keep everyone at or below `DIVISION_MAX`, sized as evenly as possible. Members are placed by rank: division first, then final position. A new league orders its members with a seeded shuffle |
+| Even counts | Every division must have an even number of members. At season start, a division with an odd count gets one extra bot automatically, so there are **no byes** |
+| Promotion | With more than one division, the top `PROMOTE_COUNT = 1` of each lower division goes up and the bottom `PROMOTE_COUNT` of each higher division goes down |
+| Titles | The winner of the top division is crowned **champion**, and every division winner gets a title. Both are cosmetic and go into the crew's `record` |
+
+### Seasons
+
+| Topic | Rule |
+|---|---|
+| Length | A **double round robin** inside each division: every pair meets twice. If that is fewer than `MIN_SEASON_ROUNDS = 3` rounds, it repeats until the season reaches that many (2 members play a best of 3). 4 members play 6 rounds and 6 members play 10 |
+| Pairing | The circle method, rotated by the season seed, so the pairings are deterministic and fair. The second half repeats the first |
+| Points | Win `POINTS_WIN = 3`, draw `POINTS_DRAW = 1`, loss 0 |
 | Tiebreaks | Head-to-head points, then total MC margin, then a seeded coin flip |
-| Promotion | With more than one division, the top `PROMOTE_COUNT = 1` of each lower division goes up and the bottom `PROMOTE_COUNT` of each higher division goes down. With one division, the winner is crowned champion (a trophy on the crew, cosmetic only) |
-| Catch-up | None. Crews are meant to snowball (see [Pillars](#pillars)); divisions keep strong and weak crews apart |
-| Joining and leaving | A player who joins mid-season enters the bottom division at the next season. A player who leaves forfeits their remaining battles (the opponent wins with MC margin 0). What happens if the host leaves is open (Q-013) |
+| Catch-up | None. Crews are meant to snowball (see [Pillars](#pillars)), and divisions keep strong and weak crews apart |
+
+A season usually spans several sittings. A season ends after its last round; the next one
+starts at the next round, with promotion, relegation and a new split applied.
+
+### Joining and leaving
+
+- **New player mid-season:** if the newcomer's division has a bot, the newcomer takes over
+  that bot's schedule slot at once, with a fresh crew. The slot's points stay, and the
+  bot's crew is dropped. If no division has a bot, the newcomer joins the bottom division
+  at the next season start.
+- **Player leaves the league for good:** their crew becomes a bot, and an AI manager runs it
+  from then on. So the counts stay even.
+- **Player misses a sitting:** nothing to do. The AI manager plays their rounds (see below).
+
+### AI managers
+
+AI players are part of the real game (Q-008), not only a test tool. One simple AI manager
+(built in T-019) runs every crew that has no human at the sitting:
+
+- **Bots** always.
+- **Absent players**, fully (D-030). It shops, pays salaries and rotates the bench under the same
+  rules as a human, so the crew ages, tires and earns as usual. When the player comes back,
+  they take over the crew as the AI left it. A "while you were away" summary lists the rounds
+  and changes.
+
+The AI plays the real economy with a simple greedy policy: buy the best affordable unit,
+merge when possible, bench tired units, and lock in once gold runs low. It should be beatable by
+a thoughtful human, but not silly. Its decisions come from seeded randomness, so every peer
+gets the same result.
+
+### League state and hosting
+
+The **league state** is the whole league: the members, every crew (units, wallet, frozen shop
+slots), the divisions, the season schedule, the results so far, the standings and the
+number of the last completed round. It is also each player's save (D-031):
+
+- After every completed round the host sends the new league state to every connected member,
+  and each one stores it locally. Crews are part of it, so the host can run absent players' crews.
+- **Starting a sitting:** any member opens a lobby with their saved league, and others join by
+  room code. The copy with the highest completed round wins, and the host adopts it if a joiner
+  has a newer one. Then the host starts the next round.
+- **Host disconnects mid-round** (Q-013): that round is voided. Everyone falls back to the
+  last completed round, and any member can host again. The shop seeds are derived from the
+  round (see [Round flow](#3-round-flow)), so the replayed round offers the same shops.
+- **Player disconnects mid-round:** their current lineup is locked in, as when the
+  [timer](#slow-players-and-the-optional-timer) runs out.
+- **Validation** (Q-012): friends are trusted. Incoming messages and saves are checked
+  against their zod schema, so malformed data can't crash a peer, but the host doesn't check
+  whether a crew is *legal*.
+
+### Slow players and the optional timer
+
+The shop has no clock by default (D-026). Each round's battles start only when every crew has
+locked in, so the others wait (Q-014, D-032):
+
+- The lobby shows who is still shopping. Any player can send that player a **nudge**, a
+  friendly poke with a sound. It has no effect on the rules.
+- The host can turn on a **shop timer** for the sitting: `SHOP_TIMER_SECONDS = 120`, off by
+  default. When it runs out, the player's **current lineup** is locked in. If the wallet
+  can't cover the payroll, units are sold one at a time until it can: the unit with the
+  lowest salary first, then bench before active slots, then the lowest level, then the
+  highest slot.
 
 ## 8. Starting roster
 
@@ -391,13 +483,10 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `FAREWELL_ROUNDS` | 2 | Retirement |
 | `DIVISION_MAX` | 6 | League |
 | `MIN_SEASON_ROUNDS` | 3 | League |
-| `POINTS_WIN` / `POINTS_DRAW` / `POINTS_BYE` | 3 / 1 / 1 | League |
+| `POINTS_WIN` / `POINTS_DRAW` | 3 / 1 | League |
 | `PROMOTE_COUNT` | 1 | League |
+| `SHOP_TIMER_SECONDS` | 120 (off by default) | League |
 
 ## 11. Still open
 
-- Q-008: are bots or ghost crews part of the final game (for example to fill byes), or only a test tool?
-- Q-011: confirm the league defaults in [League](#7-league).
-- Q-012: does the host validate saved crews?
-- Q-013: what happens when the league host disconnects?
-- Q-014: with no shop timer, what happens when a player is slow or away during a league round?
+- Q-015: what happens when two sittings play the same league at the same time and their saves fork?
