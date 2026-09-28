@@ -2,6 +2,11 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-038, in progress)
+- The user chose to bake Chromium into the image (D-018). Added a build step to `.devcontainer/project/Dockerfile.project`: it reads the pinned `@playwright/test` version from `package.json`, installs Chromium with its system libraries into `/opt/ms-playwright`, and sets `PLAYWRIGHT_BROWSERS_PATH`. I tested the version extraction in `sh`, and `make dev-custom-validate` passes. The real Docker build can't run from inside the container.
+- **Waiting for the user:** run `make dev-rebuild` on the host, then `npm run test:e2e` (or `make test-e2e` after T-005) in the new container. T-038 stays `[~]` until the smoke test passes.
+- **Next:** T-005 (Makefile).
+
 ## 2026-09-28 (T-004)
 - Added Vitest 4 (Vitest 5 needs Node 22) and Playwright 1.63, pinned exactly (D-017). First `core/` test: `clamp()` in `src/core/math.ts`, 5 tests. Playwright smoke test `e2e/smoke.spec.ts` loads the page and checks that the Phaser canvas is visible and that no errors are logged. `playwright.config.ts` starts `npm run dev`.
 - Split the tsconfig into project references (`tsconfig.app.json` for `src/`, `tsconfig.node.json` for configs and `e2e/`, and a shared `tsconfig.base.json`). `typecheck` is now `tsc -b`. New npm scripts: `test`, `test:watch`, `test:e2e`; `check` now runs the unit tests too.

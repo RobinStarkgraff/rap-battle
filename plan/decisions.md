@@ -78,3 +78,10 @@ and are marked "superseded by D-###".
   types) and `tsconfig.node.json` covers the config files and `e2e/` (Node types, no DOM), both
   extending `tsconfig.base.json`. `npm run typecheck` is `tsc -b`, so `process` and other Node
   globals stay out of `src/`.
+- **D-018 (2026-09-28): Chromium for Playwright is baked into the dev container image (T-038).**
+  The user's choice over allowlisting the Playwright CDN or running e2e only on the host.
+  `.devcontainer/project/Dockerfile.project` reads the exact `@playwright/test` version from
+  `package.json`, runs `playwright install --with-deps chromium` as root while the build still
+  has network access, and sets `PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright`. Like D-015 this
+  is local only, because `.devcontainer/` is gitignored. Changing the Playwright version means
+  rebuilding the container.

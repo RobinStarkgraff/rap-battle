@@ -6,7 +6,7 @@ Next free ID: **T-041**
 ## Now
 
 - [ ] T-005 (M0) Add Makefile targets `install`, `dev`, `check`, `test-e2e`, `build`; fill in the Commands section of CLAUDE.md (a `Makefile` already exists, so look at it first)
-- [ ] T-038 (M0) Make Playwright browsers available in the dev container: the firewall blocks `npx playwright install chromium` (download fails). The user chose to bake Chromium into the image. Done when the e2e smoke test from T-004 (`npm run test:e2e`) passes inside the rebuilt container
+- [~] T-038 (M0) Make Playwright browsers available in the dev container: the firewall blocks `npx playwright install chromium` (download fails). The user chose to bake Chromium into the image; the build step is in `.devcontainer/project/Dockerfile.project` (local only, as `.devcontainer/` is gitignored). **Waiting for the user to run `make dev-rebuild` on the host.** Done when the e2e smoke test from T-004 (`npm run test:e2e`) passes inside the rebuilt container
 - [ ] T-039 (M0) Regression test for the lint boundary rules: lint fixture files that break each rule (core importing Phaser/render, `Math.random`, `Date`, DOM globals; render↔net cross-imports) via the ESLint Node API and assert the errors. Needs Vitest (T-004)
 
 ## Next
