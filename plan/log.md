@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (M0 run wrap-up)
+- `/milestone M0 --commit` worked through T-004, T-038, T-005, T-039, T-040, T-006 and T-007.
+- Exit criteria: `make check`, `make dev` and `make build` work, and `core/`'s `clamp()` has passing tests. **Not met yet:** `make test-e2e`, and seeing the Phaser scene draw in a browser (the smoke test covers it). Both wait for the container rebuild (T-038).
+- M0 stays **in progress**. Open: T-038 (the user runs `make dev-rebuild`, then `make test-e2e`) and T-042 (push, and confirm CI is green). After that, M0 can be closed.
+- **Next:** T-038 and T-042 (user actions), then T-008 (M1 design doc).
+
 ## 2026-09-28 (T-007)
 - Added `.github/workflows/ci.yml` (D-019). The `check` job runs `make install`, `make check` and `make build`; the `e2e` job installs Chromium and runs `make test-e2e`, and uploads the Playwright results when it fails. Node 20, npm cache, actions v7 (the latest releases).
 - Verified locally: the YAML parses, and a fresh clone passes `make install`, `make check` (30 tests) and `make build`. The workflow itself has not run yet, because nothing has been pushed. Follow-up T-042: push, and confirm CI is green.

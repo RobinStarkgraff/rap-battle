@@ -6,11 +6,11 @@ Next free ID: **T-043**
 ## Now
 
 - [~] T-038 (M0) Make Playwright browsers available in the dev container: the firewall blocks `npx playwright install chromium` (download fails). The user chose to bake Chromium into the image; the build step is in `.devcontainer/project/Dockerfile.project` (local only, as `.devcontainer/` is gitignored). **Waiting for the user to run `make dev-rebuild` on the host.** Done when the e2e smoke test from T-004 (`npm run test:e2e`) passes inside the rebuilt container
-
+- [ ] T-042 (M0) Push to GitHub and confirm the CI workflow (T-007) is green on its first run; the local commits have not been pushed yet
+- [ ] T-008 (M1) Write `docs/game-design.md` from the answered questions (D-007 to D-013): shop and round flow, the front-MC clash battle, stage positions, stamina and bench rest, salary, age and retirement, economy, and the division league. Propose tunable defaults for Q-011
 
 ## Next
 
-- [ ] T-008 (M1) Write `docs/game-design.md` from the answered questions (D-007 to D-013): shop and round flow, the front-MC clash battle, stage positions, stamina and bench rest, salary, age and retirement, economy, and the division league. Propose tunable defaults for Q-011
 - [ ] T-009 (M1) Design the starting roster (about 10 units, MCs and support, 3 tiers) and 5–8 ability trigger types
 - [ ] T-010 (M2) Seeded PRNG (e.g. mulberry32) with `fork()` for independent streams, plus tests
 - [ ] T-011 (M2) Core types: `UnitDef`, `UnitInstance` (with stamina, age, salary), `Crew` (3 MC + 2 support + bench), `BattleEvent` (a discriminated union)
@@ -43,7 +43,6 @@ Next free ID: **T-043**
 - [ ] T-031 (M6) Balance pass using headless bot-vs-bot win-rate statistics, including salary and retirement pacing
 - [ ] T-032 (M7) Deploy a static build; test P2P across two real networks; decide whether a TURN server is needed
 - [ ] T-033 (M7) Write the jam submission page and a known-issues list
-- [ ] T-042 (M0) Push to GitHub and confirm the CI workflow (T-007) is green on its first run; the local commits have not been pushed yet
 - [ ] T-041 (M7) Decide with the user whether to commit `.devcontainer/project/` (the Chromium build step, D-018, and the `node_modules` volume, D-015) so other machines get them; today all of `.devcontainer/` is gitignored
 
 ## Done
