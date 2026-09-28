@@ -59,3 +59,13 @@ and are marked "superseded by D-###".
   container. `.devcontainer/project/devcontainer-overrides.json` mounts
   `rap-battle-node-modules-${devcontainerId}` at `/workspace/node_modules`; the project
   `post-create.sh` chowns it and runs `npm ci`. The host keeps its own install in the real folder.
+- **D-016 (2026-09-28): Lint and format setup: ESLint 10 flat config + typescript-eslint
+  `strictTypeChecked` and `stylisticTypeChecked`, Prettier 3 (single quotes, width 100,
+  trailing commas), `eslint-config-prettier` so they never disagree.** Layer boundaries
+  use ESLint's built-in `no-restricted-imports` / `no-restricted-globals` /
+  `no-restricted-properties` per folder, not `eslint-plugin-boundaries` or
+  `eslint-plugin-import`: no extra plugin to keep compatible with ESLint 10, and the
+  messages can name the rule they enforce. `core/` may not import Phaser, PeerJS or the
+  other layers, and may not use `Math.random`, `Date`, timers, `globalThis` or DOM/browser
+  globals. `net/` and `render/` may not import each other or `app/`. Plain `.js` files
+  (only `eslint.config.js`) skip typed rules because they are not in the tsconfig.

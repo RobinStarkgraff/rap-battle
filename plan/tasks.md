@@ -1,17 +1,18 @@
 # Tasks
 
 States: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped.
-Next free ID: **T-039**
+Next free ID: **T-041**
 
 ## Now
 
-- [ ] T-003 (M0) Add ESLint (typescript-eslint strict), Prettier and an import-boundary rule that stops `core/` importing Phaser, PeerJS or DOM code
 - [ ] T-004 (M0) Add Vitest with a first `core/` test; add Playwright with a smoke test that loads the page
 - [ ] T-005 (M0) Add Makefile targets `install`, `dev`, `check`, `test-e2e`, `build`; fill in the Commands section of CLAUDE.md (a `Makefile` already exists, so look at it first)
+- [ ] T-038 (M0) Make Playwright browsers available in the dev container: the firewall blocks `npx playwright install chromium` (download fails). Allowlist the Playwright CDN, bake Chromium into the image, or run e2e from the host. Needed by T-004
 
 ## Next
 
-- [ ] T-038 (M0) Make Playwright browsers available in the dev container: the firewall blocks `npx playwright install chromium` (download fails). Allowlist the Playwright CDN, bake Chromium into the image, or run e2e from the host. Needed by T-004
+- [ ] T-039 (M0) Regression test for the lint boundary rules: lint fixture files that break each rule (core importing Phaser/render, `Math.random`, `Date`, DOM globals; render↔net cross-imports) via the ESLint Node API and assert the errors. Needs Vitest (T-004)
+- [ ] T-040 (M0) Type-check `core/` with its own tsconfig that has no `DOM` lib, so DOM *types* (e.g. `HTMLElement`) are also rejected there; the lint rule only blocks DOM globals
 - [ ] T-006 (M0) Clean up `.gitignore` (it still has entries from another project, e.g. `public/` and `deploy.log`); add `node_modules/`, `dist/`, `test-results/`
 - [ ] T-007 (M0) Optional: pre-commit hook or GitHub Actions workflow that runs `make check`
 - [ ] T-008 (M1) Write `docs/game-design.md` from the answered questions (D-007 to D-013): shop and round flow, the front-MC clash battle, stage positions, stamina and bench rest, salary, age and retirement, economy, and the division league. Propose tunable defaults for Q-011
@@ -50,5 +51,6 @@ Next free ID: **T-039**
 
 ## Done
 
+- [x] T-003 (M0) Add ESLint (typescript-eslint strict), Prettier and an import-boundary rule that stops `core/` importing Phaser, PeerJS or DOM code (2026-09-28)
 - [x] T-002 (M0) Scaffold Vite + TypeScript (strict) + Phaser 3 in `/workspace`, with the `src/{core,net,render,app}` layout (2026-09-28)
 - [x] T-001 (M1) Get answers from the user to the blocking questions in `open-questions.md` (Q-001 to Q-006) (2026-09-28)

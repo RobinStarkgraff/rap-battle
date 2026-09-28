@@ -2,6 +2,13 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-003)
+- Added ESLint 10 + typescript-eslint 8 (strict and stylistic, type-checked), Prettier 3 and eslint-config-prettier (D-016). New files: `eslint.config.js`, `.prettierrc.json`, `.prettierignore`. New npm scripts: `lint`, `lint:fix`, `format`, `format:check`, `check` (typecheck + lint + format; T-005 will make `make check` call it).
+- Boundary rules for each layer in `eslint.config.js`. I checked them with throwaway probe files: all 13 planted violations were reported (Phaser/render/app imports in core, `Math.random`, `Date`, `document`, `setTimeout`, `globalThis`, render↔net cross-imports, peerjs in render, phaser in net), and `../core` imports stayed allowed.
+- Prettier reformatted one long line in `render/BootScene.ts`. `npm run check` and `npm run build` pass.
+- Follow-ups: T-039 (automated regression test for the boundary rules, once Vitest exists) and T-040 (a core-only tsconfig without the DOM lib, because the lint rule does not block DOM *types*).
+- **Next:** T-004 (Vitest + Playwright). Playwright still needs T-038.
+
 ## 2026-09-28 (T-002)
 - Scaffolded Vite 8 + TypeScript 5.9 (strict plus extra flags) + Phaser 3.90 (D-014). Layout: `src/{core,net,render,app}`; `app/main.ts` starts Phaser with a `render/BootScene` that draws a stage, a spotlight and a mic from shapes, and shows `core`'s `GAME_TITLE`.
 - `tsc --noEmit` and `npm run build` pass. The dev server serves the page and modules (HTTP 200). I set the chunk warning limit to 1500 kB because Phaser alone is about 1.2 MB.

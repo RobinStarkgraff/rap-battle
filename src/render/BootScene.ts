@@ -27,7 +27,14 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(COLORS.stage, 1);
     g.fillRect(0, GAME_HEIGHT - 200, GAME_WIDTH, 200);
     g.fillStyle(COLORS.spotlight, 0.15);
-    g.fillTriangle(GAME_WIDTH / 2, 0, GAME_WIDTH / 2 - 260, GAME_HEIGHT - 120, GAME_WIDTH / 2 + 260, GAME_HEIGHT - 120);
+    g.fillTriangle(
+      GAME_WIDTH / 2,
+      0,
+      GAME_WIDTH / 2 - 260,
+      GAME_HEIGHT - 120,
+      GAME_WIDTH / 2 + 260,
+      GAME_HEIGHT - 120,
+    );
   }
 
   private drawMic(x: number, y: number): void {
