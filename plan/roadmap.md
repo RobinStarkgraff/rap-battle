@@ -59,8 +59,8 @@ property test that every battle ends.
 
 ## M4: Core: shop, crew upkeep & league
 **Goal:** the complete rules of an endless league, without any UI.
-**Exit criteria:** shop rolls, buy/sell/reorder/bench/merge/level-up, gold
-income, salaries, season-end ageing and retirement, league divisions with
+**Exit criteria:** the player market (generation, supply, scouting, bidding rounds, release),
+arranging slots and bench, growth, gold income, salaries, season-end ageing and retirement, league divisions with
 standings, pairing and promotion/relegation, and a versioned crew save format. A headless
 test can play several league seasons between bots.
 

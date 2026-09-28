@@ -2,6 +2,15 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-048, design session 5: shop and progression)
+- Ran design session 5 with the user over four rounds of questions. The user turned the shop into a **sports-manager transfer market**. Rewrote `docs/game-design.md` §4 (now "the player market"), §2 unit state, §3, §5.1, §6, §8 (now archetypes and an ability pool) and §9–§10, and updated CLAUDE.md (concept and the network rule).
+- **Unique units** generated from archetypes, in **one league-wide public list** fed by rookies each upkeep and by released free agents (D-039). This answers Q-017: progression comes from value-based prices and growth.
+- **Sealed bidding rounds** (up to 3 per shop phase): the highest bid wins and plays this round, and ties go to the lower-ranked crew. **Scouting** costs 1 gold for 2 private units at their ask, which vanish if unsigned. No freeze (D-040). The host resolves the bids, which widens D-031 again.
+- **No merging or levels.** +1 xp per battle played; every 3 xp is +1 stat (MC) or +1 ability power (support); a random second ability at 12 xp. No youth boost (D-041).
+- **Value-based ask and salary**, renegotiated at each season end; releasing and retiring pay nothing; `STARTING_GOLD = 25` (D-042). All formulas are placeholders for T-049 and T-031.
+- T-011 to T-013, T-016 to T-019, T-021, T-036, T-049 and T-053 were reworded, and the M4 exit criteria were updated. Not checked yet: whether 3 bidding rounds make sittings too slow. The paper playtest (T-051) should look at that.
+- **Next:** T-049 (archetypes and abilities).
+
 ## 2026-09-28 (T-047, design session 4: crew management)
 - Ran design session 4 with the user over four rounds of questions. Rewrote `docs/game-design.md` §6 and §5.1 (salary; the old §5.1 stamina section is gone) and updated §1–§4, §7–§11.
 - **Stamina is cut** (D-036), which changes the user's own Q-005 answer: no tiredness, no bench recovery, no `restoreStamina` effect. The bench is storage at half salary and grows to 3 slots. Vocal Coach gets a placeholder `battleStart` warm-up; no unit uses `upkeep` until T-049.

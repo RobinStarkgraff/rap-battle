@@ -91,7 +91,7 @@ and are marked "superseded by D-###".
   step. `.github/workflows/ci.yml` runs `make install`, `make check` and `make build` in one
   job, and `make test-e2e` in a second job that downloads Chromium itself (CI has open
   network access). Node 20 matches the dev container.
-- **D-020 (2026-09-28): Economy: a persistent wallet, with the payroll due at lock-in (T-008).**
+- **D-020 (2026-09-28, selling part superseded by D-042): Economy: a persistent wallet, with the payroll due at lock-in (T-008).**
   Gold carries over between rounds (capped at `WALLET_CAP`) instead of resetting each round
   as in Super Auto Pets, because crews persist (D-012). Salaries are paid at lock-in, not
   at upkeep, and lock-in needs `wallet >= payroll`, so a player can never go into debt or
@@ -115,7 +115,7 @@ and are marked "superseded by D-###".
   Together with salary this is the power-creep limit from D-012: strong units cost more
   and stay for less time. Merging keeps the target's age, so it can't reset the clock.
   Retiring pays out like a sale.
-- **D-024 (2026-09-28): Ability model: one ability per unit, built from 7 trigger types, 3
+- **D-024 (2026-09-28, amended by D-039 and D-041: `buy` is now `sign`, and a unit can learn a second ability): Ability model: one ability per unit, built from 7 trigger types, 3
   effects and a fixed list of targets (T-009).** Triggers: `battleStart`, `takeFront`,
   `barLanded`, `hurt`, `choke` (with subject `self`/`friend`), `buy`, `upkeep`. Effects: `buff`,
   `diss`, `restoreStamina`. Buffs in battle last for that battle; in the shop and at upkeep they are
@@ -143,7 +143,7 @@ and are marked "superseded by D-###".
   and then chose to keep ageing and drop catch-up. `DIVISION_INCOME_BONUS` is removed
   from the §7 proposal and from the tunables. Retirement (D-012, D-023) stays as the thing that keeps
   lineups changing, and divisions keep strong and weak crews mostly apart.
-- **D-028 (2026-09-28): Owned units have a generated stage name and a career record, but
+- **D-028 (2026-09-28, amended by D-039: the stage name is rolled when a unit is generated): Owned units have a generated stage name and a career record, but
   no bio (T-044).** This serves the crew-attachment pillar. `stageName` is rolled from the seeded
   RNG at buy time; `record` tracks battles, bars landed, chokes and wins. The user picked
   "name + record" over "name + record + bio" and over type names only (the Super Auto Pets way).
@@ -208,7 +208,7 @@ and are marked "superseded by D-###".
   placeholder `battleStart` warm-up (+X confidence to the front MC) until T-049. No unit uses
   the `upkeep` trigger for now. Supersedes D-021 and the stamina part of D-011; D-009's bench
   is no longer "for resting".
-- **D-037 (2026-09-28): Units have no tiers; each unit def has its own base salary (T-047).**
+- **D-037 (2026-09-28, salary part superseded by D-042): Units have no tiers; each unit def has its own base salary (T-047).**
   The user said "there are no tiers", and confirmed it applies to the whole game: no tier
   unlocks in the shop (every slot draws from the whole roster), no tier-based salary and no
   tier-based retirement. Salary is the unit's base salary plus `SALARY_PER_LEVEL` per level
@@ -226,3 +226,37 @@ and are marked "superseded by D-###".
   with no gameplay effect (chosen over a mentor gift or payout only). The user first picked a
   hidden seeded retirement window, then settled on a known global age by role with a seeded
   signing age instead. Supersedes D-023.
+- **D-039 (2026-09-28): A league-wide player market of unique units generated from archetypes
+  (T-048).** The user wants the shop to work "a lot more like a sport manager where you buy unique
+  players", not like Super Auto Pets. Every unit is an individual generated from an archetype (a
+  role, stat ranges and an ability pool) with its own stats, ability, age and stage name. The
+  whole league shares one public list of free agents. Rookies enter it each upkeep, released
+  units return to it, retired units leave, and the list is capped. The user chose this over
+  per-crew shops of unique individuals and over one of each archetype per crew. The old 11 fixed
+  units become an ability pool for two placeholder archetypes (MC, Support) until T-049.
+  Supersedes the Super Auto Pets shop from T-008 (shop slots, flat buy cost) and answers Q-017:
+  progression comes from value-based prices and from units growing, not from unlocks.
+- **D-040 (2026-09-28): Contested signings go through sealed bidding rounds; scouting is
+  personal (T-048).** The shop phase has up to `BID_ROUNDS = 3` rounds of simultaneous sealed
+  bids (at least the ask) on the public list. The highest bid wins and the unit plays in this
+  round's battle; ties go to the crew ranked lower, then to a coin flip. The user picked this over
+  first-come-first-served (which would reward fast clicking and break "no timer") and over a
+  draft order. Rolling became **scouting**: 1 gold for 2 units only you see, signed at their ask,
+  which vanish at lock-in if unsigned (chosen over keeping them in the pool, or making them public).
+  There is no freeze. The host collects the bids and resolves them with a pure `core/` function.
+  This widens D-031 again: bids and bid results now travel over the network too.
+- **D-041 (2026-09-28): No merging or levels; units grow by playing and learn a random second
+  ability (T-048).** +1 xp per battle in an active slot, win or lose (chosen over play plus win,
+  and over performance-based xp). Every 3 xp is a growth step: +1 flow or confidence for an MC,
+  +1 power (up to 3) on an ability for a support unit. At 12 xp a unit learns a random second
+  ability from its archetype's pool (chosen over a visible "potential" and over a choice of
+  two). The user first wanted growth by both experience and age, then dropped the youth boost,
+  so age still only decides retirement (D-038).
+- **D-042 (2026-09-28): Value-based ask and salary; salaries are renegotiated each season;
+  releasing and retiring pay nothing (T-048).** A unit's rating (stats plus ability power) sets its
+  ask (the minimum bid) and its salary, with placeholder formulas in `docs/game-design.md` §4 and
+  §5.1. Salary is fixed at signing and recomputed at each season end, so a unit that grew costs
+  more next season (chosen over a salary that rises at once and over a salary fixed for life).
+  Releasing is free with no refund (chosen over 1 gold or half the ask), and retirement pays
+  nothing either. Gold is meant to feel tight. `STARTING_GOLD` goes up to 25 so a new crew can
+  sign a first lineup.

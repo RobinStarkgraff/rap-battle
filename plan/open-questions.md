@@ -10,9 +10,6 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 - Q-016 Hype (D-034): should some abilities add or drain hype, or trigger when a crew's hype
   reaches a threshold? `battleStart` abilities always see 0 hype, so should they get something
   else from the crowd? For T-049.
-- Q-017 Units have no tiers (D-037), so the shop no longer unlocks stronger units over a crew's
-  career. Does the shop need another sense of progression (e.g. more slots over time, rarity,
-  price by unit), and should the shop size still grow? `SHOP_SLOTS = 5` is a placeholder. For T-048.
 - Q-018 Divisions can have different sizes (9 members split 6 + 4 after bots), so their double
   round robins have different lengths (10 vs 6 rounds). The season end (ageing, retirement,
   promotion) is league-wide. Does the shorter division wait, play extra rounds, or does each
@@ -27,6 +24,9 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 
 ## Answered
 
+- **Q-017** The shop no longer has tiers, so progression comes from **value-based prices** and from units
+  **growing** over their careers. The shop itself became a league-wide player market with sealed
+  bidding rounds, personal scouting and no fixed slot count. (2026-09-28) → D-039 to D-042
 - **Q-008** AI players are part of the real game, not only a test tool: persistent filler bots
   that play the real economy with a simple policy, and full stand-ins that manage absent
   players' crews. (2026-09-28) → D-030
