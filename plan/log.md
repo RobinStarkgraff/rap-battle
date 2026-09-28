@@ -2,6 +2,9 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (tooling)
+- Added the `/milestone [M#] [--commit] [--include-optional]` skill (`.claude/skills/milestone/SKILL.md`). It works through all open tasks of one milestone in a single run, reusing the per-task steps from `/next-task`. No task ID; `tasks.md` is unchanged.
+
 ## 2026-09-28 (T-003)
 - Added ESLint 10 + typescript-eslint 8 (strict and stylistic, type-checked), Prettier 3 and eslint-config-prettier (D-016). New files: `eslint.config.js`, `.prettierrc.json`, `.prettierignore`. New npm scripts: `lint`, `lint:fix`, `format`, `format:check`, `check` (typecheck + lint + format; T-005 will make `make check` call it).
 - Boundary rules for each layer in `eslint.config.js`. I checked them with throwaway probe files: all 13 planted violations were reported (Phaser/render/app imports in core, `Math.random`, `Date`, `document`, `setTimeout`, `globalThis`, render↔net cross-imports, peerjs in render, phaser in net), and `../core` imports stayed allowed.
