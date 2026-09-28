@@ -6,7 +6,7 @@ layer on top.
 
 | # | Milestone | Status |
 |---|---|---|
-| M0 | Foundation & tooling | not started |
+| M0 | Foundation & tooling | in progress |
 | M1 | Game design v0 | in progress |
 | M2 | Core: battle simulation | not started |
 | M3 | Core: shop, crew upkeep & league | not started |

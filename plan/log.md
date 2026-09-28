@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-002)
+- Scaffolded Vite 8 + TypeScript 5.9 (strict plus extra flags) + Phaser 3.90 (D-014). Layout: `src/{core,net,render,app}`; `app/main.ts` starts Phaser with a `render/BootScene` that draws a stage, a spotlight and a mic from shapes, and shows `core`'s `GAME_TITLE`.
+- `tsc --noEmit` and `npm run build` pass. The dev server serves the page and modules (HTTP 200). I set the chunk warning limit to 1500 kB because Phaser alone is about 1.2 MB.
+- Added `node_modules/` and `dist/` to `.gitignore`; the rest of the cleanup stays in T-006.
+- **Problem:** there is no browser in the container, and the firewall blocks `npx playwright install chromium`, so I couldn't confirm the scene visually. Added T-038, which T-004 needs.
+- `npm run build` on the macOS host failed: no `@rolldown/binding-darwin-arm64`, because `node_modules` was installed from the Linux container. Fixed with a container-only `node_modules` volume (D-015). This needs a container rebuild, and `.devcontainer/` is gitignored, so the change is local only.
+- **Next:** T-003 (ESLint/Prettier and the boundary rule).
+
 ## 2026-09-28 (T-001)
 - Question session with the user. Q-001 to Q-007 answered and recorded as D-007 to D-013.
 - **Big change:** the game is a **rap battle crew manager**, not a sports manager. The crew is 3 MCs + 2 support + a bench; front MCs clash (with more battle styles possible later); stage positions and stamina matter; crews persist and have salary, age and retirement; a session league among friends has divisions with promotion.

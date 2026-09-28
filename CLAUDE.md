@@ -31,10 +31,11 @@ The full workflow is in `plan/README.md`.
 
 ## Tech stack
 
-Decided (see `plan/decisions.md`, D-001 to D-006). The project isn't scaffolded yet (milestone M0).
+Decided (see `plan/decisions.md`, D-001 to D-006 and D-014). The Vite + TS + Phaser scaffold exists; lint and test tooling are still being set up (milestone M0).
+Entry point: `index.html` → `src/app/main.ts`. Until the Makefile targets exist, use `npm run dev`, `npm run build` and `npm run typecheck`.
 
-- **TypeScript** with `strict`, built and served by **Vite**
-- **Phaser 3** for rendering, input and tweens. All visuals are drawn with `Graphics`/shapes/text.
+- **TypeScript 5.9** with `strict` plus extra flags (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, …), built and served by **Vite 8**
+- **Phaser 3** (3.90, not Phaser 4) for rendering, input and tweens. All visuals are drawn with `Graphics`/shapes/text.
 - **PeerJS** (WebRTC data channels) for P2P. **zod** validates every network message.
 - **Vitest** for unit tests and **Playwright** for end-to-end tests (multi-tab P2P league)
 - **ESLint** (typescript-eslint, strict) and **Prettier**

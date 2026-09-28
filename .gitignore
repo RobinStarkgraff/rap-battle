@@ -27,3 +27,6 @@
 # the repo: a committed log would make netcup's next `git pull` on the
 # webspace collide with local changes.
 deploy.log
+# Build output and dependencies (full cleanup in T-006)
+node_modules/
+dist/

@@ -46,3 +46,16 @@ and are marked "superseded by D-###".
   holds). The host keeps standings, makes 1v1 pairings each round and runs promotion and
   relegation. Each battle still uses deterministic lockstep (D-004). The league's rules
   (standings, pairing, promotion) are pure `core/` functions.
+- **D-014 (2026-09-28): Pinned toolchain versions: TypeScript ~5.9, Vite 8, Phaser 3.90.**
+  TypeScript 7 (the native port) is the newest release, but typescript-eslint only
+  supports `<6.1`, and T-003 needs it, so we stay on 5.9. Phaser 4 is out, but D-002 chose
+  Phaser 3 because AI models know it well, so we pin `^3.90`. Vite 8 needs Node ≥ 20.19,
+  which the container has (20.20). The tsconfig adds strict extras
+  (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
+  `noPropertyAccessFromIndexSignature`, `verbatimModuleSyntax`, unused checks).
+- **D-015 (2026-09-28): `node_modules` in the dev container is its own Docker volume.**
+  The workspace is bind-mounted from a macOS host, and Vite 8's bundler (rolldown) ships
+  per-platform native bindings, so one shared `node_modules` breaks either the host or the
+  container. `.devcontainer/project/devcontainer-overrides.json` mounts
+  `rap-battle-node-modules-${devcontainerId}` at `/workspace/node_modules`; the project
+  `post-create.sh` chowns it and runs `npm ci`. The host keeps its own install in the real folder.
