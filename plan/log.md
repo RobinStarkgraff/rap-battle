@@ -2,6 +2,11 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-042)
+- The repo is public, so I checked CI through the GitHub REST API with `curl` (no `gh` needed). CI run #1 (51c5172) and run #2 (a4881ac) both passed: in the `check` job, `make install`, `make check` and `make build` passed; in the `e2e` job, the Chromium install and `make test-e2e` passed. `make check` passes locally (30 tests).
+- **M0 is done.** Every exit criterion is met.
+- **Next:** T-008 (M1 design doc), then T-009 (roster).
+
 ## 2026-09-28 (T-038)
 - The user rebuilt the container. Chromium 1243 is in `/opt/ms-playwright` and `PLAYWRIGHT_BROWSERS_PATH` is set. `make test-e2e` passes (the smoke test sees the Phaser canvas and no console errors), and `make check` passes (30 tests).
 - All M0 exit criteria are now met. M0 stays **in progress** only until T-042 (confirm CI is green).
