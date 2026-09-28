@@ -5,20 +5,19 @@ Next free ID: **T-053**
 
 ## Now
 
-- [ ] T-044 (M2) Design session 1: vision and pillars. Core fantasy, tone (comedic or authentic rap culture), who plays, how long a session lasts, what makes it fun, what the game is *not*. Result: a "Pillars" section at the top of `docs/game-design.md`
-- [ ] T-045 (M2) Design session 2: core loop, persistence and league. Round flow, how a session starts and ends, league shape (confirm or change the Q-011 proposal in §7), bots or ghost crews (Q-008), save validation (Q-012), host disconnect (Q-013). After T-044
+- [ ] T-045 (M2) Design session 2: core loop, persistence and league. Round flow, how a session starts and ends, league shape (confirm or change the Q-011 proposal in §7), bots or ghost crews (Q-008), save validation (Q-012), host disconnect (Q-013), slow or absent players with no shop timer (Q-014). After T-044
 - [ ] T-046 (M2) Design session 3: the battle. How a rap battle should feel and read on screen, the front-MC clash rules, stage positions, draws, the exchange limit, whether the crowd plays a part. After T-045
+- [ ] T-047 (M2) Design session 4: crew management. Stamina and bench rest, salary, age and retirement, and whether they make for fun decisions or chores. Targets for how long a unit stays and how often players rotate. After T-046
 
 ## Next
 
-- [ ] T-047 (M2) Design session 4: crew management. Stamina and bench rest, salary, age and retirement, and whether they make for fun decisions or chores. Targets for how long a unit stays and how often players rotate. After T-046
-- [ ] T-048 (M2) Design session 5: shop and progression. Tiers and unlocks, shop size, buy/roll/sell costs, freeze, merging and levels, the gold economy and catch-up. After T-047
+- [ ] T-048 (M2) Design session 5: shop and progression. Tiers and unlocks, shop size, buy/roll/sell costs, freeze, merging and levels, the gold economy (no catch-up gold, D-027). After T-047
 - [ ] T-049 (M2) Design session 6: roster and abilities. Unit by unit: names, personality, stats, abilities; the trigger, effect and target lists; which unit types are missing. After T-048
 - [ ] T-050 (M2) Design session 7: presentation. Look of the shape-art characters, the screens and their layout, sound (Q-010), the game title. After T-049
 - [ ] T-051 (M2) Paper playtest with the user: play at least 3 rounds between two crews by hand from `docs/game-design.md` and fix every gap or unclear rule found. After T-050
 - [ ] T-052 (M2) Design wrap-up: consistency pass over `docs/game-design.md` and the tunables table, then update the M3+ tasks in `tasks.md` and the exit criteria in `roadmap.md` to match the new design. After T-051
 - [ ] T-010 (M3) Seeded PRNG (e.g. mulberry32) with `fork()` for independent streams, plus tests
-- [ ] T-011 (M3) Core types: `UnitDef`, `UnitInstance` (with stamina, age, salary), `Crew` (3 MC + 2 support + bench), `BattleEvent` (a discriminated union)
+- [ ] T-011 (M3) Core types: `UnitDef`, `UnitInstance` (with stamina, age, salary, `stageName`, `record`), `Crew` (3 MC + 2 support + bench), `BattleEvent` (a discriminated union)
 - [ ] T-012 (M3) Data tables for the roster from T-009 and the tunables table (`docs/game-design.md` §8, §10)
 - [ ] T-013 (M3) Ability and trigger system (e.g. on battle start, on bar landed, on leaving the stage, on buy), built from data plus named effect functions; support position-aware abilities
 - [ ] T-014 (M3) `simulateBattle()` behind a `BattleStyle` interface with the "front MCs clash" style (D-010), which emits an event log
@@ -52,6 +51,7 @@ Next free ID: **T-053**
 
 ## Done
 
+- [x] T-044 (M2) Design session 1: vision and pillars. Pillars section at the top of `docs/game-design.md` (D-026 to D-028) (2026-09-28)
 - [-] T-043 (M4) Confirm the proposed league defaults (Q-011): folded into T-045 (2026-09-28)
 - [x] T-009 (M1) Design the starting roster (11 units: 7 MCs, 4 support, 3 tiers) and 7 ability trigger types, in `docs/game-design.md` §8–§9 (2026-09-28)
 - [x] T-008 (M1) Write `docs/game-design.md`: round flow, shop, front-MC clash battle, stage positions, stamina, salary, age and retirement, league (proposed Q-011 defaults) and a tunables table (2026-09-28)

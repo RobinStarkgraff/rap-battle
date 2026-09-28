@@ -131,3 +131,19 @@ and are marked "superseded by D-###".
   M2–M7 are now M3–M8 in `roadmap.md` and `tasks.md`. Log entries written before this date use
   the old numbers. The sessions run from broad to detailed: vision, loop and league, battle, crew
   management, shop, roster, presentation, then a paper playtest and a wrap-up.
+- **D-026 (2026-09-28): Pillars: label-boss fantasy, affectionate comedy, and three pillars
+  (crew attachment, clever combos, watchable funny battles) (T-044).** The user's choices in
+  design session 1. Players are 2–6 colleagues playing short sessions in breaks, with no
+  target session length, so every point between two rounds must be a clean place to stop.
+  The game is skill-led with some luck, and the shop has **no timer**. Non-goals: not a rhythm
+  game, no real rappers or lyrics, not a grindy F2P game. "Bragging rights" and "not edgy"
+  were offered but not picked. The full text is in the Pillars section of `docs/game-design.md`.
+- **D-027 (2026-09-28): Crews may snowball: no catch-up gold, but ageing, retirement and divisions
+  stay (T-044).** The user chose "let it snowball" over soft catch-up or a hard power cap,
+  and then chose to keep ageing and drop catch-up. `DIVISION_INCOME_BONUS` is removed
+  from the §7 proposal and from the tunables. Retirement (D-012, D-023) stays as the thing that keeps
+  lineups changing, and divisions keep strong and weak crews mostly apart.
+- **D-028 (2026-09-28): Owned units have a generated stage name and a career record, but
+  no bio (T-044).** This serves the crew-attachment pillar. `stageName` is rolled from the seeded
+  RNG at buy time; `record` tracks battles, bars landed, chokes and wins. The user picked
+  "name + record" over "name + record + bio" and over type names only (the Super Auto Pets way).

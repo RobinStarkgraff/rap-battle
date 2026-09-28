@@ -12,6 +12,51 @@ of them in the same change.
 > constants table, so balancing (T-031) only edits data. Unit stats and ability values in
 > the [roster](#8-starting-roster) are tunable in the same way.
 
+## Pillars
+
+Settled with the user in T-044 (D-026). Every rule in this document should serve at least one
+pillar and break none of the non-goals. Later design sessions check their answers against this section.
+
+**Fantasy: you are the label boss.** You don't rap. You scout talent in the shop, set the
+lineup, pay the salaries, and then watch your crew go to war on stage.
+
+**Tone: affectionate comedy.** Over the top and funny, but it loves hip-hop: punny stage
+names, silly disses, big egos. It's never mean about the culture it borrows from.
+
+**Players: 2 to 6 colleagues** who play short sessions in breaks, online at the same time,
+over weeks. A session has **no target length**: players stop whenever they like, so every
+point between two rounds must be a clean place to stop and come back to later.
+
+### The three pillars
+
+1. **Attachment to your crew.** Units are *yours*: each one has a generated stage name
+   and a battle record that grows over its career (see [Unit state](#unit-state)). Crews
+   persist and grow over weeks, so it should sting a little when a veteran retires.
+2. **Clever combos.** Most of the fun is in finding synergies between units, positions
+   and triggers in the shop, and seeing them go off in battle. Abilities should create
+   choices, not just add raw stats.
+3. **Watchable, funny battles.** The battle playback should be worth watching, not
+   skipping: every exchange, choke and ability should read clearly on screen and land
+   with a joke.
+
+### Design principles
+
+- **Skill-led, with some luck.** As in Super Auto Pets, the shop rolls are random and the
+  battle follows from the lineups plus a shared seed. The better manager wins most of the time, and upsets
+  still happen.
+- **No timer.** The shop has no clock. Players take as long as they want to think.
+- **Investment snowballs.** Building a strong crew over many rounds is meant to pay
+  off, and there's no catch-up gold for losing crews. Two things still move crews
+  along: **ageing and retirement** (D-012), so no lineup lasts forever, and **divisions**, so
+  weak and strong crews mostly meet their equals.
+
+### Non-goals
+
+- **Not a rhythm game.** Players don't act during the battle. You win it in the shop, then watch.
+- **No real rappers, songs or lyrics.** Every character, name and line is invented.
+- **Not a grindy free-to-play game.** No monetization, energy timers, daily chores or
+  login rewards.
+
 ## 1. Overview
 
 Each player manages a **rap crew**: 3 MCs who battle on stage, 2 support members who buff
@@ -48,6 +93,8 @@ stats and ability. An owned unit (`UnitInstance`) adds persistent state:
 | `level`, `xp` | From merging duplicates (see [Shop](#4-shop-phase)) |
 | `stamina` | 0 to `MAX_STAMINA = 10`. New units arrive at `MAX_STAMINA` |
 | `age` | League rounds this unit has spent in the crew. New units arrive at 0 |
+| `stageName` | A generated stage name, rolled from the seeded RNG when the unit is bought and kept for its whole career. The name lists are content (T-049) |
+| `record` | Career stats: battles played, bars landed, chokes, wins with the crew. Shown on the unit and in its retirement farewell |
 
 Buffs that happen **in battle** last until the end of that battle. Buffs that happen in the
 **shop or upkeep** are permanent.
@@ -59,9 +106,9 @@ One league round runs these phases in order (the `app/` state machine in T-023):
 1. **Upkeep** (automatic)
    1. Every unit's `age` goes up by 1. Units that reach their tier's retirement age retire
       (see [Age and retirement](#6-age-and-retirement)).
-   2. Income: `BASE_INCOME = 10` gold, plus `WIN_BONUS = 2` if the crew won its last battle,
-      plus the division catch-up bonus (see [League](#7-league)). The wallet is then capped
-      at `WALLET_CAP = 20`, and anything above is lost.
+   2. Income: `BASE_INCOME = 10` gold, plus `WIN_BONUS = 2` if the crew won its last battle.
+      There is no catch-up income for losing crews (see [Pillars](#pillars)). The wallet is
+      then capped at `WALLET_CAP = 20`, and anything above is lost.
    3. `upkeep` abilities trigger.
    4. A new shop is rolled. Frozen shop slots stay.
 2. **Shop**: buy, sell, roll, freeze, merge, reorder and bench, in any order. The UI always
@@ -203,7 +250,7 @@ A **session league** among friends (D-013). One peer hosts it; the rules below a
 | Points | Win `POINTS_WIN = 3`, draw `POINTS_DRAW = 1`, loss 0, bye `POINTS_BYE = 1`. A bye still runs upkeep and ageing, and every unit counts as benched |
 | Tiebreaks | Head-to-head points, then total MC margin, then a seeded coin flip |
 | Promotion | With more than one division, the top `PROMOTE_COUNT = 1` of each lower division goes up and the bottom `PROMOTE_COUNT` of each higher division goes down. With one division, the winner is crowned champion (a trophy on the crew, cosmetic only) |
-| Catch-up | Crews in lower divisions get `+DIVISION_INCOME_BONUS = 1` gold per round for each division they are below the top |
+| Catch-up | None. Crews are meant to snowball (see [Pillars](#pillars)); divisions keep strong and weak crews apart |
 | Joining and leaving | A player who joins mid-season enters the bottom division at the next season. A player who leaves forfeits their remaining battles (the opponent wins with MC margin 0). What happens if the host leaves is open (Q-013) |
 
 ## 8. Starting roster
@@ -346,7 +393,6 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `MIN_SEASON_ROUNDS` | 3 | League |
 | `POINTS_WIN` / `POINTS_DRAW` / `POINTS_BYE` | 3 / 1 / 1 | League |
 | `PROMOTE_COUNT` | 1 | League |
-| `DIVISION_INCOME_BONUS` | 1 | League |
 
 ## 11. Still open
 
@@ -354,3 +400,4 @@ Every name above with its default. `core/` keeps them in one typed table.
 - Q-011: confirm the league defaults in [League](#7-league).
 - Q-012: does the host validate saved crews?
 - Q-013: what happens when the league host disconnects?
+- Q-014: with no shop timer, what happens when a player is slow or away during a league round?

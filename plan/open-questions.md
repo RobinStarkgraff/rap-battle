@@ -12,7 +12,12 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
   until enough players join? Division size, rounds per season, how many move up or down.
   T-008 should propose tunable defaults; the user confirms. **Proposal written** in
   `docs/game-design.md` §7 (one division of up to 6, round robin with at least 3 rounds,
-  3/1/0 points, bye = 1 point, 1 up / 1 down, catch-up gold). Waiting for the user to confirm.
+  3/1/0 points, bye = 1 point, 1 up / 1 down). Catch-up gold was dropped in T-044 (D-027).
+  Waiting for the user to confirm the rest in T-045.
+- Q-014 The shop has no timer (D-026). In a league round every pair must lock in before
+  their battle runs. What happens when one player takes much longer or walks away mid-round:
+  others just wait, a "nudge", an optional host-set timer, or an auto-lock of the last lineup?
+  For T-045.
 - Q-012 Crews are saved locally, so a player could edit their save. Is that acceptable
   among friends, or should the host validate crews (e.g. salary cap, legal units)?
 

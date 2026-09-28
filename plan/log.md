@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-044, design session 1: vision and pillars)
+- Ran design session 1 with the user over three rounds of questions. Added a **Pillars** section at the top of `docs/game-design.md`. The fantasy is the label boss, the tone is affectionate comedy, and the players are 2–6 colleagues in breaks, with no target session length. The pillars are crew attachment, clever combos, and watchable, funny battles. The game is skill-led with some luck, and the shop has no timer. Non-goals: not a rhythm game, no real rappers or lyrics, not a grindy F2P game (D-026).
+- "Let it snowball": catch-up gold is removed from §3, §7 and the tunables, while ageing, retirement and divisions stay (D-027). Owned units get a `stageName` and a `record` (D-028), and T-011 is updated to match.
+- New question Q-014 (slow or absent players with no shop timer), for T-045. `make check` passes.
+- **Next:** T-045 (core loop, persistence and league).
+
 ## 2026-09-28 (new milestone M2: design iteration)
 - The user asked for a milestone that works through the design together with them, from the broad view to the details. Added **M2: Design iteration with the user** (method and exit criteria in `roadmap.md`) with nine tasks: T-044 to T-050 are design sessions (vision → loop and league → battle → crew management → shop → roster → presentation), T-051 is a paper playtest and T-052 a wrap-up.
 - Renumbered the later milestones: the old M2–M7 are now M3–M8 (D-025). **Log entries below this one use the old numbers.** T-043 (confirm Q-011) is folded into T-045.
