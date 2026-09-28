@@ -1,7 +1,7 @@
 ---
 name: milestone
-description: Work through all open tasks of one roadmap milestone (e.g. M0) in a single run. Each task is done, verified and recorded in plan/ the same way as /next-task. Optional argument is a milestone ID; add --commit to commit each task separately, --include-optional to also do tasks marked "Optional".
-argument-hint: "[M#] [--commit] [--include-optional]"
+description: Work through all open tasks of one roadmap milestone (e.g. M0) in a single run. Each task is done, verified and recorded in plan/ the same way as /next-task. Optional argument is a milestone ID; add --commit to commit each task separately.
+argument-hint: "[M#] [--commit]"
 disable-model-invocation: true
 ---
 
@@ -30,7 +30,7 @@ Read the milestone's full section in `roadmap.md`, including its exit criteria.
 - If the milestone is marked `done`, say so and stop.
 - Collect every task tagged `(M#)` from **Now**, **Next** and **Later** that is `[ ]` or `[~]`.
   Skip `[x]` and `[-]` tasks.
-- Leave out tasks whose text says "Optional" unless the arguments contain `--include-optional`.
+- Include tasks whose text says "Optional" like any other task. A milestone run does them all.
 - Order them:
   1. `[~]` tasks first (resume them).
   2. Then respect dependencies: a task that says it needs another task ("Needs T-004",
@@ -50,7 +50,7 @@ questions now rather than in the middle:
   **blocking** question for this milestone or these tasks, and ask them together with
   `AskUserQuestion` (up to 4 per call, several calls if needed). Record each answer as in
   step 6 of `next-task` before starting any task.
-- If some tasks were left out as optional or can't be done (step 2), mention them in the
+- If some tasks can't be done (step 2), mention them in the
   same round of questions only if the user's answer would change the plan.
 - Then print the plan: the ordered task list, and the tasks that are skipped with the
   reason for each. Start straight away; don't wait for confirmation.
