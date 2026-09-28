@@ -1,9 +1,41 @@
-.PHONY: help dev-bootstrap
+.PHONY: help install dev check test test-e2e build format dev-bootstrap
 help:
-	@echo "Available targets:"
+	@echo "Project targets:"
+	@echo "  make install                        Install dependencies (npm ci)"
+	@echo "  make dev                            Start the Vite dev server on port 5173"
+	@echo "  make check                          Typecheck, lint, format check and unit tests"
+	@echo "  make test                           Unit tests only (Vitest)"
+	@echo "  make test-e2e                       Browser tests (Playwright)"
+	@echo "  make build                          Production build to dist/"
+	@echo "  make format                         Fix formatting and auto-fixable lint errors"
+	@echo ""
+	@echo "Devcontainer targets:"
 	@echo "  make dev-bootstrap                  Fetch/install devcontainer base layer"
 	@echo "  make dev-bootstrap OVERLAY=<url>    Bootstrap with a company overlay"
 	@echo "  make dev-help                       Show all devcontainer commands"
+
+# Project targets. The npm scripts in package.json hold the actual commands.
+install:
+	npm ci
+
+dev:
+	npm run dev
+
+check:
+	npm run check
+
+test:
+	npm run test
+
+test-e2e:
+	npm run test:e2e
+
+build:
+	npm run build
+
+format:
+	npm run format
+	npm run lint:fix
 
 # Bootstrap target — always available even before base/ exists
 # Usage: make dev-bootstrap [OVERLAY=<overlay-repo-url>]

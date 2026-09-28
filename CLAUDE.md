@@ -31,13 +31,13 @@ The full workflow is in `plan/README.md`.
 
 ## Tech stack
 
-Decided (see `plan/decisions.md`, D-001 to D-006 and D-014). The Vite + TS + Phaser scaffold, ESLint, Prettier, Vitest and Playwright exist; the Makefile targets and the Chromium for e2e tests are still being set up (milestone M0).
-Entry point: `index.html` → `src/app/main.ts`. Until the Makefile targets exist, use `npm run dev`, `npm run build` and `npm run check` (typecheck + lint + format check + unit tests; `npm run format` and `npm run lint:fix` fix most issues).
+Decided (see `plan/decisions.md`, D-001 to D-006, D-014 and D-017). The toolchain is set up; see **Commands** below.
+Entry point: `index.html` → `src/app/main.ts`. Unit tests sit next to the code as `src/**/*.test.ts`; browser tests live in `e2e/`.
 
 - **TypeScript 5.9** with `strict` plus extra flags (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, …), built and served by **Vite 8**
 - **Phaser 3** (3.90, not Phaser 4) for rendering, input and tweens. All visuals are drawn with `Graphics`/shapes/text.
 - **PeerJS** (WebRTC data channels) for P2P. **zod** validates every network message.
-- **Vitest** for unit tests and **Playwright** for end-to-end tests (multi-tab P2P league)
+- **Vitest 4** for unit tests (Vitest 5 needs Node 22) and **Playwright** for end-to-end tests (multi-tab P2P league)
 - **ESLint 10** (typescript-eslint `strictTypeChecked`) and **Prettier 3**. `eslint.config.js` also enforces the layer rules below (D-016).
 
 ## Architecture rules
@@ -72,18 +72,25 @@ src/
 
 ## Commands
 
-_Filled in once M0 is done._ Planned:
+Each target calls the matching npm script in `package.json`.
 
 | Command | Purpose |
 |---|---|
-| `make install` | install dependencies |
-| `make dev` | start the Vite dev server |
-| `make check` | typecheck + lint + format check + unit tests |
-| `make test-e2e` | Playwright tests, including the multi-peer league round |
-| `make build` | production build to `dist/` |
+| `make install` | install dependencies (`npm ci`) |
+| `make dev` | start the Vite dev server on http://localhost:5173 |
+| `make check` | typecheck (`tsc -b`) + lint + format check + unit tests. Run it before calling any task done |
+| `make test` | unit tests only (Vitest) |
+| `make test-e2e` | Playwright tests; starts the dev server itself (or reuses a running one) |
+| `make build` | typecheck + production build to `dist/` |
+| `make format` | fix formatting and auto-fixable lint errors |
 
 ## Environment notes
 
 - The dev container provides Node 20 and has an outbound firewall. Real P2P tests that go
   through the public PeerJS signalling server (`0.peerjs.com`) may need to be allowlisted,
   or run from the host browser.
+- The firewall also blocks Playwright's browser download. Chromium is baked into the
+  container image instead (D-018), so after changing the `@playwright/test` version the
+  container has to be rebuilt (`make dev-rebuild` on the host).
+- The workspace is bind-mounted from a macOS host and `node_modules` is a container-only
+  volume (D-015). `make` may warn about clock skew; that is harmless.

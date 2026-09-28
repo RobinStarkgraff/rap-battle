@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-005)
+- Added the project targets `install`, `dev`, `check`, `test`, `test-e2e`, `build` and `format` to the existing `Makefile`. Each one calls the matching npm script. The devcontainer targets are unchanged, `make help` lists both groups, and no names clash with the included `dev-*.mk` files.
+- Filled in the Commands section of CLAUDE.md and added the Chromium and clock-skew notes to Environment notes.
+- `make check` and `make build` pass. `make dev` serves the page and `main.ts` (HTTP 200). `make test-e2e` still needs the container rebuild from T-038.
+- **Next:** T-039 (lint rule regression tests), T-040 (core tsconfig without DOM).
+
 ## 2026-09-28 (T-038, in progress)
 - The user chose to bake Chromium into the image (D-018). Added a build step to `.devcontainer/project/Dockerfile.project`: it reads the pinned `@playwright/test` version from `package.json`, installs Chromium with its system libraries into `/opt/ms-playwright`, and sets `PLAYWRIGHT_BROWSERS_PATH`. I tested the version extraction in `sh`, and `make dev-custom-validate` passes. The real Docker build can't run from inside the container.
 - **Waiting for the user:** run `make dev-rebuild` on the host, then `npm run test:e2e` (or `make test-e2e` after T-005) in the new container. T-038 stays `[~]` until the smoke test passes.
