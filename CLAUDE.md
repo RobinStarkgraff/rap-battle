@@ -31,8 +31,8 @@ The full workflow is in `plan/README.md`.
 
 ## Tech stack
 
-Decided (see `plan/decisions.md`, D-001 to D-006 and D-014). The Vite + TS + Phaser scaffold, ESLint and Prettier exist; test tooling and the Makefile targets are still being set up (milestone M0).
-Entry point: `index.html` → `src/app/main.ts`. Until the Makefile targets exist, use `npm run dev`, `npm run build` and `npm run check` (typecheck + lint + format check; `npm run format` and `npm run lint:fix` fix most issues).
+Decided (see `plan/decisions.md`, D-001 to D-006 and D-014). The Vite + TS + Phaser scaffold, ESLint, Prettier, Vitest and Playwright exist; the Makefile targets and the Chromium for e2e tests are still being set up (milestone M0).
+Entry point: `index.html` → `src/app/main.ts`. Until the Makefile targets exist, use `npm run dev`, `npm run build` and `npm run check` (typecheck + lint + format check + unit tests; `npm run format` and `npm run lint:fix` fix most issues).
 
 - **TypeScript 5.9** with `strict` plus extra flags (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, …), built and served by **Vite 8**
 - **Phaser 3** (3.90, not Phaser 4) for rendering, input and tweens. All visuals are drawn with `Graphics`/shapes/text.

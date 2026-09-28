@@ -69,3 +69,12 @@ and are marked "superseded by D-###".
   other layers, and may not use `Math.random`, `Date`, timers, `globalThis` or DOM/browser
   globals. `net/` and `render/` may not import each other or `app/`. Plain `.js` files
   (only `eslint.config.js`) skip typed rules because they are not in the tsconfig.
+- **D-017 (2026-09-28): Vitest 4 and Playwright 1.63 (pinned exactly); TypeScript split into
+  project references.** Vitest 5 needs Node ≥ 22 and the container has Node 20, so we use
+  `vitest@^4.1`. `@playwright/test` is pinned to an exact version because its browser build must
+  match the one baked into the dev container (T-038). Unit tests sit next to the code as
+  `src/**/*.test.ts`; browser tests live in `e2e/` and run against the Vite dev server.
+  `tsconfig.json` is now a solution file: `tsconfig.app.json` covers `src/` (DOM lib, no Node
+  types) and `tsconfig.node.json` covers the config files and `e2e/` (Node types, no DOM), both
+  extending `tsconfig.base.json`. `npm run typecheck` is `tsc -b`, so `process` and other Node
+  globals stay out of `src/`.

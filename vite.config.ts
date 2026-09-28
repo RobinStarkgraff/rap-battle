@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -14,5 +15,10 @@ export default defineConfig({
     sourcemap: true,
     // Phaser alone is ~1.2 MB minified; one vendor chunk is fine for a jam game.
     chunkSizeWarningLimit: 1500,
+  },
+  test: {
+    // Unit tests sit next to the code they test. Browser tests live in e2e/ (Playwright).
+    include: ['src/**/*.test.ts'],
+    environment: 'node',
   },
 });

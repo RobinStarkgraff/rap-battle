@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-28 (T-004)
+- Added Vitest 4 (Vitest 5 needs Node 22) and Playwright 1.63, pinned exactly (D-017). First `core/` test: `clamp()` in `src/core/math.ts`, 5 tests. Playwright smoke test `e2e/smoke.spec.ts` loads the page and checks that the Phaser canvas is visible and that no errors are logged. `playwright.config.ts` starts `npm run dev`.
+- Split the tsconfig into project references (`tsconfig.app.json` for `src/`, `tsconfig.node.json` for configs and `e2e/`, and a shared `tsconfig.base.json`). `typecheck` is now `tsc -b`. New npm scripts: `test`, `test:watch`, `test:e2e`; `check` now runs the unit tests too.
+- `npm run check` and `npm run build` pass. `npm run test:e2e` fails as expected, because Chromium can't be downloaded yet. T-038 verifies it after the container rebuild.
+- **Next:** T-038 (bake Chromium into the image), then T-005 (Makefile).
+
 ## 2026-09-28 (tooling)
 - Added the `/milestone [M#] [--commit]` skill (`.claude/skills/milestone/SKILL.md`). It works through all open tasks of one milestone in a single run, reusing the per-task steps from `/next-task`. Tasks marked "Optional" are always included. No task ID; `tasks.md` is unchanged.
 
