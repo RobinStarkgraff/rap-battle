@@ -383,3 +383,19 @@ and are marked "superseded by D-###".
   - Every season round is played.
 
   The full list is in `docs/playtest-1.md`.
+- **D-060 (2026-09-29): Design wrap-up: `docs/game-design.md` is v1, and M2 is done (T-052).**
+  A consistency pass with no new game rules, only one reading for each gap:
+  - A **crew state** table in §2: `wallet`, `hallOfFame` and a crew `record` with titles (§7
+    already sent titles there). The win bonus and standings come from the league's results.
+  - One **season end** order for the whole league in §7 (titles, retirement, ageing, salaries,
+    divisions, schedule); §3 and §6 point to it.
+  - The **league seed** is rolled at league creation and stored in the league state; the season
+    seed is derived from it. The **battle seed** is agreed after lock-in (T-027), so it is unknown
+    while shopping, and the host stands in for AI-run crews.
+  - `xp` also comes from abilities (Studio Session), and it counts like battle xp. At 12 xp the
+    growth step is applied before the second ability is learned.
+  - The unused `allCrewMCs` target is dropped: a target is added only with an ability that needs it.
+  - The stage name retry count is the tunable `NAME_REROLLS = 10`.
+  - The M3 to M7 exit criteria and tasks now describe the player market, the league with bots and
+    the league state save, not the old Super Auto Pets shop. New T-055: one pure `playRound()`
+    shared by the headless test, the local league and the host.

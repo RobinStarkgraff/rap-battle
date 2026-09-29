@@ -1,11 +1,13 @@
 # Game design v0: Mic Drop League
 
-> **Status: draft.** M1 wrote this draft. In M2 it is reviewed with the user one topic at a
-> time (T-044 to T-052), so any section may still change.
+> **Status: v1, settled with the user.** M1 wrote the first draft; M2 reviewed it with the
+> user one topic at a time (T-044 to T-050), checked it in a paper playtest (T-051) and made
+> it consistent (T-052). The rules change from here only through a decision in
+> `plan/decisions.md`, and the balance numbers through the balance pass (T-031).
 
-The rules of the game, written from the answered questions and decisions D-007 to D-013.
-M3 and M4 build `core/` from this document. If the code and this document disagree, fix one
-of them in the same change.
+The rules of the game, written from the answered questions in `plan/open-questions.md` and
+the decisions in `plan/decisions.md` (D-007 onwards). M3 and M4 build `core/` from this
+document. If the code and this document disagree, fix one of them in the same change.
 
 > **Every number here is a tunable default.** Numbers are written as `NAME = value`, and the
 > same names are collected in [Tunables](#10-tunables). In `core/` they become one typed
@@ -17,7 +19,7 @@ of them in the same change.
 Settled with the user in T-044 (D-026). Every rule in this document should serve at least one
 pillar and break none of the non-goals. Later design sessions check their answers against this section.
 
-**Fantasy: you are the label boss.** You don't rap. You scout talent in the shop, set the
+**Fantasy: you are the label boss.** You don't rap. You scout and sign talent in the player market, set the
 lineup, pay the salaries, and then watch your crew go to war on stage.
 
 **Tone: affectionate comedy.** Over the top and funny, but it loves hip-hop: punny stage
@@ -33,7 +35,7 @@ point between two rounds must be a clean place to stop and come back to later.
    and a battle record that grows over its career (see [Unit state](#unit-state)). Crews
    persist and grow over weeks, so it should sting a little when a veteran retires.
 2. **Clever combos.** Most of the fun is in finding synergies between units, positions
-   and triggers in the shop, and seeing them go off in battle. Abilities should create
+   and triggers in the shop phase, and seeing them go off in battle. Abilities should create
    choices, not just add raw stats.
 3. **Watchable, funny battles.** The battle playback should be worth watching, not
    skipping: every bar, choke and ability should read clearly on screen and land
@@ -41,10 +43,11 @@ point between two rounds must be a clean place to stop and come back to later.
 
 ### Design principles
 
-- **Skill-led, with some luck.** As in Super Auto Pets, the shop rolls are random and the
-  battle follows from the lineups plus a shared seed. The better manager wins most of the time, and upsets
-  still happen.
-- **No timer.** The shop has no clock. Players take as long as they want to think.
+- **Skill-led, with some luck.** The rookies, scouted units and growth rolls are random, and
+  the battle follows from the lineups plus a shared seed. The better manager wins most of the
+  time, and upsets still happen.
+- **No timer by default.** The shop has no clock. Players take as long as they want to think;
+  only the host can turn on an optional timer (see [Slow players](#slow-players-and-the-optional-timer)).
 - **Investment snowballs.** Building a strong crew over many rounds is meant to pay
   off, and there's no catch-up gold for losing crews. Two things still move crews
   along: **ageing and retirement** (D-012), so no lineup lasts forever, and **divisions**, so
@@ -101,6 +104,19 @@ colours and a random logo from the seeded RNG. A generated name that is taken is
 again like a stage name (see [Stage names](#stage-names)). When a leaving player's crew
 becomes a bot (see [Joining and leaving](#joining-and-leaving)), it keeps its identity.
 
+### Crew state
+
+Besides its identity and its units in the slots and on the bench, a crew keeps:
+
+| Field | Meaning |
+|---|---|
+| `wallet` | Its gold, kept between rounds and sittings (see [Round flow](#3-round-flow)) |
+| `hallOfFame` | The retired units that played for it (see [Age and retirement](#6-age-and-retirement)) |
+| `record` | Its titles (champion and division wins, with the season) and its results per season. Cosmetic |
+
+Whether the crew won its last battle (for `WIN_BONUS`) and its standing come from the
+league's results, not from the crew. A crew's scouted units exist only during the shop phase.
+
 | List | Entries |
 |---|---|
 | Bot crew adjectives | Midnight, Golden, Crunchy, Rowdy, Tiny, Electric, Sleepy, Cosmic, Soggy, Funky, Unstoppable, Suspicious |
@@ -120,12 +136,12 @@ keeps this state for its whole career:
 | `flow` | MCs only. Damage dealt per bar. Rolled from the archetype's range, grows with experience |
 | `confidence` | MCs only. Damage an MC can take before choking. Rolled like `flow` |
 | `abilities` | One ability from the archetype's pool at first, each with a `power` of 1 to `MAX_POWER = 3`. A second one is learned at an XP milestone (see [Growth](#growth)) |
-| `xp` | Battles played in an active slot (see [Growth](#growth)) |
+| `xp` | Experience: +1 per battle played in an active slot, plus xp from abilities such as Studio Session (see [Growth](#growth)) |
 | `age` | In years; one season is one year. Rolled from the seeded RNG when the unit is generated, with younger ages more likely (see [Age and retirement](#6-age-and-retirement)) |
 | `salary` | Set from the unit's value when it is signed, and renegotiated at each season end (see [Salary](#51-salary)) |
 | `look` | A 32-bit seed rolled when the unit is generated. `render/` draws the unit's whole appearance from it, so it looks the same on every peer and for its whole career (see [Presentation](#11-presentation)). It has no effect on the rules |
 | `stageName` | A generated stage name, rolled from the seeded RNG when the unit is generated and kept for its whole career (see [Stage names](#stage-names)) |
-| `record` | Career stats: battles played, bars landed, chokes, wins, and the crews it played for (with its battles and seasons for each). Shown on the unit, and kept in the hall of fame after it retires |
+| `record` | Career stats: battles played, bars landed, chokes, wins, and the crews it played for (with its battles and seasons for each). Updated from the event log after each battle (see [Round flow](#3-round-flow)). Shown on the unit, and kept in the hall of fame after it retires |
 
 Buffs that happen **in battle** last until the end of that battle. Buffs that happen in the
 **shop or upkeep** are permanent.
@@ -146,23 +162,25 @@ phases, with the AI making the shop decisions:
 2. **Shop**: the [player market](#4-shop-phase-the-player-market) runs its bidding rounds;
    in between, each player can scout, sign scouted units, release units and arrange the
    lineup. The UI always shows the **payroll** that is due at lock-in. There is no timer by
-   default (see [Slow players](#slow-players-and-the-optional-timer)). All random draws come
-   from seeds derived from the league seed, the round and the crew (and, for scouting, how
-   often the crew has scouted this round), so replaying a round gives the same market.
+   default (see [Slow players](#slow-players-and-the-optional-timer)). All random draws
+   outside the battle come from seeds derived from the **league seed** (rolled once when the
+   league is created and kept in the [league state](#league-state-and-hosting)), the round and,
+   where it applies, the crew (and, for scouting, how often the crew has scouted this round),
+   so replaying a round gives the same market.
 3. **Lock-in**: possible once the bidding has ended. The payroll (see [Salary](#51-salary))
    is paid from the wallet. Lock-in is only possible while `wallet >= payroll`. Releasing
    units always makes that reachable, because it lowers the payroll. The locked crew is a
    snapshot that is sent to the opponent (D-004).
 4. **Battle**: once **every** crew in the league has locked in, all of the round's battles
-   start. `simulateBattle(crewA, crewB, seed)` runs on the peers and the event log is played
+   start. Each battle's seed is agreed by its two crews only after both have locked in, so
+   nobody knows it while shopping; for a crew run by an AI manager, the host stands in (T-027).
+   `simulateBattle(crewA, crewB, seed)` runs on the peers and the event log is played
    back. Everyone watches their own battle at the same time.
-5. **Result**: league points are awarded, the units' `record`s are updated and XP is given
-   out (see [Growth](#growth)). If this was the last round of the season, the **season end**
-   runs next: retirements, then ageing (see [Age and retirement](#6-age-and-retirement)),
-   then salary renegotiation, then promotion and relegation (see [Seasons](#seasons)). The
-   host sends the new league state to every member, and everyone saves it (see
-   [League state](#league-state-and-hosting)). After the result is saved the round is
-   complete, and it's a clean place to stop.
+5. **Result**: league points are awarded, the units' `record`s are updated from the event
+   logs and xp is given out (see [Growth](#growth)). If this was the last round of the
+   season, the [season end](#season-end) runs next. The host sends the new league state to
+   every member, and everyone saves it (see [League state](#league-state-and-hosting)). After
+   the result is saved the round is complete, and it's a clean place to stop.
 
 A brand new crew has no units, `STARTING_GOLD = 40` gold (above the wallet cap once, so it
 can sign about five average units at their ask, about 24 gold, and pay its first payroll,
@@ -217,7 +235,8 @@ The shop phase starts with up to `BID_ROUNDS = 3` **bidding rounds** on the publ
 
 Scouting, signing scouted units, releasing and arranging are allowed at any time in the shop
 phase. While a crew's sealed bids are open, it can only do these in ways that keep every open
-bid valid (affordable, with a place for the unit). Units signed in the shop phase play in that round's battle. Bids and results travel
+bid valid (affordable, with a place for the unit). Units signed in the shop phase play in
+that round's battle if they are in an active slot at lock-in. Bids and results travel
 through the host, which resolves them with a pure `core/` function, so every peer agrees
 (D-040). A signed unit triggers `sign` abilities.
 
@@ -245,7 +264,9 @@ Units get better by playing (D-041):
   (seeded pick). A support unit gets +1 `power` on one of its abilities below `MAX_POWER`
   (seeded pick); if all are maxed, the step does nothing.
 - At `SECOND_ABILITY_XP = 12` xp a unit learns a **second ability**, drawn at random from its
-  archetype's pool (not its first one), at power 1.
+  archetype's pool (not its first one), at power 1. 12 xp is also a growth step, which is
+  applied first.
+- xp from abilities (Studio Session) counts the same as xp from battles.
 - Growth changes the unit's value, but its salary only changes at the season end.
 
 ## 5. Battle: "front MCs clash"
@@ -385,10 +406,10 @@ only [growth](#growth) does.
   It shows a "farewell tour" badge for that whole season; the rules don't change. Units
   normally reach it at a season end, where it is announced along with the season results. A
   unit generated or signed at that age is on its farewell tour right away.
-- **Season end**, after the season's last round, in this order: every unit on its farewell
-  tour **retires** (in crews and on the public list); then every remaining unit's age goes up
-  by 1, and the units whose last season starts now are announced; then every crew unit's
-  salary is renegotiated (see [Salary](#51-salary)).
+- **Season end**, after the season's last round (the full order is in
+  [Season end](#season-end)): every unit on its farewell tour **retires** (in crews and on the
+  public list); then every remaining unit's age goes up by 1, and the units whose last season
+  starts now are announced; then every crew unit's salary is renegotiated (see [Salary](#51-salary)).
 - A retiring unit leaves the game. It pays nothing out, as releasing doesn't either (D-042).
 - **Hall of fame.** Each crew keeps a hall of fame. When a unit retires, from a crew or from
   the public list, it goes into the hall of fame of **every crew it played for** (D-056): its
@@ -428,15 +449,29 @@ A **member** is a crew plus who runs it:
 | Topic | Rule |
 |---|---|
 | Length | A **double round robin** inside each division: every pair meets twice. If that is fewer than `MIN_SEASON_ROUNDS = 3` rounds, it repeats until the season reaches that many (2 members play 3 rounds). Every round of the season is played, even once the division winner is decided. 4 members play 6 rounds and 6 members play 10 |
-| Pairing | The circle method, rotated by the season seed, so the pairings are deterministic and fair. The second half repeats the first |
+| Pairing | The circle method, rotated by the season seed (derived from the league seed and the season number), so the pairings are deterministic and fair. The second half repeats the first |
 | Points | Win `POINTS_WIN = 3`, loss 0. Battles can't end drawn (D-035), so there are no draws |
 | Tiebreaks | Head-to-head points, then total MC margin, then a seeded coin flip |
 | Catch-up | None. Crews are meant to snowball (see [Pillars](#pillars)), and divisions keep strong and weak crews apart |
 
 A season usually spans several sittings, and one season is one year of the units' age. A
-season ends after its last round. The season end first retires the units on their farewell
-tour and ages everyone else (see [Age and retirement](#6-age-and-retirement)), then applies
-promotion, relegation and a new split; the next season starts at the next round.
+season ends after its last round, and the next season starts at the next round.
+
+### Season end
+
+The season end runs once for the whole league, right after the result of the season's last
+round, in this order:
+
+1. **Titles**: the final standings are fixed, and each division winner (and the champion)
+   gets its title in the crew's `record`.
+2. **Retirement**: every unit on its farewell tour retires, from crews and from the public
+   list, and enters the hall of fame of every crew it played for (see [Age and retirement](#6-age-and-retirement)).
+3. **Ageing**: every remaining unit, in crews and on the public list, gets one year older.
+   The new farewell tours are announced.
+4. **Salaries**: every crew unit's salary is renegotiated from its value (see [Salary](#51-salary)).
+5. **Divisions**: promotion and relegation, then the new split, newcomers who waited join the
+   bottom division, and bots pad every division (see [Divisions](#divisions)).
+6. **Schedule**: the new season's pairings are drawn from the season seed.
 
 ### Joining and leaving
 
@@ -467,9 +502,9 @@ gets the same result.
 
 ### League state and hosting
 
-The **league state** is the whole league: the members, every crew (units, wallet, hall of fame), the
-player market's public list, the divisions, the season schedule, the results so far, the standings and the
-number of the last completed round. It is also each player's save (D-031):
+The **league state** is the whole league: the league seed, the members, every crew (identity,
+units, wallet, hall of fame, record), the player market's public list, the divisions, the season
+number and schedule, the results so far, the standings and the number of the last completed round. It is also each player's save (D-031):
 
 - After every completed round the host sends the new league state to every connected member,
   and each one stores it locally. Crews are part of it, so the host can run absent players' crews.
@@ -604,7 +639,7 @@ prefixes plus the archetype's own; the word comes from the shared words plus the
 own, uniformly. Examples: *Lil Syntax*, *MC Thunderclap*, *Big Mood*, *Beats by Snare*, *Biscuit*.
 
 - No two units in a league share a stage name. If a roll is taken, it is rolled again, up
-  to 10 times; after that the smallest free numeral is added (*Biscuit II*, *Biscuit III*).
+  to `NAME_REROLLS = 10` times; after that the smallest free numeral is added (*Biscuit II*, *Biscuit III*).
 - Names are invented and never the name of a real artist (see [Non-goals](#non-goals)). Words
   that complete a real artist's name with one of the prefixes are left out of the lists.
 
@@ -686,12 +721,14 @@ learned them.
   behind it when it choked),
   `allFriendsBehind`, `triggeringFriend` (the MC that caused the trigger),
   `randomFriendOnStage`, `randomOtherCrewMC` (stage or bench, not this unit),
-  `randomCrewMC` (stage or bench), `allCrewMCs` (stage and bench).
+  `randomCrewMC` (stage or bench).
 - Enemy: `enemyFront`, `enemyBehindFront` (the second enemy MC on stage), `randomEnemy` (on
   stage), `allEnemies`.
 - Crews (for `hype` and `gold`): `ownCrew`, `enemyCrew`.
 - If a target doesn't exist (for example, no MC behind), the effect does nothing.
   Random targets use the seeded RNG.
+- Every target is used by at least one ability in §8. A new target is added here only
+  together with the ability that needs it.
 
 ### Rules for new abilities
 
@@ -739,7 +776,9 @@ const storyteller: ArchetypeDef = {
 
 ## 10. Tunables
 
-Every name above with its default. `core/` keeps them in one typed table.
+Every name above with its default. `core/` keeps them in one typed table (T-012). The
+render constants of [Presentation](#11-presentation) are not in it. Stat ranges and ability
+values live in the archetype and ability tables of §8.
 
 | Name | Default | Section |
 |---|---|---|
@@ -762,15 +801,16 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `MAX_POWER` | 3 | Unit state, Growth |
 | `GROWTH_XP` | 3 | Growth |
 | `SECOND_ABILITY_XP` | 12 | Growth |
-| `MAX_TURNS` | 40 | Battle |
+| `MAX_TURNS` | 40 | Battle (a safety limit; D-054 aims for 6 to 12 turns) |
 | `HYPE_MAX` | 10 | Battle |
 | `HYPE_PER_BAR` / `HYPE_PER_DISS` / `HYPE_PER_CHOKE` | 1 / 1 / 2 | Battle |
 | `HYPE_LOSS_ON_CHOKE` | 2 | Battle |
 | `SALARY_PER_RATING` | 0.25 (rounded up) | Salary |
 | `BENCH_SALARY_FACTOR` | 0.5 (rounded down) | Salary |
-| `SIGN_AGE_MIN` | 18 | Retirement |
+| `SIGN_AGE_MIN` | 18 | Age and retirement |
+| `MC_RETIRE_AGE` / `SUPPORT_RETIRE_AGE` | 23 / 25 | Age and retirement |
 | `NAME_PREFIX_CHANCE` | 0.6 | Stage names |
-| `MC_RETIRE_AGE` / `SUPPORT_RETIRE_AGE` | 23 / 25 | Retirement |
+| `NAME_REROLLS` | 10 | Stage names, Crew identity |
 | `DIVISION_MAX` | 6 | League |
 | `MIN_SEASON_ROUNDS` | 3 | League |
 | `POINTS_WIN` | 3 | League |
@@ -902,4 +942,11 @@ audio files.
 
 ## 12. Still open
 
+No design questions are open. Two technical questions remain for M6, in `plan/open-questions.md`:
+
 - Q-015: what happens when two sittings play the same league at the same time and their saves fork?
+- Q-009: is the free public PeerJS signalling server acceptable, or do we host our own?
+
+Left to the balance pass (T-031), not open questions: the stat ranges and ability values, the
+economy numbers, and the power 1 / 2 / 3 values of Studio Session, Voice Lessons and
+Negotiator, where power 2 is the same as power 1 for now.

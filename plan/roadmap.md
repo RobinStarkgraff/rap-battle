@@ -8,10 +8,10 @@ layer on top.
 |---|---|---|
 | M0 | Foundation & tooling | done |
 | M1 | Game design v0 | done |
-| M2 | Design iteration with the user | in progress |
+| M2 | Design iteration with the user | done |
 | M3 | Core: battle simulation | not started |
 | M4 | Core: shop, crew upkeep & league | not started |
-| M5 | Playable single-player (vs. bot) | not started |
+| M5 | Playable single-player (league vs. bots) | not started |
 | M6 | Peer-to-peer multiplayer | not started |
 | M7 | Juice & polish | not started |
 | M8 | Release & playtest | not started |
@@ -52,37 +52,52 @@ rule the doc leaves undefined. The tasks of M3 and later match the new design.
 
 ## M3: Core: battle simulation
 **Goal:** `simulateBattle(crewA, crewB, seed) → BattleEvent[]`, pure and deterministic.
-**Exit criteria:** seeded RNG, crew and unit data model, ability trigger system, and the
-"front MCs clash" battle style behind a `BattleStyle` interface are in place. Tests cover
+**Exit criteria:** seeded RNG; the crew and unit data model (`docs/game-design.md` §2); the
+data tables for the 10 archetypes, the 32 abilities, the name lists and the tunables (§8,
+§10); the ability system with its 8 triggers, conditions, fixed and hype-based values, 5
+effects and targets (§9); and the "front MCs clash" battle style behind a `BattleStyle`
+interface, with alternating turns, hype meters and the no-draw end rules (§5). Tests cover
 each ability, check that the same seed always gives the same event log, and include a
-property test that every battle ends.
+property test that every battle ends with exactly one winner.
 
 ## M4: Core: shop, crew upkeep & league
 **Goal:** the complete rules of an endless league, without any UI.
-**Exit criteria:** the player market (generation, supply, scouting, bidding rounds, release),
-arranging slots and bench, growth, gold income, salaries, season-end ageing and retirement, league divisions with
-standings, pairing and promotion/relegation, and a versioned crew save format. A headless
-test can play several league seasons between bots.
+**Exit criteria:** the player market (unit generation with stage names, supply, scouting,
+sealed bidding rounds, release), arranging slots and bench, upkeep (income, `upkeep`
+abilities, wallet cap), payroll at lock-in, growth and the second ability, the season end
+(titles, retirement into the halls of fame, ageing, salary renegotiation), league divisions
+padded with bots, the double round robin, standings and promotion/relegation, joining and
+leaving, the AI manager, one pure function that plays a whole league round, and a versioned,
+zod-validated league state save. A headless test lets AI managers play several league
+seasons.
 
 ## M5: Playable single-player
-**Goal:** a person can play league rounds in the browser against a bot or ghost crew.
-**Exit criteria:** Phaser shop scene (drag to buy/reorder, sell, roll, freeze), match
-scene that plays back the event log with tweens, result and standings screens, and
-procedural shape art for every crew unit. A Playwright smoke test clicks through one round.
+**Goal:** a person can play league rounds in the browser in a local league filled with bots,
+and come back to it later.
+**Exit criteria:** title screen, crew founding (name, colours, logo) and a new local league
+with bots; the home hub with its Market (scouting table, bidding rounds, scouting), Lineup
+(drag and drop, release), League and Hall of Fame tabs and the Lock in button; the battle
+scene that plays back the event log with tweens and battle text; the result screen with its
+headline and MVP; paper-cut figures drawn from each unit's `look` seed, and crew logos; the
+league saved in the browser. A Playwright smoke test clicks through one full round.
 
 ## M6: Peer-to-peer multiplayer
-**Goal:** a group of friends plays a session league using a room code.
-**Exit criteria:** PeerJS lobby (host creates a code, guests join), the host runs the league
-(pairings, standings, divisions), zod-validated message protocol with a version handshake,
-shared seed agreement, simultaneous lock-in, and a result-hash check that detects desyncs.
-Disconnects are handled and the player gets feedback. A Playwright test plays a league
-round with three or more tabs.
+**Goal:** a group of friends plays rounds of their persistent league together, using a room code.
+**Exit criteria:** PeerJS lobby (any member hosts with their saved league, guests join by
+code, the newest league state wins); a zod-validated message protocol with a version
+handshake; the host collects and resolves the bidding rounds, runs the AI managers for bots
+and absent players, and sends the league state to everyone after each round; battle seed
+agreement after lock-in, and simultaneous lock-in; a result-hash check that detects desyncs;
+who is still shopping, nudges and the optional shop timer; disconnects handled (a host drop
+voids the round, a player drop locks the current lineup) with feedback for the player; a
+"while you were away" summary. A Playwright test plays a league round with three or more tabs.
 
 ## M7: Juice & polish
 **Goal:** make it feel good. Only features that fit the remaining jam time.
-**Exit criteria (pick by priority):** hit and ability effects, screen shake, procedural
-sound via WebAudio, a tutorial or onboarding hint, a colour palette and theme pass,
-balance tuning using headless bot-vs-bot statistics.
+**Exit criteria (pick by priority):** balance tuning using headless AI-manager statistics
+(battle length, economy, salary and retirement pacing), hit and ability effects, screen
+shake, the procedural beat and SFX (D-051), a tutorial or onboarding hint, a colour palette
+and theme pass, and a second battle style through the `BattleStyle` interface.
 
 ## M8: Release & playtest
 **Goal:** a submitted, playable build.

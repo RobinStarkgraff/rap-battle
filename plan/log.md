@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-052, design wrap-up; M2 done)
+- Consistency pass over `docs/game-design.md`, now marked **v1**. Added a crew state table (wallet, hall of fame, a crew `record` for titles), one league-wide season-end order in §7, the league, season and battle seeds, xp from abilities, `NAME_REROLLS`, and a §12 that lists what is left to T-031. Dropped the unused `allCrewMCs` target. No new game rules (D-060).
+- `roadmap.md`: M2 is **done**. The M3 to M7 exit criteria now match the design (the M5 shop scene still said "buy, sell, roll, freeze").
+- `tasks.md`: T-011 to T-014, T-016 to T-019, T-023, T-024, T-027, T-031, T-034 to T-036 reworded; new **T-055** `playRound()` (M4); T-012 moved into Now.
+- **Next:** M3 with T-010 (seeded PRNG).
+
 ## 2026-09-29 (T-051, paper playtest)
 - Played a 2-crew league by hand from `docs/game-design.md`: 3 rounds plus the season end, with crew B run by the greedy AI policy. The record is in `docs/playtest-1.md`.
 - **Economy stalled** as written: 25 gold couldn't pay for a first lineup plus its payroll, and 10 income couldn't carry 5 salaries. The user chose more income: `BASE_INCOME = 16`, `STARTING_GOLD = 40` (D-053).
