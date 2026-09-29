@@ -399,3 +399,46 @@ and are marked "superseded by D-###".
   - The M3 to M7 exit criteria and tasks now describe the player market, the league with bots and
     the league state save, not the old Super Auto Pets shop. New T-055: one pure `playRound()`
     shared by the headless test, the local league and the host.
+- **D-061 (2026-09-29): The seeded RNG is mulberry32; `fork(label)` and `deriveSeed()` hash the
+  seed with labels (T-010).** `createRng(seed)` returns a plain object of functions (no class).
+  `fork(label)` depends only on the stream's seed and the label, not on how far the stream has
+  advanced, so a named sub-stream (for example the battle one-liners from the battle seed) is
+  the same wherever it is forked. `deriveSeed(seed, ...labels)` mixes FNV-1a label hashes with the
+  murmur3 finaliser, for the market, season and scouting seeds of §3. A test pins the first
+  outputs, because changing the stream would change every saved league's rolls. Alternatives were
+  xorshift128+ (needs 64-bit state or BigInt) and forks that draw from the parent (order-dependent).
+- **D-062 (2026-09-29): The core data model (T-011).** The id lists (abilities, archetypes,
+  triggers, targets, colours, logos) are `as const` arrays, so the types come from them and tests
+  can check coverage at runtime; the data tables are `Record<Id, Def>`, so the compiler checks
+  they are complete. `Unit` is a union on `role`: only an `McUnit` has `flow` and `confidence`,
+  and its `archetype` is an MC archetype. `abilities` is a tuple of one or two. A crew's slots are
+  tuples (`[McUnit | null ×3]`, `[SupportUnit | null ×2]`) and the bench a list of at most
+  `BENCH_SIZE`. `simulateBattle` takes a `BattleLineup` (id and active slots), not a whole crew.
+  An ability has one `Effect`, a union on `kind` that carries its target and `Amount`
+  (`byPower` values plus an optional `hypeDivisor`); `gold` has no target, it always goes to the
+  own crew. The event log names crews `'a'` and `'b'` and reports actual damage and clamped hype
+  changes. Colour and logo ids live in `core/`; their hex values belong to `render/` (T-020).
+- **D-063 (2026-09-29): Effects return operations; growth is built with the `xp` effect (T-013).**
+  An effect function doesn't change state: it picks its targets and returns operations (`buff`,
+  `damage`, `hype`, `gold`, `xp`). The battle applies them one at a time, so chokes are checked
+  after every single effect (§5), and outside a battle the crew applies them for good. A diss
+  returns its hits in stage order and then its one cheer (`HYPE_PER_DISS`), only if it dealt
+  more than 0 to someone. `gainXp()` (growth steps, then the second ability at 12 xp) is part of
+  this task because the `xp` effect applies growth at once; T-018 reuses it after battles.
+  `friend` means any *other* MC of the crew (the doc said "any friendly MC"; only matters for an
+  MC with a `friend` ability, which none has yet). `sign` abilities resolve at the unit's power,
+  which is always 1 for the only one (Feature Verse, an MC ability). Outside a battle the view's
+  "stage" is the crew's MCs in active slots, and `CrewEvent`s report what happened for the UI.
+- **D-064 (2026-09-29): How the battle engine orders what happens (T-014).** One reading for
+  each detail §5 leaves open, all pinned by tests in `frontMcsClash.test.ts`:
+  - A bar's own hype (`HYPE_PER_BAR`) comes right after the bar, before its `barLanded` abilities.
+  - On a choke: the `choke` event, the MCs close up, the choking crew loses hype, the other crew
+    gains it, then (if a crew is out) the battle ends at once; otherwise the `choke` abilities are
+    queued, and if it was the front MC, the new front MC's `front` event and `takeFront`.
+  - A diss's hits land in stage order, each checked for a choke, and its one cheer comes after them.
+  - `oncePerBattle` is used up when the ability triggers, not when it resolves.
+  - A value-0 buff or diss still emits its event (it shows on screen) but triggers nothing.
+  - The coin flip is the battle stream's first draw; random targets draw from the same stream.
+  - The engine keeps mutable state inside `simulateBattle` only; its inputs are never changed.
+  - A queue safety limit (10 000 steps) throws, because the §9 rules bound every chain, so hitting
+    it would be a data bug.

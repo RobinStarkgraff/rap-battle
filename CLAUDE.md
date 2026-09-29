@@ -38,7 +38,7 @@ The full workflow is in `plan/README.md`.
 ## Tech stack
 
 Decided (see `plan/decisions.md`, D-001 to D-006, D-014 and D-017). The toolchain is set up; see **Commands** below.
-Entry point: `index.html` → `src/app/main.ts`. Unit tests sit next to the code as `src/**/*.test.ts`; browser tests live in `e2e/`.
+Entry point: `index.html` → `src/app/main.ts`. Unit tests sit next to the code as `src/**/*.test.ts` (shared `core/` test builders are in `src/core/testing/`); browser tests live in `e2e/`.
 
 - **TypeScript 5.9** with `strict` plus extra flags (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, …), built and served by **Vite 8**
 - **Phaser 3** (3.90, not Phaser 4) for rendering, input and tweens. All visuals are drawn with `Graphics`/shapes/text.

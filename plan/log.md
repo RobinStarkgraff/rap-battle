@@ -2,6 +2,40 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-015, battle tests; M3 done)
+- `src/core/battle/abilities.test.ts`: one case per ability (a `Record<AbilityId, …>`, so a new ability without a test fails to compile), incl. slot conditions, crowd values, `oncePerBattle`, random targets and the 4 out-of-battle abilities, plus two abilities in learned order.
+- `src/core/battle/properties.test.ts`: 400 random battles plus 100 long ones (extra confidence) from `src/core/testing/randomLineup.ts`: same seed → same log, exactly one `end` naming a winner, turns alternate from the opener and stay within `MAX_TURNS`, end reason and margin match the stage replayed from the chokes, hype within 0–10, no bars by choked MCs, every end reason and all 28 in-battle abilities occur. One log is pinned as a snapshot.
+- Observed: no ordinary random battle reached `MAX_TURNS`, which fits D-054's short battles.
+- **M3 exit criteria**, checked one by one: seeded RNG ✓ (T-010); crew and unit model ✓ (T-011); data tables for 10 archetypes, 32 abilities, name lists and tunables ✓ (T-012); ability system with 8 triggers, conditions, fixed and hype values, 5 effects and targets ✓ (T-013); "front MCs clash" behind `BattleStyle` with alternating turns, hype meters and no-draw end rules ✓ (T-014); tests per ability, determinism and the one-winner property ✓ (T-015). `make check`, `make build` and `make test-e2e` pass.
+- **M3 is done; M4 is in progress.** Now: T-016, T-017, T-018. T-023 now also covers setting `GAME_TITLE` to *Mic Drop League*.
+- **Next:** T-016 (player market).
+
+## 2026-09-29 (T-014, `simulateBattle()`)
+- `src/core/battle/`: `state.ts` (battle state from the lineups), `fire.ts` (queues triggered abilities in resolution order, `oncePerBattle`), `stage.ts` (bars, disses, chokes, moving up, hype), `queue.ts` (FIFO queue, targets picked at resolution, ops applied one at a time), `frontMcsClash.ts` (setup, turns, turn-limit winner), `style.ts` (`BattleStyle`), `simulate.ts` (`simulateBattle`, `battleEnd`) (D-064).
+- `frontMcsClash.test.ts`: a full hand-computed log, opener order, move-up, empty slots, margin, hype clamping, the three end rules, chains stopped at the end, setup step order, `takeFront` once after a setup choke, queue order after a bar, and D-055. Test helpers in `src/core/testing/battle.ts`.
+- `make check` passes. **Next:** T-015 (per-ability, determinism and property tests).
+
+## 2026-09-29 (T-013, ability system)
+- `src/core/abilities/`: `amount.ts` (value by power plus `⌊H / N⌋`), `triggers.ts` (`triggersOn`, `slotConditionMet`), `targets.ts` (the 12 friend and enemy target functions over a `TargetView`, incl. a choked MC's place), `effects.ts` (the 5 named effect functions returning `EffectOp`s), `outOfBattle.ts` (`applySignAbilities`, `applyUpkeepAbilities` with `CrewEvent`s). `src/core/growth.ts`: `gainXp()` (D-063). `oncePerBattle` is battle state and comes with T-014.
+- Tests for each module; `docs/game-design.md` §9 now says `friend` is any *other* friendly MC.
+- `make check` passes. **Next:** T-014 (`simulateBattle()`).
+
+## 2026-09-29 (T-012, data tables)
+- `src/core/data/abilities.ts` (32 abilities with UI text), `archetypes.ts` (5 MC + 5 support, stat ranges, pools, name prefixes and words), `names.ts` (shared stage name lists, bot crew adjectives and nouns, colour and logo display names), `src/core/tunables.ts` (all of §10 as `TUNABLES`).
+- `data.test.ts`: every trigger, subject per MC trigger, slot condition, target and effect is used; pools have 4 abilities of their role incl. the shared one; MC abilities have one value; `hurt` disses are `oncePerBattle`; name lists have no duplicates. New `tooling/game-design-doc.test.ts` checks the doc's §10 table against `TUNABLES`.
+- Noted: `CREW_NAME_MAX = 20` applies to typed names only; generated bot names reach 24 characters (*The Unstoppable Mixtapes*), which the render work (T-020, T-023) must fit.
+- `make check` passes. **Next:** T-013 (ability system).
+
+## 2026-09-29 (T-011, core types)
+- `src/core/model/`: `ability.ts` (ids, triggers, subjects, `inSlot`/`oncePerBattle`, targets, `Amount`, the 5 effects, `AbilityDef`), `archetype.ts`, `unit.ts` (`McUnit | SupportUnit`, learned abilities, `record` with crew stints), `crew.ts` (identity, slots, bench, wallet, hall of fame, record, `BattleLineup`), `battleEvent.ts` (`BattleEvent` union), `crewUnits.ts` (active/all units, find, replace) (D-062).
+- `src/core/testing/fixtures.ts`: `mc()`, `support()`, `crew()` builders for tests. `model.test.ts` covers the id lists, type-level shapes and the crew helpers.
+- `make check` passes. **Next:** T-012 (data tables).
+
+## 2026-09-29 (T-010, seeded PRNG; M3 started)
+- `src/core/rng.ts`: mulberry32 `createRng()` with `next`, `int`, `chance`, `pick`, `weightedIndex`, `shuffle` and `fork(label)`, plus `deriveSeed(seed, ...labels)` (D-061). 15 tests in `rng.test.ts`, including pinned reference outputs. Exported from `core/index.ts`.
+- `make check` passes. M3 is **in progress**.
+- **Next:** T-011 (core types).
+
 ## 2026-09-29 (T-052, design wrap-up; M2 done)
 - Consistency pass over `docs/game-design.md`, now marked **v1**. Added a crew state table (wallet, hall of fame, a crew `record` for titles), one league-wide season-end order in §7, the league, season and battle seeds, xp from abilities, `NAME_REROLLS`, and a §12 that lists what is left to T-031. Dropped the unused `allCrewMCs` target. No new game rules (D-060).
 - `roadmap.md`: M2 is **done**. The M3 to M7 exit criteria now match the design (the M5 shop scene still said "buy, sell, roll, freeze").

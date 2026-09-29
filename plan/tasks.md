@@ -5,29 +5,23 @@ Next free ID: **T-056**
 
 ## Now
 
-- [ ] T-010 (M3) Seeded PRNG (e.g. mulberry32) with `fork()` for independent streams, plus tests
-- [ ] T-011 (M3) Core types: `ArchetypeDef`, `AbilityDef`, `Unit` (an individual: id, archetype, stats, 1–2 abilities with power in learned order, xp, age, salary, `look` seed, `stageName`, `record`), `Crew` (name, two colours and a logo, 3 MC + 2 support + 3 bench, wallet, hall of fame, `record` with titles; §2, D-052), `BattleEvent` (a discriminated union)
-- [ ] T-012 (M3) Data tables for the 10 archetypes, the 32 abilities, the stage name lists, the bot crew name lists, the crew colours and logos, and the tunables table (`docs/game-design.md` §2, §8, §10, §11; D-043, D-047, D-052). Test that every trigger, subject, position condition and target is used by some ability
-
-## Next
-
-- [ ] T-013 (M3) Ability system from data plus named effect and target functions (§9): the 8 triggers (`beforeBattle`, `battleStart`, `takeFront`, `barLanded`, `hurt`, `choke`, `sign`, `upkeep`) with `self`/`friend` subjects, the `inSlot` and `oncePerBattle` conditions, fixed and hype-based values by power (D-044), the `buff`, `diss`, `hype`, `gold` and `xp` effects (D-045), and units with two abilities (D-041)
-- [ ] T-014 (M3) `simulateBattle()` behind a `BattleStyle` interface with the "front MCs clash" style (D-010, §5): the setup steps, alternating turns (D-033), hype meters (D-034), the FIFO queue and choke rules from the playtest (D-055, D-059), the no-draw end rules and MC margin (D-035); emits an event log
-- [ ] T-015 (M3) Tests: one or more per ability, same seed gives the same log, property test that every battle ends with exactly one winner
-
-## Later
-
 - [ ] T-016 (M4) Player market in `core/`: unit generation from archetypes (role drawn 3 : 2, stats, first ability at power 1, weighted age, `look` seed, unique stage name), the public list (start pool per member, rookies per round, `POOL_MAX` at upkeep), rating with the youth premium, ask and personal scouting (D-039, D-040, D-042, D-046, D-047, D-058)
 - [ ] T-017 (M4) Bidding rounds as a pure function (affordability incl. payroll, highest bid, tie order, early end, won-unit placement), scouted signings, release to the pool, arranging slots and bench, and lock-in with the payroll (D-040, D-059)
 - [ ] T-018 (M4) Crew upkeep: gold income and win bonus, `upkeep` abilities, the wallet cap; `record` updates from the event log, xp, growth steps and the second ability after battles (D-041); the season end in its §7 order: titles, retirement (crews and pool) into every former crew's hall of fame, ageing, farewell-tour announcements and salary renegotiation (D-038, D-042, D-056)
+
+## Next
+
 - [ ] T-034 (M4) League rules in `core/`: divisions padded to one even size (auto-added bots with generated names, colours and logos, D-052, D-057), unique crew names, double round robin pairing with `MIN_SEASON_ROUNDS`, standings and tiebreaks, promotion, relegation and titles, newcomer takes over a bot, a leaving player's crew becomes a bot (§7, D-029)
 - [ ] T-035 (M4) League state save format (league seed, members, crews, public list, divisions, schedule, results; zod-validated, versioned) and localStorage save/load in `app/` (D-031)
 - [ ] T-055 (M4) `playRound()` in `core/`: one pure function that runs a whole league round on the league state (upkeep, rookies, the shop decisions it is given, lock-in, pairings, battles from given seeds, results, xp and the season end), so the headless test (T-019), the local league (T-023) and the host (T-036) share it (§3, §7)
 - [ ] T-019 (M4) AI manager (simple greedy bidding and scouting policy, seeded; define "best value" and how it orders its lineup, see `docs/playtest-1.md`) that runs filler bots and absent players' crews (D-030), plus a headless test where AI managers play a multi-season league through T-055
+
+## Later
+
 - [ ] T-020 (M5) Procedural shape art: a paper-cut figure generator drawn from the unit's `look` seed with the outfit in crew colours, the archetype icon badge and name plate, bling per growth step, farewell grey hair and sash; crew logos; the block party backdrop (`docs/game-design.md` §11, D-049)
 - [ ] T-021 (M5) Phaser Market and Lineup tabs: the sortable scouting table with a detail panel and bid input, bidding rounds and results, scouting, and drag and drop into the MC/support slots and the bench (D-050)
 - [ ] T-022 (M5) Phaser battle scene that plays back `BattleEvent[]` with tweens: the side-view face-off, turn-by-turn bars with comic words and damage numbers, ability banners, seeded one-liners, both hype meters with a reacting crowd, 2× speed, 30–60 s per battle (D-033, D-034, D-050)
-- [ ] T-023 (M5) Game-flow state machine in `app/`: title screen, crew founding (name, colours, logo), a new local league with bots, the home hub with its League and Hall of Fame tabs and Lock in button, and the headline result screen with MVP (D-050, D-052)
+- [ ] T-023 (M5) Game-flow state machine in `app/`: title screen, crew founding (name, colours, logo), a new local league with bots, the home hub with its League and Hall of Fame tabs and Lock in button, and the headline result screen with MVP (D-050, D-052). Also set `GAME_TITLE` in `core/index.ts` (still `rap-battle`) to *Mic Drop League* (D-048)
 - [ ] T-054 (M5) Comedy text tables in `render/`: comic hit words, one-liner templates for chokes, abilities and big hype swings, and tabloid result headlines, picked with a seed derived from the battle seed (invented lines only, `docs/game-design.md` §11)
 - [ ] T-024 (M5) Playwright test that clicks through one full round of a local league with bots
 - [ ] T-025 (M6) PeerJS wrapper with host/join by room code, and a lobby UI
@@ -46,6 +40,12 @@ Next free ID: **T-056**
 
 ## Done
 
+- [x] T-015 (M3) Tests: `battle/abilities.test.ts` has a case per ability in a `Record<AbilityId, …>` (so the compiler requires all 32) plus two-ability order; `battle/properties.test.ts` runs 500 random battles for determinism, one winner, alternating turns, end reasons that match the stage, hype and damage bounds, and a pinned log snapshot (2026-09-29)
+- [x] T-014 (M3) `simulateBattle(crewA, crewB, seed, style?)` in `src/core/battle/` behind a `BattleStyle` interface, with the "front MCs clash" style: setup steps, alternating turns, hype meters, the FIFO queue with choke, move-up and `oncePerBattle` rules, the no-draw end rules and MC margin; `battleEnd()` reads the result (D-064) (2026-09-29)
+- [x] T-013 (M3) Ability system in `src/core/abilities/`: amounts by power and hype, trigger matching with `self`/`friend`, the `inSlot` condition, named target and effect functions that return operations, `sign` and `upkeep` resolution with permanent buffs, gold and xp, and `gainXp()` with growth steps and the second ability (D-063) (2026-09-29)
+- [x] T-012 (M3) Data tables in `src/core/data/` (32 abilities, 10 archetypes with stage name words, shared prefixes and words, bot crew names, colour and logo names) and `src/core/tunables.ts`; tests check every trigger, subject, slot condition, target and effect is used, the pools, the name lists, and that §10 of the doc matches `TUNABLES` (2026-09-29)
+- [x] T-011 (M3) Core types in `src/core/model/`: ability model (triggers, subjects, conditions, targets, `Amount`, 5 effects), archetypes, `Unit` (MC/support union), `Crew` with identity, slots, bench, wallet, hall of fame and record, `BattleLineup`, `BattleEvent`, crew unit helpers and test fixtures (D-062) (2026-09-29)
+- [x] T-010 (M3) Seeded PRNG: mulberry32 `createRng()` with `int`, `chance`, `pick`, `weightedIndex`, `shuffle` and a stable `fork(label)`, plus `deriveSeed()` for league, round and crew seeds (D-061) (2026-09-29)
 - [x] T-052 (M2) Design wrap-up: consistency pass over `docs/game-design.md` (v1: crew state, one season-end order, league and battle seeds, xp from abilities, `NAME_REROLLS`, unused `allCrewMCs` dropped), M3–M7 exit criteria and tasks reworded, new T-055 (`playRound()`). M2 is done (D-060) (2026-09-29)
 - [x] T-051 (M2) Paper playtest: 3 rounds and a season end between two crews (`docs/playtest-1.md`). Fixed the economy (income 16, start 40), accepted short battles (6–12 turns), queued abilities of a choked MC still resolve, a hall of fame for every former crew, equal division sizes (Q-018), a bigger start pool with 3:2 roles, and 10 rule clarifications (D-053 to D-059) (2026-09-29)
 - [x] T-050 (M2) Design session 7: presentation. Title *Mic Drop League*, a 90s block party look with paper-cut figures rolled from a `look` seed and archetype badges, crew name/colours/logo, a home hub with tabs, side-view battle, scouting-table market, headline result screen, and procedural sound (D-048 to D-052, Q-010) (2026-09-29)

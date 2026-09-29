@@ -673,7 +673,7 @@ learned them.
 |---|---|---|
 | `beforeBattle` | once, after battle setup and before `battleStart` | – |
 | `battleStart` | once, after `beforeBattle` | – |
-| `takeFront` | an MC becomes the front MC, including the Opener at battle start | `self` or `friend` (any friendly MC) |
+| `takeFront` | an MC becomes the front MC, including the Opener at battle start | `self` or `friend` (any other friendly MC) |
 | `barLanded` | an MC drops a bar on its turn (ability damage doesn't count) | `self` or `friend` |
 | `hurt` | an MC takes damage from any source and still has confidence above 0 | `self` or `friend` |
 | `choke` | an MC reaches 0 confidence and leaves the stage | `self` or `friend` |
