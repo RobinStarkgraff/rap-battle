@@ -125,7 +125,7 @@ keeps this state for its whole career:
 | `salary` | Set from the unit's value when it is signed, and renegotiated at each season end (see [Salary](#51-salary)) |
 | `look` | A 32-bit seed rolled when the unit is generated. `render/` draws the unit's whole appearance from it, so it looks the same on every peer and for its whole career (see [Presentation](#11-presentation)). It has no effect on the rules |
 | `stageName` | A generated stage name, rolled from the seeded RNG when the unit is generated and kept for its whole career (see [Stage names](#stage-names)) |
-| `record` | Career stats: battles played, bars landed, chokes, wins, and the crews it played for. Shown on the unit, and kept in the crew's hall of fame after it retires |
+| `record` | Career stats: battles played, bars landed, chokes, wins, and the crews it played for (with its battles and seasons for each). Shown on the unit, and kept in the hall of fame after it retires |
 
 Buffs that happen **in battle** last until the end of that battle. Buffs that happen in the
 **shop or upkeep** are permanent.
@@ -137,17 +137,18 @@ machine in T-023). Crews run by an AI (see [AI managers](#ai-managers)) go throu
 phases, with the AI making the shop decisions:
 
 1. **Upkeep** (automatic)
-   1. Income: `BASE_INCOME = 10` gold, plus `WIN_BONUS = 2` if the crew won its last battle.
+   1. Income: `BASE_INCOME = 16` gold, plus `WIN_BONUS = 2` if the crew won its last battle.
       There is no catch-up income for losing crews (see [Pillars](#pillars)).
    2. `upkeep` abilities trigger (for example Negotiator's gold or Studio Session's xp).
    3. The wallet is capped at `WALLET_CAP = 20`, and anything above is lost.
-   4. New rookies enter the player market (see [Supply](#supply)).
+   4. New rookies enter the player market (see [Supply](#supply)). This step runs once per
+      league round for the whole league, not once per crew.
 2. **Shop**: the [player market](#4-shop-phase-the-player-market) runs its bidding rounds;
    in between, each player can scout, sign scouted units, release units and arrange the
    lineup. The UI always shows the **payroll** that is due at lock-in. There is no timer by
    default (see [Slow players](#slow-players-and-the-optional-timer)). All random draws come
-   from seeds derived from the league seed, the round and the crew, so replaying a round
-   gives the same market.
+   from seeds derived from the league seed, the round and the crew (and, for scouting, how
+   often the crew has scouted this round), so replaying a round gives the same market.
 3. **Lock-in**: possible once the bidding has ended. The payroll (see [Salary](#51-salary))
    is paid from the wallet. Lock-in is only possible while `wallet >= payroll`. Releasing
    units always makes that reachable, because it lowers the payroll. The locked crew is a
@@ -163,8 +164,10 @@ phases, with the AI making the shop decisions:
    [League state](#league-state-and-hosting)). After the result is saved the round is
    complete, and it's a clean place to stop.
 
-A brand new crew has no units, `STARTING_GOLD = 25` gold (above the wallet cap once, so it
-can sign a first lineup) and skips the first upkeep.
+A brand new crew has no units, `STARTING_GOLD = 40` gold (above the wallet cap once, so it
+can sign about five average units at their ask, about 24 gold, and pay its first payroll,
+about 14) and skips its first upkeep. The league's first round has no upkeep at all: the start
+pool (see [Supply](#supply)) takes the place of its rookies.
 
 ## 4. Shop phase: the player market
 
@@ -180,7 +183,7 @@ choice between a signing, a scout and a better unit's salary.
 |---|---|
 | **Public list** | The league-wide pool of free agents. Every member of every division sees the same list, with each unit's archetype, stats, abilities, age, record and **asking price** |
 | **Scouting** | `SCOUT_COST = 1` gold: generates `SCOUT_COUNT = 2` new units that **only this crew** sees. Scouting again replaces them. A scouted unit can be signed at its ask at any time during the shop phase, with no bidding. Unsigned scouted units **vanish** at lock-in |
-| **Release** | Free, with **no refund**. The unit returns to the public list as a free agent, with its stats, abilities, age, record and stage name |
+| **Release** | Free, with **no refund**. The unit returns to the public list at once as a free agent, with its stats, abilities, xp, age, `look`, record and stage name. It counts as the newest unit on the list |
 | **Arrange** | Free. Units move between MC slots, support slots (by role) and the bench |
 
 There is no freeze. A unit's **value** sets both its ask and its salary (settled in T-049,
@@ -202,7 +205,9 @@ The shop phase starts with up to `BID_ROUNDS = 3` **bidding rounds** on the publ
 1. Every crew places **sealed bids** at the same time: any number of bids, each at least the
    unit's ask, or a pass. A crew's bids must be affordable together: the wallet minus all
    its bids must still cover the payroll including every unit it bids on, and it needs a
-   free slot or bench place for each of them.
+   free slot or bench place for each of them. A won unit goes into the first free active slot
+   of its role (lowest slot number), or else the first free bench place, and the payroll
+   check counts it there.
 2. When every crew has bid or passed, the host reveals the bids. Each unit goes to its
    **highest bid**. Ties go to the crew ranked lower in the league (lower division, then
    lower position), then to a seeded coin flip. The winner pays its bid and the unit joins
@@ -211,20 +216,24 @@ The shop phase starts with up to `BID_ROUNDS = 3` **bidding rounds** on the publ
    `BID_ROUNDS` rounds, or earlier when a round has no bids at all.
 
 Scouting, signing scouted units, releasing and arranging are allowed at any time in the shop
-phase. Units signed in the shop phase play in that round's battle. Bids and results travel
+phase. While a crew's sealed bids are open, it can only do these in ways that keep every open
+bid valid (affordable, with a place for the unit). Units signed in the shop phase play in that round's battle. Bids and results travel
 through the host, which resolves them with a pure `core/` function, so every peer agrees
 (D-040). A signed unit triggers `sign` abilities.
 
 ### Supply
 
-- **At league creation** the public list gets `POOL_START_PER_MEMBER = 4` generated units per
-  member, so every new crew can sign a first lineup.
+- **At league creation** the public list gets `POOL_START_PER_MEMBER = 6` generated units per
+  member, so every new crew can sign a first lineup with some choice left.
 - **Each upkeep** `ROOKIES_PER_ROUND = 3` new units are generated into the public list.
 - **Released** units return to it as free agents. **Retired** units leave the game.
-- The list holds at most `POOL_MAX = 16` units. When it is over, the units that have been
-  on the list longest leave the game.
-- A generated unit's archetype is drawn uniformly, and its stats, first ability, age and
-  stage name are rolled from the seeded RNG. Every ability starts at power 1.
+- The list holds at most `POOL_MAX = 16` units. The cap is checked at each upkeep after the
+  rookies enter (so the start pool may be larger): the units that have been on the list
+  longest leave the game until it fits.
+- A generated unit's **role** is drawn with the weights `MC_WEIGHT : SUPPORT_WEIGHT = 3 : 2`,
+  matching the 3 MC and 2 support slots, then its archetype uniformly within that role. Its
+  stats, first ability, age and stage name are rolled from the seeded RNG. Every ability starts
+  at power 1. This applies to the start pool, rookies and scouted units alike.
 
 ### Growth
 
@@ -257,6 +266,10 @@ crew powers the abilities (D-034), and every battle has a **winner** (D-035).
    loser loses.
 4. `beforeBattle` abilities trigger (for example Hometown Crowd, so a crew can start with
    hype), then `battleStart` abilities, then the front MC of each crew triggers `takeFront`.
+   Each of these steps runs the queue empty before the next one starts. An MC triggers
+   `takeFront` every time it becomes the front MC. If an Opener chokes during setup, the MC
+   that moves up triggers `takeFront` then, and not a second time at this step. MCs can choke
+   in setup before they drop a bar (for example to Headliner or Battle Kid).
 
 ### Turns
 
@@ -271,9 +284,18 @@ opening crew, …) for the whole battle, whatever happens on stage. On a crew's 
    next MC of that crew moves up and triggers `takeFront`. It answers on its crew's next turn.
 
 Abilities can deal damage outside the bars as well (`diss`). Chokes are checked after every
-single effect, so a choke caused by an ability triggers its own `choke` abilities.
+single effect, so a choke caused by an ability triggers its own `choke` abilities. An ability
+that hits several MCs is one effect per target, in stage order.
 Triggered abilities go on one FIFO queue, which is processed until it is empty before the
-next turn starts.
+next turn starts. For a bar, the queue order is: the `barLanded` abilities, then the `hurt` or
+`choke` abilities, then the `takeFront` of the MC that moved up.
+
+- An ability's **targets are picked when it resolves**, not when it is queued.
+- If an MC **behind the front** chokes (from a diss), it leaves the stage and the MCs behind
+  it close up. The front MC doesn't change, so nothing triggers `takeFront`.
+- An ability that was **already queued when its MC choked still resolves** (D-055). Targets
+  relative to that MC (`friendBehind`, `allFriendsBehind`) use the place it held when it
+  choked, and a buff on the choked MC itself does nothing.
 
 ### Hype meter
 
@@ -284,7 +306,7 @@ way a battle reads as going one way or the other.
 | Event | Hype change |
 |---|---|
 | The crew's MC drops a bar | `+HYPE_PER_BAR = 1` |
-| One of the crew's abilities deals `diss` damage | `+HYPE_PER_DISS = 1` |
+| One of the crew's abilities deals `diss` damage | `+HYPE_PER_DISS = 1`, once per ability however many MCs it hits |
 | An enemy MC chokes | `+HYPE_PER_CHOKE = 2` |
 | One of the crew's own MCs chokes | `-HYPE_LOSS_ON_CHOKE = 2` (never below 0) |
 
@@ -318,8 +340,10 @@ All random choices (coin flip, random targets) come from the seed through the se
 ### Pacing
 
 - A battle should play back in **30 to 60 seconds** at normal speed, so a round still fits a
-  coffee break. Balancing (T-031) aims for a typical battle of about 12 to 24 turns, and
-  `MAX_TURNS` should almost never be reached.
+  coffee break. Battles are **short and punchy** (D-054): balancing (T-031) aims for a typical
+  battle of about 6 to 12 turns, each with about 4 to 6 seconds of screen time, and
+  `MAX_TURNS` should almost never be reached. (The T-051 playtest saw 3 to 8 turns with the
+  current stats.)
 - Playback has a **2× speed** button. There is no skip, because the battle is a pillar.
 - Every bar, choke, ability and big hype swing gets its own beat on screen (see [Presentation](#11-presentation)).
 
@@ -336,8 +360,9 @@ Every unit in the crew costs its `salary` at each lock-in (D-012):
 - On the bench a unit costs half, rounded down (`BENCH_SALARY_FACTOR = 0.5`), so a benched
   unit with salary 1 is free.
 
-With `BASE_INCOME = 10`, five average units in active slots cost about the whole income, and
-grown stars cost more than that. That is intended: gold is tight, and salary is the soft cap
+With `BASE_INCOME = 16`, five average units in active slots (salary about 3 each) cost most
+of the income and leave 1 to 3 gold, plus the win bonus, for signings; grown stars cost more
+than that (D-053). That is intended: gold is tight, and salary is the soft cap
 on crew power (T-047, T-048).
 
 ## 6. Age and retirement
@@ -365,9 +390,11 @@ only [growth](#growth) does.
   by 1, and the units whose last season starts now are announced; then every crew unit's
   salary is renegotiated (see [Salary](#51-salary)).
 - A retiring unit leaves the game. It pays nothing out, as releasing doesn't either (D-042).
-- **Hall of fame.** Each crew keeps a hall of fame: every retired unit's `stageName`,
-  archetype, final stats and abilities, seasons with the crew and final `record`. It is shown in the crew screen and
-  saved with the crew in the league state. It has no effect on the rules (pillar 1).
+- **Hall of fame.** Each crew keeps a hall of fame. When a unit retires, from a crew or from
+  the public list, it goes into the hall of fame of **every crew it played for** (D-056): its
+  `stageName`, archetype, final stats and abilities, its seasons and battles with that crew and
+  its final `record`. It is shown in the crew screen and saved with the crew in the league
+  state. It has no effect on the rules (pillar 1).
 
 ## 7. League
 
@@ -392,7 +419,7 @@ A **member** is a crew plus who runs it:
 |---|---|
 | Size | A division holds up to `DIVISION_MAX = 6` members. A group of 2 to 6 plays in one division |
 | Splitting | When the league is created, and at each season start, the league uses the fewest divisions that keep everyone at or below `DIVISION_MAX`, sized as evenly as possible. Members are placed by rank: division first, then final position. A new league orders its members with a seeded shuffle |
-| Even counts | Every division must have an even number of members. At season start, a division with an odd count gets one extra bot automatically, so there are **no byes** |
+| Equal, even sizes | At league creation and at each season start, bots are added until every division has the size of the largest one, rounded up to even (Q-018, D-057). So there are **no byes**, and every division plays the same number of rounds and reaches the league-wide season end together. For example 9 members split 5 + 4 and play as 6 + 6 with 3 bots |
 | Promotion | With more than one division, the top `PROMOTE_COUNT = 1` of each lower division goes up and the bottom `PROMOTE_COUNT` of each higher division goes down |
 | Titles | The winner of the top division is crowned **champion**, and every division winner gets a title. Both are cosmetic and go into the crew's `record` |
 
@@ -400,7 +427,7 @@ A **member** is a crew plus who runs it:
 
 | Topic | Rule |
 |---|---|
-| Length | A **double round robin** inside each division: every pair meets twice. If that is fewer than `MIN_SEASON_ROUNDS = 3` rounds, it repeats until the season reaches that many (2 members play a best of 3). 4 members play 6 rounds and 6 members play 10 |
+| Length | A **double round robin** inside each division: every pair meets twice. If that is fewer than `MIN_SEASON_ROUNDS = 3` rounds, it repeats until the season reaches that many (2 members play 3 rounds). Every round of the season is played, even once the division winner is decided. 4 members play 6 rounds and 6 members play 10 |
 | Pairing | The circle method, rotated by the season seed, so the pairings are deterministic and fair. The second half repeats the first |
 | Points | Win `POINTS_WIN = 3`, loss 0. Battles can't end drawn (D-035), so there are no draws |
 | Tiebreaks | Head-to-head points, then total MC margin, then a seeded coin flip |
@@ -622,7 +649,8 @@ learned them.
   `choke` only make sense with the subject `friend`.
 - Benched units' abilities don't trigger, except `sign` (a unit signed straight onto the
   bench still triggers it).
-- An MC that has choked doesn't trigger anything afterwards, except its own `choke`.
+- An MC that has choked doesn't trigger anything afterwards, except its own `choke`. Its
+  abilities that were already queued still resolve (see [Turns](#turns)).
 - When an MC chokes, the next MC of its crew moves up **at once**, before the queued `choke`
   abilities resolve, so "the new front MC" is already in place for them. Its `takeFront` goes on
   the queue after those `choke` abilities.
@@ -639,7 +667,8 @@ learned them.
 - **From hype**: `⌊H / N⌋` plus a number per `power`, where *H* is the crew's hype when the
   ability resolves and `N` is part of the ability's data. This is the only way hype changes an
   ability (D-044).
-- A value of 0 still resolves (it shows on screen) but changes nothing.
+- A value of 0 still resolves (it shows on screen) but changes nothing: a diss of 0 deals no
+  damage, so it triggers no `hurt` and gives no hype.
 
 ### Effects (5)
 
@@ -653,7 +682,8 @@ learned them.
 
 ### Targets
 
-- Friendly: `self`, `frontFriend`, `friendBehind` (the next MC behind this one on stage),
+- Friendly: `self`, `frontFriend`, `friendBehind` (the next MC behind this one on stage; for a choked MC, the one that was
+  behind it when it choked),
   `allFriendsBehind`, `triggeringFriend` (the MC that caused the trigger),
   `randomFriendOnStage`, `randomOtherCrewMC` (stage or bench, not this unit),
   `randomCrewMC` (stage or bench), `allCrewMCs` (stage and bench).
@@ -715,8 +745,8 @@ Every name above with its default. `core/` keeps them in one typed table.
 |---|---|---|
 | `BENCH_SIZE` | 3 | Crew |
 | `CREW_NAME_MAX` | 20 | Crew identity |
-| `STARTING_GOLD` | 25 | Round flow |
-| `BASE_INCOME` | 10 | Round flow |
+| `STARTING_GOLD` | 40 | Round flow |
+| `BASE_INCOME` | 16 | Round flow |
 | `WIN_BONUS` | 2 | Round flow |
 | `WALLET_CAP` | 20 | Round flow |
 | `SCOUT_COST` / `SCOUT_COUNT` | 1 / 2 | Market |
@@ -725,9 +755,10 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `ABILITY_RATING` | 2 | Market |
 | `ASK_PER_RATING` | 0.5 (rounded up) | Market |
 | `YOUTH_SEASONS_PER_RATING` | 2 (rounded down) | Market |
-| `POOL_START_PER_MEMBER` | 4 | Market |
+| `POOL_START_PER_MEMBER` | 6 | Market |
 | `ROOKIES_PER_ROUND` | 3 | Market |
 | `POOL_MAX` | 16 | Market |
+| `MC_WEIGHT` / `SUPPORT_WEIGHT` | 3 / 2 | Market |
 | `MAX_POWER` | 3 | Unit state, Growth |
 | `GROWTH_XP` | 3 | Growth |
 | `SECOND_ABILITY_XP` | 12 | Growth |
@@ -847,9 +878,10 @@ same lines. An ability shows its name in a banner over the unit that triggered i
 After the battle a **headline** in tabloid style ("MC WAFFLE ROASTS BIG PRETZEL!"), filled
 from templates with the winner's and loser's names (D-050). Then:
 
-1. the **MVP**: the MC with the most damage dealt in the battle (bars and disses), with
-   ties going to the winning crew and then to the earlier slot;
-2. your xp gained, growth steps and newly learned abilities, and the gold earned;
+1. the **MVP**: the MC with the most damage dealt in the battle (bars and disses, counting
+   only confidence actually lost), with ties going to the winning crew and then to the earlier slot;
+2. your xp gained, growth steps and newly learned abilities, and the win bonus due at the
+   next upkeep;
 3. the other battles of the round, one line each;
 4. the updated standings.
 

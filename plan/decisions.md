@@ -340,3 +340,46 @@ and are marked "superseded by D-###".
   only. The name is at most `CREW_NAME_MAX = 20` characters and unique in the league. Bot names
   are *The ⟨adjective⟩ ⟨noun⟩* from lists in `docs/game-design.md` §2. The identity is part of
   `Crew` and the league state, so `core/` holds it; `render/` only draws it.
+- **D-053 (2026-09-29): More income instead of cheaper salaries: `BASE_INCOME = 16`,
+  `STARTING_GOLD = 40` (T-051).** The paper playtest showed that 25 starting gold couldn't sign
+  a first lineup once the first payroll is due, and that a full crew of 5 (payroll about 13)
+  could never be paid from 10 income. The user chose to raise income over rounding salaries
+  down (with income 12 and a start of 35), and over leaving it to T-031. The salary formula is unchanged.
+- **D-054 (2026-09-29): Battles are short and punchy: a target of 6 to 12 turns (T-051).** The
+  playtest saw 3 to 8 turns, because flow ≈ confidence, and MCs often choked in setup before
+  dropping a bar. The user accepted short battles with about 4 to 6 s of screen time per turn
+  over tripling confidence (with the rating counting confidence / 3), and over leaving it to
+  T-031. The 30 to 60 s playback target stays.
+- **D-055 (2026-09-29): Abilities queued before their MC choked still resolve (T-051).** The
+  user chose this over removing them from the queue (the recommendation), so every trigger that
+  showed on screen pays off. A choked MC still triggers nothing new except its own `choke`.
+  Positional targets use the place it held when it choked, and a buff on the choked MC does nothing.
+- **D-056 (2026-09-29): A retiring unit enters the hall of fame of every crew it played for
+  (T-051).** This includes units that retire from the public list after being released. The user chose
+  it over only the crew it played the most battles for (the recommendation), and over only the crew it
+  retires from. The `record` keeps battles and seasons per crew.
+- **D-057 (2026-09-29): Bots pad every division to the same even size (T-051, Q-018).** At
+  league creation and at each season start, every division is filled up to the size of the largest one,
+  rounded up to even, so all divisions play the same number of rounds and reach the league-wide
+  season end together. Chosen over extra round robin rounds for the smaller divisions, and over
+  letting them sit out.
+- **D-058 (2026-09-29): A bigger start pool, with roles drawn 3 : 2 (T-051).**
+  `POOL_START_PER_MEMBER` goes from 4 to 6, and every generated unit (start pool, rookies,
+  scouts) draws its role with `MC_WEIGHT : SUPPORT_WEIGHT = 3 : 2` before its archetype. In the
+  playtest, 8 units for 10 slots ran out in the first bidding round. Chosen over 6 per member
+  with 50/50 roles, and over keeping the scarcity. `POOL_MAX` is now checked at upkeep only, so the
+  start pool may exceed it.
+- **D-059 (2026-09-29): Rule clarifications from the paper playtest (T-051).** These fill gaps
+  the doc left open, each with one sensible reading:
+  - Rookies enter once per league round, and none in the first round.
+  - A won unit goes into the first free active slot of its role, else the bench.
+  - Open bids must stay valid while the crew scouts, signs or arranges.
+  - A released unit keeps its xp and `look`.
+  - A diss gives hype once per ability, and a diss of 0 triggers nothing.
+  - After a bar the queue order is `barLanded`, `hurt`/`choke`, `takeFront`, with targets picked at resolution.
+  - When a back MC chokes, the MCs behind it close up.
+  - `takeFront` fires once per time an MC becomes the front MC.
+  - The MVP counts confidence actually lost.
+  - Every season round is played.
+
+  The full list is in `docs/playtest-1.md`.

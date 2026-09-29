@@ -5,16 +5,15 @@ Next free ID: **T-055**
 
 ## Now
 
-- [ ] T-051 (M2) Paper playtest with the user: play at least 3 rounds between two crews by hand from `docs/game-design.md` and fix every gap or unclear rule found. After T-050
 - [ ] T-052 (M2) Design wrap-up: consistency pass over `docs/game-design.md` and the tunables table, then update the M3+ tasks in `tasks.md` and the exit criteria in `roadmap.md` to match the new design. After T-051
 - [ ] T-010 (M3) Seeded PRNG (e.g. mulberry32) with `fork()` for independent streams, plus tests
+- [ ] T-011 (M3) Core types: `ArchetypeDef`, `AbilityDef`, `Unit` (an individual: stats, 1–2 abilities with power, xp, age, salary, `look` seed, `stageName`, `record`), `Crew` (name, two colours and a logo, 3 MC + 2 support + 3 bench, hall of fame; D-052), `BattleEvent` (a discriminated union)
 
 ## Next
 
-- [ ] T-011 (M3) Core types: `ArchetypeDef`, `AbilityDef`, `Unit` (an individual: stats, 1–2 abilities with power, xp, age, salary, `look` seed, `stageName`, `record`), `Crew` (name, two colours and a logo, 3 MC + 2 support + 3 bench, hall of fame; D-052), `BattleEvent` (a discriminated union)
 - [ ] T-012 (M3) Data tables for the 10 archetypes, the 32 abilities, the stage name lists, the bot crew name lists, the crew colours and logos, and the tunables table (`docs/game-design.md` §2, §8, §10, §11; D-043, D-047, D-052)
 - [ ] T-013 (M3) Ability and trigger system (e.g. on battle start, on bar landed, on leaving the stage, on sign), built from data plus named effect functions; support position-aware and `oncePerBattle` abilities, fixed and hype-based values (D-044), the `buff`, `diss`, `hype`, `gold` and `xp` effects and the `beforeBattle` trigger (D-045), ability `power`, and units with two abilities (D-041)
-- [ ] T-014 (M3) `simulateBattle()` behind a `BattleStyle` interface with the "front MCs clash" style (D-010): alternating turns (D-033), hype meters (D-034) and the no-draw end rules (D-035); emits an event log
+- [ ] T-014 (M3) `simulateBattle()` behind a `BattleStyle` interface with the "front MCs clash" style (D-010): alternating turns (D-033), hype meters (D-034) the no-draw end rules (D-035) and the queue and choke rules from the playtest (D-055, D-059); emits an event log
 - [ ] T-015 (M3) Tests: one or more per ability, same seed gives the same log, property test that every battle ends with exactly one winner
 
 ## Later
@@ -22,8 +21,8 @@ Next free ID: **T-055**
 - [ ] T-016 (M4) Player market in `core/`: unit generation from archetypes (stats, ability, weighted age, `look` seed, unique stage name), the public list (start pool, rookies, cap), rating with the youth premium, ask and personal scouting (D-039, D-040, D-042, D-046, D-047)
 - [ ] T-017 (M4) Bidding rounds as a pure function (affordability, highest bid, tie order, early end), scouted signings, release to the pool, and arranging slots and bench (D-040)
 - [ ] T-018 (M4) Crew upkeep: gold income, `upkeep` abilities, the wallet cap and salary payments each round; xp and growth steps and the second ability after battles (D-041); at the season end, retirement (crews and pool), ageing, farewell-tour announcements, salary renegotiation and the hall of fame (D-038, D-042)
-- [ ] T-019 (M4) AI manager (simple greedy bidding and scouting policy, seeded) that runs filler bots and absent players' crews (D-030), plus a headless test where AI managers play a multi-season league
-- [ ] T-034 (M4) League rules in `core/`: divisions with even counts (auto-added bots with generated names, colours and logos, D-052), unique crew names, double round robin pairing, standings and tiebreaks, season end with promotion, relegation and titles, newcomer takes over a bot, a leaving player's crew becomes a bot (§7, D-029)
+- [ ] T-019 (M4) AI manager (simple greedy bidding and scouting policy, seeded; define "best value" and how it orders its lineup, see `docs/playtest-1.md`) that runs filler bots and absent players' crews (D-030), plus a headless test where AI managers play a multi-season league
+- [ ] T-034 (M4) League rules in `core/`: divisions padded to one even size (auto-added bots with generated names, colours and logos, D-052), unique crew names, double round robin pairing, standings and tiebreaks, season end with promotion, relegation and titles, newcomer takes over a bot, a leaving player's crew becomes a bot (§7, D-029)
 - [ ] T-035 (M4) League state save format (all members and crews, schedule, results; zod-validated, versioned) and localStorage save/load in `app/` (D-031)
 - [ ] T-020 (M5) Procedural shape art: a paper-cut figure generator drawn from the unit's `look` seed with the outfit in crew colours, the archetype icon badge and name plate, bling per growth step, farewell grey hair and sash; crew logos; the block party backdrop (`docs/game-design.md` §11, D-049)
 - [ ] T-021 (M5) Phaser Market and Lineup tabs: the sortable scouting table with a detail panel and bid input, bidding rounds and results, scouting, and drag and drop into the MC/support slots and the bench (D-050)
@@ -47,6 +46,7 @@ Next free ID: **T-055**
 
 ## Done
 
+- [x] T-051 (M2) Paper playtest: 3 rounds and a season end between two crews (`docs/playtest-1.md`). Fixed the economy (income 16, start 40), accepted short battles (6–12 turns), queued abilities of a choked MC still resolve, a hall of fame for every former crew, equal division sizes (Q-018), a bigger start pool with 3:2 roles, and 10 rule clarifications (D-053 to D-059) (2026-09-29)
 - [x] T-050 (M2) Design session 7: presentation. Title *Mic Drop League*, a 90s block party look with paper-cut figures rolled from a `look` seed and archetype badges, crew name/colours/logo, a home hub with tabs, side-view battle, scouting-table market, headline result screen, and procedural sound (D-048 to D-052, Q-010) (2026-09-29)
 - [x] T-049 (M2) Design session 6: roster and abilities. 5 MC and 5 support archetypes with 32 abilities, crowd abilities valued from hype instead of `hypeBonus`, 3 new effects and a `beforeBattle` trigger, a youth premium in the rating, stage name lists (D-043 to D-047, Q-016) (2026-09-28)
 - [x] T-048 (M2) Design session 5: shop and progression. A league-wide market of unique generated units, sealed bidding rounds, personal scouting, no merging or levels, growth by playing with a random second ability, value-based ask and salary (D-039 to D-042) (2026-09-28)

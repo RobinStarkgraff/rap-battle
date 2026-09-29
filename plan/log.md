@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-051, paper playtest)
+- Played a 2-crew league by hand from `docs/game-design.md`: 3 rounds plus the season end, with crew B run by the greedy AI policy. The record is in `docs/playtest-1.md`.
+- **Economy stalled** as written: 25 gold couldn't pay for a first lineup plus its payroll, and 10 income couldn't carry 5 salaries. The user chose more income: `BASE_INCOME = 16`, `STARTING_GOLD = 40` (D-053).
+- **Battles ran 3 to 8 turns** (the target was 12 to 24), with frequent knockouts in setup. The user **accepted short battles**: the target is now 6 to 12 turns with more screen time per turn (D-054).
+- The user's answers: queued abilities of a choked MC still resolve (D-055, against the recommendation); retirees enter the hall of fame of **every** crew they played for, including releases retiring from the pool (D-056); **Q-018:** bots pad every division to one even size (D-057); the start pool is 6 per member, with roles drawn 3 : 2 (D-058). 10 more gaps were clarified without a real alternative (D-059), among them rookies per league round, won-unit placement, queue order after a bar and diss hype once per ability.
+- T-014, T-019 and T-034 were reworded. No open design questions are left; only Q-015 and Q-009 (tech) remain. `make check` passes.
+- **Next:** T-052 (design wrap-up), then M3 with T-010.
+
 ## 2026-09-29 (T-050, design session 7: presentation)
 - Ran design session 7 with the user over four rounds of questions. Added `docs/game-design.md` §11 **Presentation** (title, look, screens, battle, result screen, sound) and a **Crew identity** section in §2, added `look` to the unit state and `CREW_NAME_MAX` to the tunables; "Still open" is now §12.
 - **Title: Mic Drop League** (D-048); CLAUDE.md updated.

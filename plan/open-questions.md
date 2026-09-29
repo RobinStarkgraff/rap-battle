@@ -7,10 +7,7 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 ## Open
 
 ### Game design
-- Q-018 Divisions can have different sizes (9 members split 6 + 4 after bots), so their double
-  round robins have different lengths (10 vs 6 rounds). The season end (ageing, retirement,
-  promotion) is league-wide. Does the shorter division wait, play extra rounds, or does each
-  division end its season on its own? For T-051 or T-052.
+(none)
 
 ### Tech / scope
 - Q-015 Two sittings could play the same league at the same time (e.g. two pairs of colleagues
@@ -20,6 +17,8 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 
 ## Answered
 
+- **Q-018** Bots pad every division to the size of the largest one, rounded up to even, so
+  all divisions play the same number of rounds and end the season together. (2026-09-29) → D-057
 - **Q-010** Sound is in scope: procedural WebAudio with one seeded beat per battle that builds
   with hype, plus SFX. It starts on at low volume, with mute always visible. Built in M7 (T-030).
   (2026-09-29) → D-051
