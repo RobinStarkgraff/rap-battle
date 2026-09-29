@@ -11,6 +11,7 @@ import {
   JoinScene,
   LobbyScene,
   ResultScene,
+  SoundScene,
   TitleScene,
   type BattleSceneData,
   type FoundingSceneData,
@@ -20,6 +21,7 @@ import {
   type ResultSceneData,
   type TitleSceneData,
 } from '../render';
+import { LEAGUE_BATTLE_STYLES } from '../core';
 import type { GameFlow, Screen } from './flow';
 import { BOT_CHOICES, DEFAULT_BOTS, type BotCount } from './localLeague';
 
@@ -29,9 +31,13 @@ export function startDirector(game: Phaser.Game, flow: GameFlow): void {
     const screen = flow.screen();
     if (screen === shown) return;
     shown = screen;
-    for (const scene of game.scene.getScenes(true)) game.scene.stop(scene);
+    for (const scene of game.scene.getScenes(true)) {
+      // The sound controls stay on top of every screen.
+      if (scene.scene.key !== SoundScene.KEY) game.scene.stop(scene);
+    }
     const [key, data] = sceneFor(screen, flow);
     game.scene.start(key, data);
+    game.scene.bringToTop(SoundScene.KEY);
   };
   flow.subscribe(show);
   show();
@@ -93,10 +99,11 @@ function sceneFor(screen: Screen, flow: GameFlow): SceneStart {
         {
           botChoices: screen.joining === null ? BOT_CHOICES : [],
           defaultBots: DEFAULT_BOTS,
+          styleChoices: screen.joining === null ? LEAGUE_BATTLE_STYLES : [],
           joining: screen.joining,
           notice: screen.notice,
-          onFound: (identity, bots) => {
-            const founded = flow.found(identity, toBotCount(bots));
+          onFound: (identity, bots, battleStyle) => {
+            const founded = flow.found(identity, toBotCount(bots), battleStyle);
             return founded.ok ? null : founded.error;
           },
           onBack: () => {
@@ -116,6 +123,7 @@ function sceneFor(screen: Screen, flow: GameFlow): SceneStart {
           crews: screen.battle.crews,
           events: screen.battle.report.events,
           seed: screen.battle.report.seed,
+          style: screen.battle.report.style,
           onDone: () => {
             flow.battleWatched();
           },

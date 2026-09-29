@@ -4,7 +4,16 @@
  * faces right; mirror it to face left. Everything but the outfit colours comes from the look.
  */
 
-import { GOLD, GOLD_DARK, GREY_HAIR, INK, SASH, SASH_TRIM, type OutfitColours } from '../palette';
+import {
+  ART,
+  GOLD,
+  GOLD_DARK,
+  GREY_HAIR,
+  INK,
+  type OutfitColours,
+  SASH,
+  SASH_TRIM,
+} from '../palette';
 import type { CareerLook } from './career';
 import { wearsHat, type BodyShape, type Look } from './look';
 import { circle, OUTLINE, polygon, roundedRect, starPoints, type Pen } from './pen';
@@ -14,8 +23,8 @@ export const FIGURE_HEIGHT = 136;
 /** Half the width of a figure at scale 1. */
 export const FIGURE_HALF_WIDTH = 40;
 
-const PANTS = 0x2c2c48;
-const SHOE = 0xf8f8f2;
+const PANTS = ART.pants;
+const SHOE = ART.white;
 const LEG_HEIGHT = 22;
 const HEAD_RADIUS = 22;
 
@@ -289,7 +298,7 @@ function drawFace(pen: Pen, frame: Frame, look: Look, career: CareerLook): void 
       pen.lineStyle(2.5, INK, 1);
       pen.lineBetween(eyeX - 3, eyeY, eyeX + 3, eyeY);
     } else if (look.eyes === 'wide') {
-      circle(pen, eyeX, eyeY, 4.5, 0xffffff, INK);
+      circle(pen, eyeX, eyeY, 4.5, ART.pureWhite, INK);
       circle(pen, eyeX + 1, eyeY, 2, INK);
     } else {
       circle(pen, eyeX, eyeY, 2.6, INK);
@@ -315,7 +324,7 @@ function drawFace(pen: Pen, frame: Frame, look: Look, career: CareerLook): void 
   const mouthY = y + 10;
   switch (look.mouth) {
     case 'grin':
-      pen.fillStyle(0xffffff, 1);
+      pen.fillStyle(ART.pureWhite, 1);
       pen.fillEllipse(mouthX, mouthY, 14, 7);
       pen.lineStyle(2, INK, 1);
       pen.strokeEllipse(mouthX, mouthY, 14, 7);
@@ -325,7 +334,7 @@ function drawFace(pen: Pen, frame: Frame, look: Look, career: CareerLook): void 
       pen.lineBetween(mouthX - 6, mouthY + 1, mouthX + 5, mouthY - 2);
       break;
     case 'open':
-      circle(pen, mouthX, mouthY, 4.5, 0x7a1f2b, INK);
+      circle(pen, mouthX, mouthY, 4.5, ART.mouth, INK);
       break;
     case 'flat':
       pen.lineStyle(2.5, INK, 1);

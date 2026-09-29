@@ -11,9 +11,9 @@ export const TUNABLES = {
   CREW_NAME_MAX: 20,
   // Round flow (§3)
   STARTING_GOLD: 40,
-  BASE_INCOME: 16,
+  BASE_INCOME: 18,
   WIN_BONUS: 2,
-  WALLET_CAP: 20,
+  WALLET_CAP: 25,
   // Market (§4)
   SCOUT_COST: 1,
   SCOUT_COUNT: 2,
@@ -25,14 +25,19 @@ export const TUNABLES = {
   /** Rounded down. */
   YOUTH_SEASONS_PER_RATING: 2,
   POOL_START_PER_MEMBER: 6,
+  /** The fewest rookies per upkeep; a big league gets `ROOKIES_PER_MEMBER` per member. */
   ROOKIES_PER_ROUND: 3,
+  /** Rounded up. */
+  ROOKIES_PER_MEMBER: 0.5,
+  /** The smallest cap of the public list; a big league keeps `POOL_MAX_PER_MEMBER` per member. */
   POOL_MAX: 16,
+  POOL_MAX_PER_MEMBER: 2,
   MC_WEIGHT: 3,
   SUPPORT_WEIGHT: 2,
   // Unit state and growth (§2, §4)
   /** Every ability's value table has one entry per power, so this can't grow without them. */
   MAX_POWER: 3 satisfies Power,
-  GROWTH_XP: 3,
+  GROWTH_XP: 4,
   SECOND_ABILITY_XP: 12,
   // Battle (§5)
   /** A safety limit; D-054 aims for 6 to 12 turns. */
@@ -42,9 +47,16 @@ export const TUNABLES = {
   HYPE_PER_DISS: 1,
   HYPE_PER_CHOKE: 2,
   HYPE_LOSS_ON_CHOKE: 2,
+  // Crowd vote (§5.2)
+  VERSES: 3,
+  TURNS_PER_VERSE: 4,
+  /** Rounded down. */
+  VERSE_HYPE_KEEP: 0.5,
+  /** In a league with mixed styles, every this many rounds of a season is a crowd vote. */
+  CROWD_VOTE_EVERY: 3,
   // Salary (§5.1)
   /** Rounded up. */
-  SALARY_PER_RATING: 0.25,
+  SALARY_PER_RATING: 0.18,
   /** Rounded down. */
   BENCH_SALARY_FACTOR: 0.5,
   // Age and retirement (§6)

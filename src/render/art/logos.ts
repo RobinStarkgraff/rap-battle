@@ -4,7 +4,7 @@
  */
 
 import type { LogoId } from '../../core';
-import { INK } from '../palette';
+import { ART, INK } from '../palette';
 import { circle, polygon, roundedRect, starPoints, type Pen } from './pen';
 
 type LogoDrawer = (pen: Pen, x: number, y: number, s: number, main: number, trim: number) => void;
@@ -118,7 +118,7 @@ const LOGOS: Readonly<Record<LogoId, LogoDrawer>> = {
   },
   vinyl: (pen, x, y, s, main, trim) => {
     circle(pen, x, y, 9.5 * s, INK);
-    pen.lineStyle(1, 0x55556a, 1);
+    pen.lineStyle(1, ART.groove, 1);
     pen.strokeCircle(x, y, 7 * s);
     circle(pen, x, y, 4 * s, main);
     circle(pen, x, y, 1.2 * s, trim);

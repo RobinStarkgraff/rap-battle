@@ -5,7 +5,9 @@ import {
   divisionStandings,
   payroll,
   roundBattles,
+  roundBattleStyle,
   TUNABLES,
+  type BattleStyleId,
   type Crew,
   type CrewId,
   type League,
@@ -42,6 +44,11 @@ export function nextOpponent(state: HubState): Crew | null {
   if (battle === undefined) return null;
   const opponentId = battle.crewA === state.crewId ? battle.crewB : battle.crewA;
   return state.league.crews.find((crew) => crew.id === opponentId) ?? null;
+}
+
+/** The style of this round's battles, known from the league before the shop (D-088). */
+export function roundStyle(state: HubState): BattleStyleId {
+  return roundBattleStyle(state.league, state.round.seasonRound);
 }
 
 export interface WalletView {

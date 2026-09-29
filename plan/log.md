@@ -2,6 +2,39 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-058, colour palette and theme pass; M7 done)
+- Added T-058 because no task covered the "colour palette and theme pass" exit criterion. About 60 colour literals in `render/` became named tokens in `palette.ts` (new `UI` tokens, an `ART` table for props; `PAGE_BACKGROUND` is `UI.page`). `tooling/palette.test.ts` fails on any colour literal outside the palette and checks WCAG AA contrast (4.5:1) of text on panels, secondary buttons, buttons and the newsprint; every pair passes, so the look is unchanged (D-092). Doc §11 Look.
+- **M7 exit criteria**, checked one by one: balance tuning from headless AI-manager statistics (battle length, economy, salary and retirement pacing) ✓ (T-031, `make balance`, held by the headless test); hit and ability effects ✓ (T-030); screen shake ✓ (T-030); the procedural beat and SFX ✓ (T-030; they can't be heard in headless Chromium, but the page runs them with no errors); a tutorial or onboarding hint ✓ (T-056); a colour palette and theme pass ✓ (T-058); a second battle style through `BattleStyle` ✓ (T-037). Also T-057. `make check` (525 tests), `make build` and `make test-e2e` (3 tests) pass.
+- **M7 is done; M8 is in progress.** Now: T-032, T-033, T-041.
+, hall of fame paging, league figures)
+- `src/render/hub/hallView.ts` (pure, tested): `hallPage` (10 portraits a page, newest first, clamped page), `titleSummary` (championships with seasons, then division titles, in one line). `hallTab.ts` pages with `hall-prev`/`hall-next`; its frames are shorter so two rows fit the panel (the second row used to run past it), and "1 season" is singular.
+- `leagueTab.ts`: the crew panel shows the crew's units as figures in its colours, the bench dimmed, above the unit lines.
+- Checked in Chromium with a 12-season save made headlessly (19 legends, page 2 of 2) and the league tab for two crews.
+- `make check` (523 tests), `make build` and `make test-e2e` (3 tests) pass. **Next:** T-058 (colour palette and theme pass, added for the M7 exit criteria).
+, onboarding hints)
+- `src/render/hub/hints.ts`: `onboardingHint(state, tab)` picks one of 7 hints from the bidding state and the open tab while the player's crew has played fewer than 2 battles in its first season (so newcomers who join mid-season get them too); tested for each situation, for stopping after two battles, and for length (D-091).
+- `HubScene` draws it in a note beside the tab bar, the one spot free on every tab; OK hides a hint for the page visit. A first try at the bottom of the screen covered the market's and lineup's buttons.
+- Doc §11 Screens. Checked the home and market hints in Chromium.
+- `make check` (520 tests) and `make test-e2e` (3 tests) pass. **Next:** T-057 (hall of fame paging, figures in the league tab).
+, balance pass)
+- `src/core/ai/balance.ts` (`balanceStats` over `RoundPlayed[]`) and `make balance` (`tooling/balance-report.test.ts`, runs only with `BALANCE_REPORT=1`): 3 leagues each of 12 crews per style and of 4 crews mixed, 5 seasons, in about 3 s.
+- Before: 5.7 turns a clash, crowd verdicts 5 to 7%, lineups at about 3 of 5 from season 3 (grown salaries against a payroll of 16). Tried supply alone (no effect), then salary, growth, cap and income, then confidence for length (D-090).
+- Now: clashes 8.4 to 8.7 turns (p90 11 to 12), crowd votes 8.1 to 8.5 with 13 to 27% decided by the crowd, no setup knockouts or turn limits, the stronger lineup wins 66 to 81%, 4.6 to 5.0 active units every season. Ability tweaks: Scratch, Crowd Mix, Studio Session, Negotiator. `rookieCount`/`poolMax` in `core/market` (tested). Doc §3, §4, §5, §5.1, §8, §10, §12 updated; tests that pinned old numbers now read `TUNABLES` where they can.
+- The headless test checks the pacing, knockout, upset and lineup targets, and a crowd vote league.
+- `make check` (515 tests) and `make test-e2e` (3 tests) pass. **Next:** T-056 (onboarding hints).
+, effects and sound)
+- `src/render/audio/`: `beat.ts` (the seeded pattern, `LAYER_HYPE`, `stepHits`), `cues.ts` (`battleCue`, `battleShake` per playback beat), `recipes.ts` (every SFX as tone and noise voices), `synth.ts`, `engine.ts` (`createSoundEngine`: WebAudio on the first click, a lookahead beat scheduler, drop on choke, `SILENT_SOUND`), `settings.ts` (volume and mute in `localStorage`, default 0.4), `index.ts` (`provideSound`/`soundOf` through the game registry) (D-089).
+- `render/`: `SoundScene` (mute and five volume steps, bottom-left, always on top; the director never stops it), `battle/effects.ts` (sparks, rings, flash, confetti) and camera shake in `BattleScene`, `hub/sounds.ts` (`withShopSounds`), nudge and won-bid sounds in the hub, a click on every button, cheer or boo on the result screen. `app/main.ts` creates the engine and unlocks it on the first pointer or key press.
+- Tests: patterns, layers, step hits, every beat's cue and shake, recipes, settings (broken and blocked storage), the engine without WebAudio, shop sounds only for actions that go through. Checked the controls and a battle in Chromium with no page errors (the sound itself can't be checked headless).
+- `make check` (512 tests) and `make test-e2e` (3 tests) pass. **Next:** T-031 (balance pass).
+, second battle style: crowd vote)
+- Asked the user before the M7 run: the second style is *crowd vote verses* (Q-019), the style is a league setting (Q-020), and the balance pass may make small formula changes (Q-021). D-088.
+- `src/core/battle/`: `opening.ts` (coin flip, setup and one turn, shared), `crowdVote.ts` (verses, verdicts by hype rise, then damage in the verse, then the non-opener; best of 3; meters halve between verses), `styles.ts` (`BATTLE_STYLES`). New events `verse`, `verdict`; end reason `crowdVote`; hype cause `verseBreak`; tunables `VERSES`, `TURNS_PER_VERSE`, `VERSE_HYPE_KEEP`, `CROWD_VOTE_EVERY`.
+- League: `battleStyle` (`frontMcsClash` / `crowdVote` / `mixed`), `createLeague` options, `roundBattleStyle`, `BattleReport.style`; save version 2 migrates version 1 saves to clash only.
+- `render/`: playback `verse`/`verdict` beats and a verse tally in the snapshots (no crowd line for the settling between verses), the battle scene's intro, verse and verdict banners and end reason, `VERDICT_LINES`, crowd headlines, `battleStyles.ts` texts, the founding screen's BATTLE STYLE picker (default mixed), the round's style on the hub's Home tab and opponent card. `?battle=<seed>&style=crowdVote`.
+- Doc: §5.2, §7 Battle style, §10, §11. Checked the founding picker, the hub and a crowd vote battle with a verdict and a wipeout in Chromium.
+- `make check` (484 tests) and `make test-e2e` (3 tests) pass. **Next:** T-030 (effects and sound).
+
 ## 2026-09-29 (T-029, three-tab sitting test; M6 done)
 - `e2e/sitting.spec.ts`: host and two friends in three contexts over a local PeerJS server started by `playwright.config.ts` (second web server, Chromium mDNS hiding off); `e2e/targets.ts` gained `waitForShown`. The market hides its submit button once a sitting's bids are in (D-087).
 - The test takes about 3 minutes (three pages at 15 to 20 fps in the container); `make test-e2e` runs all three tests in 3 minutes with 3 workers.

@@ -113,8 +113,8 @@ describe('unit text', () => {
     );
     expect(abilityText({ id: 'hype-wave', power: 3 })).toContain('(+hype ÷ 3 + 2 flow)');
     expect(abilityText({ id: 'street-poet', power: 1 })).toContain('(+2 flow, +2 confidence)');
-    expect(abilityText({ id: 'negotiator', power: 3 })).toContain('(2 gold)');
+    expect(abilityText({ id: 'negotiator', power: 3 })).toContain('(3 gold)');
     expect(abilityText({ id: 'studio-session', power: 1 })).toContain('(1 xp)');
-    expect(abilityText({ id: 'crowd-mix', power: 2 })).toContain('(2 hype)');
+    expect(abilityText({ id: 'crowd-mix', power: 2 })).toContain('(3 hype)');
   });
 });

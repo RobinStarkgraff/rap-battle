@@ -137,7 +137,7 @@ function drawSpot(context: TabContext, ui: LineupUi, crew: Crew, spot: Spot): vo
   const release = spot.place === 'release';
   const width = release ? 300 : BOX.width;
   const box = scene.add.graphics();
-  box.fillStyle(release ? 0x4a1f2a : UI.panelLight, 1);
+  box.fillStyle(release ? UI.dropDanger : UI.panelLight, 1);
   box.fillRoundedRect(spot.x, spot.y, width, BOX.height, 12);
   box.lineStyle(2, release ? UI.accent : UI.panelEdge, 1);
   box.strokeRoundedRect(spot.x, spot.y, width, BOX.height, 12);
@@ -393,7 +393,7 @@ function drawDetail(context: TabContext, ui: LineupUi, unit: Unit | undefined): 
       height: 48,
       fontSize: confirming ? 15 : 20,
       fill: UI.accent,
-      hoverFill: 0xff5d6a,
+      hoverFill: UI.accentHover,
       target: 'lineup-release',
     },
   );

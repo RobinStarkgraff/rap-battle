@@ -23,6 +23,7 @@ import {
   type UnitAbilities,
   type UnitRecord,
 } from '../model';
+import { BATTLE_STYLE_IDS } from '../battle';
 import { TUNABLES } from '../tunables';
 
 const count = z.number().int().nonnegative();
@@ -120,6 +121,7 @@ const pairing = z.object({ a: count, b: count });
 
 export const leagueSchema: z.ZodType<League> = z.object({
   seed,
+  battleStyle: z.enum([...BATTLE_STYLE_IDS, 'mixed']),
   members: z.array(member),
   crews: z.array(crew),
   market: z.object({ publicList: z.array(unit), nextUnitNumber: count }),

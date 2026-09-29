@@ -311,14 +311,14 @@ const CASES: Readonly<Record<AbilityId, () => void>> = {
       a: [sturdy('a1'), sturdy('a2')],
       aSupports: [support({ id: 'ad', abilities: [['scratch', 3]] })],
     });
-    expectRun(log, ['front a1', 'front b1', 'ability ad scratch', 'diss ad>b1 3', 'hype a +1=1']);
+    expectRun(log, ['front a1', 'front b1', 'ability ad scratch', 'diss ad>b1 2', 'hype a +1=1']);
   },
   'crowd-mix': () => {
     const log = play({
       a: [sturdy('a1')],
       aSupports: [support({ id: 'ad', abilities: [['crowd-mix', 3]] })],
     });
-    expectRun(log, ['start a', 'ability ad crowd-mix', 'hype a +3=3']);
+    expectRun(log, ['start a', 'ability ad crowd-mix', 'hype a +4=4']);
   },
   'get-up': () => {
     const log = play({
@@ -417,7 +417,7 @@ const CASES: Readonly<Record<AbilityId, () => void>> = {
       'ability am hometown-crowd',
       'hype a +2=2',
       'ability ad crowd-mix',
-      'hype a +1=3',
+      'hype a +2=4',
     ]);
   },
   'paid-hecklers': () => {
@@ -438,7 +438,7 @@ const CASES: Readonly<Record<AbilityId, () => void>> = {
     const manager = support({ id: 'boss', archetype: 'manager', abilities: [['negotiator', 2]] });
     expect(
       applyUpkeepAbilities(crew({ supports: [manager], wallet: 3 }), createRng(1)).crew.wallet,
-    ).toBe(4);
+    ).toBe(5);
     expect(
       play({ a: [sturdy('a1')], aSupports: [manager] }).some((line) => line.startsWith('ability')),
     ).toBe(false);

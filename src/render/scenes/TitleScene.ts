@@ -4,7 +4,7 @@ import { addBackdrop } from '../art/bake';
 import { letteringStyle } from '../art/lettering';
 import { addUnitFigure } from '../art/unitFigure';
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from '../config';
-import { CREW_COLOUR_HEX, UI } from '../palette';
+import { ART, CREW_COLOUR_HEX, UI } from '../palette';
 import { problemText } from '../text';
 import { addButton } from '../ui/button';
 import { addBody } from '../ui/panel';
@@ -81,7 +81,7 @@ export class TitleScene extends Phaser.Scene {
       {
         width: 340,
         height: 64,
-        fill: data.canContinue ? 0xf4892b : UI.button,
+        fill: data.canContinue ? ART.orange : UI.button,
         target: 'title-new',
       },
     );
@@ -113,7 +113,7 @@ export class TitleScene extends Phaser.Scene {
     if (data.notice !== null) {
       addBody(this, DESIGN_WIDTH / 2, y + 72, problemText(data.notice), 18, UI.textBad)
         .setOrigin(0.5, 0)
-        .setBackgroundColor('#1b1b2f')
+        .setBackgroundColor(UI.textDark)
         .setPadding(10, 6, 10, 6);
     }
   }

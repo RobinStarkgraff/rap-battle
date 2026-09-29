@@ -115,7 +115,7 @@ describe('signUnit', () => {
     );
     expect(signed.crew.wallet).toBe(4);
     expect(signed.crew.mcSlots[1]?.id).toBe('r');
-    expect(signed.crew.mcSlots[1]?.salary).toBe(3);
+    expect(signed.crew.mcSlots[1]?.salary).toBe(2);
     expect(signed.crew.mcSlots[1]?.record.crews).toEqual([{ crewId: 'c', battles: 0, seasons: 0 }]);
   });
 
@@ -166,17 +166,17 @@ describe('releaseUnit', () => {
 });
 
 describe('bids', () => {
-  // Rating 3 + 3 + 2 + 2 = 10: ask 5, salary 3.
+  // Rating 3 + 3 + 2 + 2 = 10: ask 5, salary 2.
   const star = mc({ id: 'star', flow: 3, confidence: 3, age: 18 });
   // Rating 4 + 2 + 0 = 6 at 24 of 25: ask 3, salary 2.
   const dj = { ...support({ id: 'dj', abilities: ['scratch'] }), age: 24 };
   const list = market(star, dj);
 
   it('allows bids of at least the ask that the wallet covers with the new payroll', () => {
-    // 5 + 3 in bids and a payroll of 3 + 2.
+    // 5 + 3 in bids and a payroll of 2 + 2.
     expect(
       bidsProblem(
-        crew({ wallet: 13 }),
+        crew({ wallet: 12 }),
         [
           { unitId: 'star', amount: 5 },
           { unitId: 'dj', amount: 3 },
@@ -186,7 +186,7 @@ describe('bids', () => {
     ).toBeNull();
     expect(
       bidsProblem(
-        crew({ wallet: 12 }),
+        crew({ wallet: 11 }),
         [
           { unitId: 'star', amount: 5 },
           { unitId: 'dj', amount: 3 },
@@ -383,7 +383,7 @@ describe('shop crew', () => {
 
   it('refuses scouting that would break an open bid', () => {
     const shop = unwrap(
-      submitBids(openShop(crew({ wallet: 8 })), list, [{ unitId: 'star', amount: 5 }]),
+      submitBids(openShop(crew({ wallet: 7 })), list, [{ unitId: 'star', amount: 5 }]),
     );
     expect(shopScout(shop, list, context, nameSet([]))).toEqual({ ok: false, error: 'breaksBids' });
   });

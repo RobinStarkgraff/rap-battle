@@ -4,14 +4,41 @@
  */
 
 import Phaser from 'phaser';
-import { activeUnits, createRng, type Crew, type Side, type Unit, type UnitId } from '../../core';
+import {
+  activeUnits,
+  createRng,
+  TUNABLES,
+  type BattleStyleId,
+  type Crew,
+  type Side,
+  type Unit,
+  type UnitId,
+} from '../../core';
+import {
+  battleCue,
+  battleShake,
+  beatPattern,
+  SILENT_SOUND,
+  soundOf,
+  type SoundEngine,
+} from '../audio';
 import { addBackdrop, addBaked, bakeTexture } from '../art/bake';
 import { bodyStyle, letteringStyle } from '../art/lettering';
 import { drawLogo } from '../art/logos';
 import { circle, roundedRect } from '../art/pen';
 import { addUnitFigure, type UnitFigure } from '../art/unitFigure';
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from '../config';
-import { crewOutfit, CREW_COLOUR_HEX, HAIR_COLOURS, INK, SKIN_TONES, STREET, UI } from '../palette';
+import {
+  ART,
+  CREW_COLOUR_HEX,
+  crewOutfit,
+  HAIR_COLOURS,
+  INK,
+  SKIN_TONES,
+  STREET,
+  UI,
+} from '../palette';
+import { HUGE_HIT } from '../text';
 import { addButton } from '../ui/button';
 import { addSpeechBubble, popWord } from '../ui/bubble';
 import {
@@ -26,6 +53,7 @@ import {
   supportX,
   WALL_FOOT_Y,
 } from './layout';
+import { confetti, flash, ring, sparks } from './effects';
 import {
   buildPlayback,
   other,
@@ -40,6 +68,8 @@ export interface BattleSceneData {
   readonly crews: Readonly<Record<Side, Crew>>;
   readonly events: Parameters<typeof buildPlayback>[2];
   readonly seed: number;
+  /** The style the battle was simulated in (§5, §5.2). */
+  readonly style: BattleStyleId;
   /** Called once the last beat has played. */
   readonly onDone: () => void;
 }
@@ -64,7 +94,12 @@ export class BattleScene extends Phaser.Scene {
   private hypeMeters!: Record<Side, Phaser.GameObjects.Graphics>;
   private crowd: Record<Side, Phaser.GameObjects.Image[]> = { a: [], b: [] };
   private turnText!: Phaser.GameObjects.Text;
+  /** Crowd vote: the verses each crew has won, under the turn. */
+  private verseText!: Phaser.GameObjects.Text;
   private speed: 1 | 2 = 1;
+  private audio: SoundEngine = SILENT_SOUND;
+  /** Where the confetti flies; seeded, so a replay looks the same. */
+  private fxRng = createRng(0);
 
   constructor() {
     super(BattleScene.KEY);
@@ -75,6 +110,7 @@ export class BattleScene extends Phaser.Scene {
     this.actors = new Map();
     this.crowd = { a: [], b: [] };
     this.speed = 1;
+    this.fxRng = createRng(data.seed).fork('effects');
     const { a, b } = data.crews;
     this.playback = buildPlayback(
       { name: a.identity.name, lineup: a },
@@ -95,8 +131,16 @@ export class BattleScene extends Phaser.Scene {
     this.hypeMeters = { a: this.add.graphics(), b: this.add.graphics() };
     this.addCrowd();
     this.turnText = this.add.text(DESIGN_WIDTH / 2, 34, '', letteringStyle(30)).setOrigin(0.5);
+    this.verseText = this.add
+      .text(DESIGN_WIDTH / 2, 124, '', letteringStyle(20, { colour: UI.textGold }))
+      .setOrigin(0.5);
     this.addSpeedButton();
     this.applySnapshot(this.playback.start, false);
+    this.audio = soundOf(this);
+    this.audio.startBeat(beatPattern(this.data_.seed));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.audio.stopBeat();
+    });
     this.playBeat(0);
   }
 
@@ -120,7 +164,7 @@ export class BattleScene extends Phaser.Scene {
       pen.lineStyle(5, INK, 1);
       pen.lineBetween(x, STAGE_Y - 2, x, STAGE_Y - 92);
       pen.lineBetween(x - 16, STAGE_Y - 2, x + 16, STAGE_Y - 2);
-      circle(pen, x, STAGE_Y - 100, 9, 0x9a9aa6, INK);
+      circle(pen, x, STAGE_Y - 100, 9, ART.steel, INK);
     }
   }
 
@@ -164,7 +208,7 @@ export class BattleScene extends Phaser.Scene {
               .text(0, -158, '', bodyStyle(13, { colour: UI.textDark, align: 'center' }))
               .setOrigin(0.5)
               .setFontStyle('bold')
-              .setBackgroundColor('#fff4d6')
+              .setBackgroundColor(UI.text)
               .setPadding(6, 2, 6, 2)
           : null;
       if (stats !== null) figure.container.add(stats);
@@ -231,13 +275,17 @@ export class BattleScene extends Phaser.Scene {
 
   private showBeat(beat: Beat): void {
     const { action, after, duration } = beat;
+    this.playSound(action);
     switch (action.kind) {
       case 'intro':
-        popWord(this, DESIGN_WIDTH / 2, 280, 'BATTLE!', 84, UI.textGold, duration);
-        this.caption(`${this.data_.crews[action.opener].identity.name} opens`, duration);
+        this.intro(action.opener, duration);
         break;
       case 'turn':
-        this.turnText.setText(`TURN ${String(action.turn)}`);
+        this.turnText.setText(
+          after.verse === 0
+            ? `TURN ${String(action.turn)}`
+            : `VERSE ${String(after.verse)} · TURN ${String(action.turn)}`,
+        );
         this.pulse(this.actors.get(after.stage[action.side][0] ?? '')?.figure.body, 1.06);
         break;
       case 'bar':
@@ -265,11 +313,34 @@ export class BattleScene extends Phaser.Scene {
       case 'swing':
         this.crowdShout(action.side, action.speech.text, action.rising, duration);
         break;
+      case 'verse':
+        popWord(
+          this,
+          DESIGN_WIDTH / 2,
+          280,
+          `VERSE ${String(action.verse)}!`,
+          72,
+          UI.textGold,
+          duration,
+        );
+        break;
+      case 'verdict':
+        this.verdict(action, after, duration);
+        break;
       case 'end':
-        this.showEnd(action, duration);
+        this.showEnd(action, after, duration);
         break;
     }
     this.applySnapshot(after, true);
+  }
+
+  /** The beat's sound and shake, and the battle beat's layers from the hype after it. */
+  private playSound(action: BeatAction): void {
+    const cue = battleCue(action);
+    if (cue !== null) this.audio.play(cue);
+    const shake = battleShake(action);
+    if (shake !== null) this.cameras.main.shake(shake.ms, shake.intensity);
+    if (action.kind === 'choke') this.audio.dropBar();
   }
 
   /** Moves the MCs to their places and updates their stats and both hype meters. */
@@ -286,6 +357,7 @@ export class BattleScene extends Phaser.Scene {
         }
       });
       this.drawHypeMeter(side, snapshot.hype[side]);
+      this.audio.setHype(snapshot.hype.a + snapshot.hype.b);
       this.setCrowdMood(side, snapshot.hype[side]);
     }
     for (const [id, stats] of Object.entries(snapshot.stats)) {
@@ -391,6 +463,13 @@ export class BattleScene extends Phaser.Scene {
     const head = this.headOf(targetId);
     popWord(this, head.x, head.y - 20, word, 34, UI.textGold, duration);
     if (damage > 0) {
+      sparks(
+        this,
+        head.x,
+        head.y + 10,
+        damage >= HUGE_HIT ? UI.accentHover : UI.button,
+        30 + damage * 8,
+      );
       this.floatText(head.x + 40, head.y + 20, `-${String(damage)}`, UI.textBad, duration);
       const actor = this.actors.get(targetId);
       if (actor !== undefined) {
@@ -424,6 +503,7 @@ export class BattleScene extends Phaser.Scene {
 
   private abilityBanner(action: Extract<BeatAction, { kind: 'ability' }>, duration: number): void {
     const head = this.headOf(action.unitId);
+    ring(this, head.x, head.y + 20, UI.button);
     const banner = this.add
       .text(
         head.x,
@@ -432,9 +512,9 @@ export class BattleScene extends Phaser.Scene {
         letteringStyle(18, { colour: UI.textDark }),
       )
       .setOrigin(0.5)
-      .setBackgroundColor('#ffd23f')
+      .setBackgroundColor(UI.buttonCss)
       .setPadding(10, 4, 10, 4)
-      .setStroke('#ffd23f', 0)
+      .setStroke(UI.buttonCss, 0)
       .setDepth(550)
       .setScale(0.3);
     this.tweens.add({ targets: banner, scale: 1, duration: 150, ease: 'Back.Out' });
@@ -449,6 +529,7 @@ export class BattleScene extends Phaser.Scene {
   private choke(action: Extract<BeatAction, { kind: 'choke' }>, duration: number): void {
     const actor = this.actors.get(action.unitId);
     const head = this.headOf(action.unitId);
+    flash(this, UI.white);
     popWord(this, head.x, head.y - 30, action.word, 44, UI.textBad, duration * 0.6);
     this.speak(action.speech.speaker, action.speech.text, duration, 30);
     if (actor === undefined) return;
@@ -516,6 +597,19 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  private endReason(action: Extract<BeatAction, { kind: 'end' }>, after: StageSnapshot): string {
+    switch (action.reason) {
+      case 'noMcs':
+        return `${this.data_.crews[other(action.winner)].identity.name} had no MCs on stage`;
+      case 'turnLimit':
+        return 'Time! The judges decide';
+      case 'crowdVote':
+        return `The crowd votes ${String(after.verses[action.winner])} verses to ${String(after.verses[other(action.winner)])}`;
+      case 'wipeout':
+        return `${String(action.margin)} MC${action.margin === 1 ? '' : 's'} still standing`;
+    }
+  }
+
   private caption(text: string, duration: number): void {
     const label = this.add
       .text(DESIGN_WIDTH / 2, 350, text, letteringStyle(26))
@@ -526,14 +620,68 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  private showEnd(action: Extract<BeatAction, { kind: 'end' }>, duration: number): void {
+  private intro(opener: Side, duration: number): void {
+    const openerName = this.data_.crews[opener].identity.name;
+    if (this.data_.style === 'crowdVote') {
+      popWord(this, DESIGN_WIDTH / 2, 280, 'CROWD VOTE!', 84, UI.textGold, duration);
+      this.caption(
+        `${openerName} opens · the crowd picks each verse · best of ${String(TUNABLES.VERSES)}`,
+        duration,
+      );
+      return;
+    }
+    popWord(this, DESIGN_WIDTH / 2, 280, 'BATTLE!', 84, UI.textGold, duration);
+    this.caption(`${openerName} opens`, duration);
+  }
+
+  /** Crowd vote: the crowd gives the verse to a crew, and the tally under the turn goes up. */
+  private verdict(
+    action: Extract<BeatAction, { kind: 'verdict' }>,
+    after: StageSnapshot,
+    duration: number,
+  ): void {
+    const name = this.data_.crews[action.winner].identity.name.toUpperCase();
+    popWord(
+      this,
+      DESIGN_WIDTH / 2,
+      250,
+      `VERSE ${String(action.verse)} TO`,
+      40,
+      UI.textGold,
+      duration,
+    );
+    this.caption(
+      `${name}  (HYPE +${String(action.gain[action.winner])} vs +${String(action.gain[other(action.winner)])})`,
+      duration,
+    );
+    this.crowdShout(action.winner, action.speech.text, true, duration);
+    this.confettiFor(action.winner);
+    this.verseText.setText(this.tally(after));
+  }
+
+  /** Confetti in the crew's colours from its half of the crowd. */
+  private confettiFor(side: Side): void {
+    const { identity } = this.data_.crews[side];
+    const colours = [
+      CREW_COLOUR_HEX[identity.mainColour],
+      CREW_COLOUR_HEX[identity.trimColour],
+      UI.button,
+    ];
+    confetti(this, halfLeft(side) + DESIGN_WIDTH / 4, CROWD_Y - 20, colours, this.fxRng);
+  }
+
+  private tally(snapshot: StageSnapshot): string {
+    const { a, b } = this.data_.crews;
+    return `VERSES  ${a.identity.name} ${String(snapshot.verses.a)} – ${String(snapshot.verses.b)} ${b.identity.name}`;
+  }
+
+  private showEnd(
+    action: Extract<BeatAction, { kind: 'end' }>,
+    after: StageSnapshot,
+    duration: number,
+  ): void {
     const winner = this.data_.crews[action.winner].identity.name.toUpperCase();
-    const reason =
-      action.reason === 'noMcs'
-        ? `${this.data_.crews[other(action.winner)].identity.name} had no MCs on stage`
-        : action.reason === 'turnLimit'
-          ? 'Time! The judges decide'
-          : `${String(action.margin)} MC${action.margin === 1 ? '' : 's'} still standing`;
+    const reason = this.endReason(action, after);
     const panel = this.add.graphics().setDepth(700);
     roundedRect(panel, 240, 200, DESIGN_WIDTH - 480, 190, 20, UI.panel, INK);
     const title = this.add
@@ -550,6 +698,7 @@ export class BattleScene extends Phaser.Scene {
       .text(DESIGN_WIDTH / 2, 340, reason, bodyStyle(22, { align: 'center' }))
       .setOrigin(0.5)
       .setDepth(701);
+    this.confettiFor(action.winner);
     this.time.delayedCall(duration * 0.1, () => {
       for (const head of this.crowd[action.winner])
         this.tweens.add({ targets: head, y: head.y - 20, duration: 200, yoyo: true, repeat: 3 });

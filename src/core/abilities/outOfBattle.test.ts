@@ -53,7 +53,7 @@ describe('applyUpkeepAbilities', () => {
       crew({ supports: [manager], wallet: 20 }),
       createRng(1),
     );
-    expect(after.wallet).toBe(22);
+    expect(after.wallet).toBe(23);
   });
 
   it('Voice Lessons gives a random crew MC (stage or bench) confidence for good', () => {
@@ -81,7 +81,7 @@ describe('applyUpkeepAbilities', () => {
     });
     const subject = crew({ mcs: [mc({ id: 'm', xp: 2 })], supports: [producer] });
     const { crew: after, events } = applyUpkeepAbilities(subject, createRng(1));
-    expect(mcIn(after, 'm').xp).toBe(4);
+    expect(mcIn(after, 'm').xp).toBe(5);
     expect(events.map((event) => event.kind)).toEqual(['ability', 'xp', 'statUp']);
   });
 

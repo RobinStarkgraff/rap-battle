@@ -165,7 +165,7 @@ const SUPPORT_ABILITIES = {
     name: 'Scratch',
     role: 'support',
     trigger: { kind: 'takeFront', subject: 'friend' },
-    effect: { kind: 'diss', target: 'enemyFront', amount: perPower(1, 2, 3) },
+    effect: { kind: 'diss', target: 'enemyFront', amount: perPower(1, 2, 2) },
     text: 'When a friendly MC takes the front: diss the enemy front MC',
   },
   'crowd-mix': {
@@ -173,7 +173,7 @@ const SUPPORT_ABILITIES = {
     name: 'Crowd Mix',
     role: 'support',
     trigger: { kind: 'battleStart' },
-    effect: { kind: 'hype', target: 'ownCrew', amount: perPower(1, 2, 3) },
+    effect: { kind: 'hype', target: 'ownCrew', amount: perPower(2, 3, 4) },
     text: 'Battle start: its crew gains hype',
   },
   'get-up': {
@@ -213,7 +213,7 @@ const SUPPORT_ABILITIES = {
     name: 'Studio Session',
     role: 'support',
     trigger: { kind: 'upkeep' },
-    effect: { kind: 'xp', target: 'randomCrewMC', amount: perPower(1, 1, 2) },
+    effect: { kind: 'xp', target: 'randomCrewMC', amount: perPower(1, 2, 3) },
     text: 'Each upkeep: a random MC of the crew gets xp',
   },
   remix: {
@@ -270,7 +270,7 @@ const SUPPORT_ABILITIES = {
     name: 'Negotiator',
     role: 'support',
     trigger: { kind: 'upkeep' },
-    effect: { kind: 'gold', amount: perPower(1, 1, 2) },
+    effect: { kind: 'gold', amount: perPower(1, 2, 3) },
     text: 'Each upkeep: the crew gains gold',
   },
   'shout-out': {

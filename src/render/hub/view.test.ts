@@ -17,6 +17,7 @@ import {
   liveCrew,
   nextOpponent,
   positionOf,
+  roundStyle,
   seasonView,
   walletView,
 } from './view';
@@ -106,5 +107,19 @@ describe('hub view', () => {
       'Nobody signed anyone in that bidding round.',
     ]);
     expect(biddingView(after)).toMatchObject({ kind: 'open', round: 2 });
+  });
+});
+
+describe('roundStyle', () => {
+  it('reads the style of the round from the league before any battle', () => {
+    const state = hubState();
+    expect(roundStyle(state)).toBe('frontMcsClash');
+    expect(roundStyle({ ...state, league: { ...state.league, battleStyle: 'crowdVote' } })).toBe(
+      'crowdVote',
+    );
+    const third = { ...state, round: { ...state.round, seasonRound: 3 } };
+    expect(roundStyle({ ...third, league: { ...third.league, battleStyle: 'mixed' } })).toBe(
+      'crowdVote',
+    );
   });
 });

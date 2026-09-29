@@ -52,6 +52,10 @@ export function describeEvents(events: readonly BattleEvent[]): string[] {
         return `hype ${event.side} ${event.change > 0 ? '+' : ''}${String(event.change)}=${String(event.hype)}`;
       case 'choke':
         return `choke ${event.unitId}`;
+      case 'verse':
+        return `verse ${String(event.verse)}`;
+      case 'verdict':
+        return `verdict ${String(event.verse)} ${event.winner} ${String(event.gain.a)}:${String(event.gain.b)} ${String(event.verses.a)}-${String(event.verses.b)}`;
       case 'end':
         return `end ${event.winner} ${event.reason} ${String(event.margin)}`;
     }

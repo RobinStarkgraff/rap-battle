@@ -15,12 +15,19 @@ export const SAVE_FORMAT = 'mic-drop-league';
  * The version of the save format. Bump it with every change to the league state's shape,
  * and add a migration from the old version to `MIGRATIONS` so older saves still load.
  */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 /** Upgrades the `league` of a save of version `from` to version `from + 1`. */
 type Migration = (league: unknown) => unknown;
 
-const MIGRATIONS: Readonly<Record<number, Migration>> = {};
+const MIGRATIONS: Readonly<Record<number, Migration>> = {
+  // Version 2 added the league's battle style (D-088); older leagues only knew the clash.
+  1: (league) => (isRecord(league) ? { ...league, battleStyle: 'frontMcsClash' } : league),
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 const envelopeSchema = z.object({
   format: z.literal(SAVE_FORMAT),

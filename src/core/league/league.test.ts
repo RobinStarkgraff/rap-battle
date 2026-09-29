@@ -4,6 +4,7 @@ import { nameSet } from '../names';
 import { createRng } from '../rng';
 import { mc } from '../testing/fixtures';
 import { TUNABLES } from '../tunables';
+import { roundBattleStyle } from './battleStyle';
 import { createLeague, type NewPlayer } from './create';
 import { botIdentity, crewNameProblem } from './crews';
 import { divisionSizes, paddedSize } from './divisions';
@@ -136,6 +137,32 @@ describe('createLeague', () => {
     expect(named('  ')).toEqual({ ok: false, error: 'empty' });
     expect(named('x'.repeat(TUNABLES.CREW_NAME_MAX + 1))).toEqual({ ok: false, error: 'tooLong' });
     expect(crewNameProblem('Fine', nameSet(['Other']))).toBeNull();
+  });
+});
+
+describe('battle styles', () => {
+  it('founds a league of clashes unless another style is picked', () => {
+    expect(league(2).battleStyle).toBe('frontMcsClash');
+    const created = createLeague(1, players(2), 0, { battleStyle: 'mixed' });
+    expect(created.ok && created.value.battleStyle).toBe('mixed');
+  });
+
+  it('uses the league style for every round, or a crowd vote every CROWD_VOTE_EVERY rounds', () => {
+    const rounds = [1, 2, 3, 4, 5, 6];
+    const styles = (subject: League) => rounds.map((round) => roundBattleStyle(subject, round));
+    expect(styles({ ...league(2), battleStyle: 'crowdVote' })).toEqual(
+      rounds.map(() => 'crowdVote'),
+    );
+    expect(styles({ ...league(2), battleStyle: 'frontMcsClash' })).not.toContain('crowdVote');
+    expect(TUNABLES.CROWD_VOTE_EVERY).toBe(3);
+    expect(styles({ ...league(2), battleStyle: 'mixed' })).toEqual([
+      'frontMcsClash',
+      'frontMcsClash',
+      'crowdVote',
+      'frontMcsClash',
+      'frontMcsClash',
+      'crowdVote',
+    ]);
   });
 });
 

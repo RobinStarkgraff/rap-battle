@@ -27,6 +27,7 @@ import {
   HYPE_SWING_LINES,
   pickLine,
   SELF_CHOKE_LINES,
+  VERDICT_LINES,
 } from '../text';
 
 /** A change of at least this much hype in one turn gets a crowd line (§11). */
@@ -52,6 +53,8 @@ export const BEAT_MS = {
   chokeLine: 700,
   front: 650,
   swing: 1200,
+  verse: 1100,
+  verdict: 2200,
   end: 2600,
 } as const;
 
@@ -72,6 +75,9 @@ export interface StageSnapshot {
   readonly stats: Readonly<Record<UnitId, McStats>>;
   readonly hype: Readonly<Record<Side, number>>;
   readonly turn: number;
+  /** Crowd vote (§5.2): the verse being played (0 in a clash) and the verses each crew won. */
+  readonly verse: number;
+  readonly verses: Readonly<Record<Side, number>>;
 }
 
 /** A speech bubble: said by a unit, or by the crowd of one side when `speaker` is `null`. */
@@ -130,6 +136,14 @@ export type BeatAction =
       readonly rising: boolean;
       readonly speech: Speech;
     }
+  | { readonly kind: 'verse'; readonly verse: number }
+  | {
+      readonly kind: 'verdict';
+      readonly verse: number;
+      readonly winner: Side;
+      readonly gain: Readonly<Record<Side, number>>;
+      readonly speech: Speech;
+    }
   | {
       readonly kind: 'end';
       readonly winner: Side;
@@ -155,6 +169,8 @@ interface Stage {
   stats: Map<UnitId, McStats>;
   hype: Record<Side, number>;
   turn: number;
+  verse: number;
+  verses: Record<Side, number>;
   /** The opening front MCs, who stand at the mic from the start: their first `front` shows nothing. */
   atMic: Set<UnitId>;
 }
@@ -192,10 +208,12 @@ export function buildPlayback(
     beats.push({ ...draft, after: snapshot(stage) });
   };
   for (const [index, event] of events.entries()) {
-    if (event.kind === 'turn' || event.kind === 'end') {
+    if (event.kind === 'turn' || event.kind === 'end' || event.kind === 'verdict') {
       for (const swing of swings(stage, turnStartHype, cast)) push(swing);
       turnStartHype = { ...stage.hype };
     }
+    // The crowd settling between verses is no swing: measure the next turn from after it.
+    if (event.kind === 'verse') turnStartHype = { ...stage.hype };
     const draft = beatFor(event, events[index + 1], stage, cast);
     if (draft !== null) push(draft);
   }
@@ -264,6 +282,25 @@ function beatFor(
       return {
         action: { kind: 'front', side: event.side, unitId: event.unitId },
         duration: BEAT_MS.front,
+      };
+    case 'verse':
+      stage.verse = event.verse;
+      return { action: { kind: 'verse', verse: event.verse }, duration: BEAT_MS.verse };
+    case 'verdict':
+      stage.verses = { ...event.verses };
+      return {
+        action: {
+          kind: 'verdict',
+          verse: event.verse,
+          winner: event.winner,
+          gain: event.gain,
+          speech: {
+            speaker: null,
+            side: event.winner,
+            text: pickLine(cast.rng, VERDICT_LINES, { crew: cast.crews[event.winner] }),
+          },
+        },
+        duration: BEAT_MS.verdict,
       };
     case 'end':
       return {
@@ -366,7 +403,15 @@ function openingStage(a: BattleLineup, b: BattleLineup): Stage {
   }
   const stage = { a: onStage(a), b: onStage(b) };
   const fronts = [stage.a[0], stage.b[0]].filter((id) => id !== undefined);
-  return { stage, stats, hype: { a: 0, b: 0 }, turn: 0, atMic: new Set(fronts) };
+  return {
+    stage,
+    stats,
+    hype: { a: 0, b: 0 },
+    turn: 0,
+    verse: 0,
+    verses: { a: 0, b: 0 },
+    atMic: new Set(fronts),
+  };
 }
 
 function loseConfidence(stage: Stage, id: UnitId, damage: number): void {
@@ -388,6 +433,8 @@ function snapshot(stage: Stage): StageSnapshot {
     stats: Object.fromEntries(stage.stats),
     hype: { ...stage.hype },
     turn: stage.turn,
+    verse: stage.verse,
+    verses: { ...stage.verses },
   };
 }
 

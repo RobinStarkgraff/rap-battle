@@ -31,6 +31,9 @@ export { JoinScene } from './scenes/JoinScene';
 export type { JoinSceneData } from './scenes/JoinScene';
 export { TitleScene } from './scenes/TitleScene';
 export type { TitleSceneData } from './scenes/TitleScene';
+export { SoundScene } from './scenes/SoundScene';
+export { createSoundEngine, provideSound } from './audio';
+export type { SoundEngine } from './audio';
 export { visibleTargets } from './ui/targets';
 export type { TargetInfo } from './ui/targets';
 

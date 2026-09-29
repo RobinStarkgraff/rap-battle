@@ -1,9 +1,9 @@
-/** Battle styles (D-010): `simulateBattle` runs one through this interface (T-037 adds more). */
+/** Battle styles (D-010, D-088): `simulateBattle` runs one through this interface. */
 
 import type { BattleEvent, BattleLineup } from '../model';
 import type { Rng } from '../rng';
 
-export const BATTLE_STYLE_IDS = ['frontMcsClash'] as const;
+export const BATTLE_STYLE_IDS = ['frontMcsClash', 'crowdVote'] as const;
 export type BattleStyleId = (typeof BATTLE_STYLE_IDS)[number];
 
 export interface BattleStyle {

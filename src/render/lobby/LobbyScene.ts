@@ -157,7 +157,7 @@ export class LobbyScene extends Phaser.Scene {
         addBody(this, x, 120, problemText(state.notice), 18, UI.textBad, 400)
           .setOrigin(0.5, 0)
           .setAlign('center')
-          .setBackgroundColor('#1b1b2f')
+          .setBackgroundColor(UI.textDark)
           .setPadding(10, 6, 10, 6),
       );
     }

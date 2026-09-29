@@ -4,6 +4,9 @@ import {
   DESIGN_WIDTH,
   GAME_SCENES,
   PAGE_BACKGROUND,
+  createSoundEngine,
+  provideSound,
+  SoundScene,
   visibleTargets,
 } from '../render';
 import { createPeerNetwork, peerServerFrom } from '../net';
@@ -40,8 +43,10 @@ function startGame(parent: string): Phaser.Game {
       postBoot: (game) => {
         if (page !== null) {
           startDevPage(game, page, window.location.search);
+          startSound(game);
           return;
         }
+        startSound(game);
         for (const scene of GAME_SCENES) game.scene.add(scene.KEY, scene, false);
         const flow = createGameFlow({
           store: browserStore(),
@@ -57,6 +62,21 @@ function startGame(parent: string): Phaser.Game {
       },
     },
   });
+}
+
+/**
+ * Sound for every scene, with its controls on top (§11 Sound). Browsers only let audio start
+ * after the player's first click or key press.
+ */
+function startSound(game: Phaser.Game): void {
+  const sound = createSoundEngine(browserStore());
+  provideSound(game, sound);
+  game.scene.add(SoundScene.KEY, SoundScene, true);
+  const unlock = (): void => {
+    sound.unlock();
+  };
+  window.addEventListener('pointerdown', unlock);
+  window.addEventListener('keydown', unlock);
 }
 
 startGame('game');

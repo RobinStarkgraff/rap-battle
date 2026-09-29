@@ -93,6 +93,7 @@ Each target calls the matching npm script in `package.json`.
 | `make test-e2e` | Playwright tests; starts the dev server and a local PeerJS server itself (or reuses running ones) |
 | `make build` | typecheck + production build to `dist/` |
 | `make format` | fix formatting and auto-fixable lint errors |
+| `make balance` | print battle and economy statistics of AI-played leagues (T-031, `tooling/balance-report.test.ts`) |
 
 ## Environment notes
 

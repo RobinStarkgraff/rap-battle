@@ -1,4 +1,4 @@
-.PHONY: help install dev peer-server check test test-e2e build format dev-bootstrap
+.PHONY: help install dev peer-server check test test-e2e build format balance dev-bootstrap
 help:
 	@echo "Project targets:"
 	@echo "  make install                        Install dependencies (npm ci)"
@@ -9,6 +9,7 @@ help:
 	@echo "  make test-e2e                       Browser tests (Playwright)"
 	@echo "  make build                          Production build to dist/"
 	@echo "  make format                         Fix formatting and auto-fixable lint errors"
+	@echo "  make balance                        Print battle and economy statistics of AI-played leagues"
 	@echo ""
 	@echo "Devcontainer targets:"
 	@echo "  make dev-bootstrap                  Fetch/install devcontainer base layer"
@@ -40,6 +41,9 @@ build:
 format:
 	npm run format
 	npm run lint:fix
+
+balance:
+	npm run balance
 
 # Bootstrap target — always available even before base/ exists
 # Usage: make dev-bootstrap [OVERLAY=<overlay-repo-url>]

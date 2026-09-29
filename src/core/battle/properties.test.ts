@@ -8,7 +8,7 @@ import { createRng } from '../rng';
 import { describeEvents, eventsOf } from '../testing/battle';
 import { randomLineup, type RandomLineupOptions } from '../testing/randomLineup';
 import { TUNABLES } from '../tunables';
-import { battleEnd, simulateBattle } from '.';
+import { battleEnd, CROWD_VOTE, simulateBattle } from '.';
 
 const BATTLES = 400;
 
@@ -157,5 +157,57 @@ describe('every battle', () => {
     );
     // Every ability that can trigger in a battle (not sign or upkeep ones).
     expect(resolved.size).toBe(32 - 4);
+  });
+});
+
+describe('every crowd vote battle', () => {
+  const VOTES = CASES.slice(0, BATTLES).map((each) => ({
+    ...each,
+    events: simulateBattle(each.a, each.b, each.seed, CROWD_VOTE),
+  }));
+
+  it('gives the same log for the same lineups and seed', () => {
+    for (const { a, b, seed, events } of VOTES.slice(0, 100)) {
+      expect(simulateBattle(a, b, seed, CROWD_VOTE)).toEqual(events);
+    }
+    const [first] = VOTES;
+    expect(describeEvents(first?.events ?? [])).toMatchSnapshot();
+  });
+
+  it('keeps turns alternating within VERSES verses of TURNS_PER_VERSE turns', () => {
+    for (const { events } of VOTES) {
+      const [start] = events;
+      if (start?.kind !== 'start') throw new Error('no start event');
+      const turns = eventsOf(events, 'turn');
+      expect(turns.length).toBeLessThanOrEqual(TUNABLES.VERSES * TUNABLES.TURNS_PER_VERSE);
+      turns.forEach((turn, index) => {
+        expect(turn.side === start.opener).toBe(index % 2 === 0);
+      });
+      eventsOf(events, 'verse').forEach((verse, index) => {
+        expect(verse.verse).toBe(index + 1);
+      });
+    }
+  });
+
+  it('ends with one winner, by a wipeout or by winning most of the verses', () => {
+    const majority = Math.floor(TUNABLES.VERSES / 2) + 1;
+    for (const { a, b, events } of VOTES) {
+      expect(eventsOf(events, 'end')).toHaveLength(1);
+      const end = battleEnd(events);
+      const lineups = { a, b };
+      expect(end.margin).toBe(remainingOnStage(lineups[end.winner], end.winner, events).length);
+      const verdicts = eventsOf(events, 'verdict');
+      verdicts.forEach((verdict, index) => {
+        expect(verdict.verse).toBe(index + 1);
+        expect(verdict.verses.a + verdict.verses.b).toBe(index + 1);
+        expect(Math.max(verdict.verses.a, verdict.verses.b)).toBeLessThanOrEqual(majority);
+      });
+      expect(['wipeout', 'noMcs', 'crowdVote']).toContain(end.reason);
+      if (end.reason === 'crowdVote') {
+        expect(verdicts.at(-1)?.verses[end.winner]).toBe(majority);
+      }
+    }
+    const reasons = new Set(VOTES.map(({ events }) => battleEnd(events).reason));
+    expect(reasons).toEqual(new Set(['wipeout', 'noMcs', 'crowdVote']));
   });
 });

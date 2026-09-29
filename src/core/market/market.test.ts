@@ -6,7 +6,14 @@ import { createRng } from '../rng';
 import { crew, mc, support } from '../testing/fixtures';
 import { TUNABLES } from '../tunables';
 import { generateUnit, rollAge, rollStageName } from './generate';
-import { addFreeAgent, addRookies, createMarket, removeFromMarket } from './market';
+import {
+  addFreeAgent,
+  addRookies,
+  createMarket,
+  poolMax,
+  removeFromMarket,
+  rookieCount,
+} from './market';
 import { NO_SCOUTING, scout } from './scouting';
 import {
   askPrice,
@@ -33,13 +40,13 @@ function generateMany(count: number, seed: number): Unit[] {
 }
 
 describe('value', () => {
-  it('rates an 18-year-old 3 / 3 MC with one ability at 10: ask 5, salary 3 (§4, §5.1)', () => {
+  it('rates an 18-year-old 3 / 3 MC with one ability at 10: ask 5, salary 2 (§4, §5.1)', () => {
     const young = mc({ id: 'm', flow: 3, confidence: 3, age: 18 });
     expect(seasonsLeft(young)).toBe(5);
     expect(youthPremium(young)).toBe(2);
     expect(rating(young)).toBe(10);
     expect(askPrice(young)).toBe(5);
-    expect(salaryFor(young)).toBe(3);
+    expect(salaryFor(young)).toBe(2);
   });
 
   it('rates the same MC at 22 at 8 and asks 4; it is on its farewell tour', () => {
@@ -187,17 +194,26 @@ describe('market', () => {
 
   it('adds rookies as the newest units, then drops the oldest down to POOL_MAX', () => {
     const start = createMarket(3, createRng(1), NONE);
-    const { market, rookies, leftGame } = addRookies(start, createRng(2), NONE);
+    const { market, rookies, leftGame } = addRookies(start, 3, createRng(2), NONE);
     expect(rookies.map((unit) => unit.id)).toEqual(['u19', 'u20', 'u21']);
     expect(market.publicList).toHaveLength(TUNABLES.POOL_MAX);
     expect(leftGame.map((unit) => unit.id)).toEqual(['u1', 'u2', 'u3', 'u4', 'u5']);
     expect(market.publicList.at(-1)?.id).toBe('u21');
   });
 
+  it('lets more rookies in, and keeps more, in a big league', () => {
+    expect([1, 4, 6, 8, 12].map(rookieCount)).toEqual([3, 3, 3, 4, 6]);
+    expect([4, 8, 12].map(poolMax)).toEqual([16, 16, 24]);
+    const start = createMarket(12, createRng(1), NONE);
+    const { market, rookies } = addRookies(start, 12, createRng(2), NONE);
+    expect(rookies).toHaveLength(6);
+    expect(market.publicList).toHaveLength(24);
+  });
+
   it('keeps a short list whole and gives rookies names not taken in the league', () => {
     const start = createMarket(1, createRng(1), NONE);
     const taken = nameSet(start.publicList.map((unit) => unit.stageName));
-    const { market, leftGame } = addRookies(start, createRng(2), taken);
+    const { market, leftGame } = addRookies(start, 1, createRng(2), taken);
     expect(leftGame).toEqual([]);
     expect(market.publicList).toHaveLength(9);
     const names = market.publicList.map((unit) => unit.stageName);

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createRng, simulateBattle, type BattleEvent, type BattleLineup } from '../../core';
-import { mc, plainMc } from '../../core/testing/fixtures';
+import {
+  createRng,
+  CROWD_VOTE,
+  simulateBattle,
+  type BattleEvent,
+  type BattleLineup,
+} from '../../core';
+import { seedWhereOpens } from '../../core/testing/battle';
+import { mc, plainMc, support } from '../../core/testing/fixtures';
 import { randomLineup } from '../../core/testing/randomLineup';
 import {
   BIG_HYPE_SWING,
@@ -147,5 +154,61 @@ describe('playback over random battles', () => {
     // Setup knockouts and no-MC forfeits stay short even when stretched by `MAX_STRETCH`.
     expect(inTarget / lengths.length).toBeGreaterThan(0.6);
     expect(MAX_STRETCH).toBeGreaterThan(1);
+  });
+});
+
+describe('buildPlayback for a crowd vote', () => {
+  const a = lineup('a', [plainMc('a1', 1, 30), null, null]);
+  const b = lineup('b', [plainMc('b1', 1, 30), null, null]);
+  const seed = seedWhereOpens('a');
+  const events = simulateBattle(a, b, seed, CROWD_VOTE);
+  const playback = buildPlayback(
+    { name: 'Crew A', lineup: a },
+    { name: 'Crew B', lineup: b },
+    events,
+    seed,
+  );
+
+  it('shows each verse and each verdict, with the tally in the snapshots', () => {
+    expect(kinds(playback).filter((kind) => kind === 'verse' || kind === 'verdict')).toEqual([
+      'verse',
+      'verdict',
+      'verse',
+      'verdict',
+    ]);
+    const verdicts = playback.beats.filter((beat) => beat.action.kind === 'verdict');
+    expect(verdicts.map((beat) => beat.after.verses)).toEqual([
+      { a: 0, b: 1 },
+      { a: 0, b: 2 },
+    ]);
+    const [first] = verdicts;
+    if (first?.action.kind !== 'verdict') throw new Error('no verdict');
+    expect(first.action.speech).toMatchObject({ speaker: null, side: 'b' });
+    expect(first.action.speech.text).toContain('Crew B');
+    expect(playback.beats.at(-1)?.after.verse).toBe(2);
+  });
+
+  it('gives no crowd line for the crowd settling between verses', () => {
+    const rising: BattleLineup = {
+      id: 'a',
+      mcSlots: [mc({ id: 'a1', flow: 1, confidence: 30, abilities: ['chart-topper'] }), null, null],
+      supportSlots: [
+        support({ id: 'as', archetype: 'manager', abilities: [['hometown-crowd', 3]] }),
+        null,
+      ],
+    };
+    const log = simulateBattle(rising, b, 1, CROWD_VOTE);
+    const settle = log.filter((event) => event.kind === 'hype' && event.cause === 'verseBreak');
+    expect(settle.some((event) => event.kind === 'hype' && event.change <= -BIG_HYPE_SWING)).toBe(
+      true,
+    );
+    const beats = buildPlayback(
+      { name: 'A', lineup: rising },
+      { name: 'B', lineup: b },
+      log,
+      1,
+    ).beats;
+    const drops = beats.filter((beat) => beat.action.kind === 'swing' && !beat.action.rising);
+    expect(drops).toEqual([]);
   });
 });

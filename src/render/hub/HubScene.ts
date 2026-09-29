@@ -4,6 +4,7 @@
  */
 
 import Phaser from 'phaser';
+import { SILENT_SOUND, soundOf, type SoundEngine } from '../audio';
 import { addBackdrop } from '../art/bake';
 import { letteringStyle } from '../art/lettering';
 import { drawLogo } from '../art/logos';
@@ -14,12 +15,15 @@ import { problemText } from '../text';
 import { addButton } from '../ui/button';
 import { addBody, fitWidth } from '../ui/panel';
 import { renderHallTab } from './hallTab';
+import { createHallUi, type HallUi } from './hallView';
 import { renderHomeTab } from './homeTab';
 import { createLeagueUi, renderLeagueTab, type LeagueUi } from './leagueTab';
 import { createLineupUi, renderLineupTab, type LineupUi } from './lineupTab';
 import { createMarketUi, renderMarketTab, type MarketUi } from './marketTab';
 import type { TabContext } from './tab';
-import { HUB_TABS, type HubController, type HubTab } from './types';
+import { onboardingHint, type HintId } from './hints';
+import { withShopSounds } from './sounds';
+import { HUB_TABS, type HubController, type HubState, type HubTab } from './types';
 import { biddingView, nextOpponent, playerShop, seasonView, walletView } from './view';
 
 export interface HubSceneData {
@@ -36,6 +40,9 @@ const TAB_LABELS: Readonly<Record<HubTab, string>> = {
 
 const TONES = { good: UI.textGood, bad: UI.textBad, info: UI.text } as const;
 
+/** Hints the player closed; they stay closed until the page is reloaded. */
+const CLOSED_HINTS = new Set<HintId>();
+
 export class HubScene extends Phaser.Scene {
   static readonly KEY = 'hub';
 
@@ -46,25 +53,32 @@ export class HubScene extends Phaser.Scene {
   private leagueUi: LeagueUi = createLeagueUi();
   private market: MarketUi = createMarketUi();
   private lineup: LineupUi = createLineupUi();
+  private hall: HallUi = createHallUi();
   private unsubscribe: (() => void) | null = null;
   /** The shop timer's countdown under the Lock in button (a sitting with the timer on). */
   private countdown: Phaser.GameObjects.Text | null = null;
   /** How many nudges were shown already. */
   private nudgesShown = 0;
+  private audio: SoundEngine = SILENT_SOUND;
+  /** The bidding results the signing sound was played for. */
+  private awardsHeard: HubState['lastAwards'] = null;
 
   constructor() {
     super(HubScene.KEY);
   }
 
   create(data: HubSceneData): void {
-    this.controller = data.controller;
+    this.audio = soundOf(this);
+    this.controller = withShopSounds(data.controller, this.audio);
+    this.awardsHeard = data.controller.state().lastAwards;
     this.tab = 'home';
     this.leagueUi = createLeagueUi();
     this.market = createMarketUi();
     this.lineup = createLineupUi();
+    this.hall = createHallUi();
     addBackdrop(this, { width: DESIGN_WIDTH, height: DESIGN_HEIGHT, groundY: 520, seed: 3 });
     const shade = this.add.graphics();
-    shade.fillStyle(0x000000, 0.35);
+    shade.fillStyle(UI.shade, 0.35);
     shade.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
     this.notice = addBody(this, DESIGN_WIDTH / 2, 136, '', 16)
       .setOrigin(0.5)
@@ -113,11 +127,23 @@ export class HubScene extends Phaser.Scene {
     const nudge = this.controller.state().sitting?.nudge ?? null;
     if (nudge === null || nudge.count <= this.nudgesShown) return;
     this.nudgesShown = nudge.count;
+    this.audio.play('nudge');
     this.notice.setText(`${nudge.from} nudges you: the crews are waiting!`).setColor(UI.textGold);
+  }
+
+  /** A cash register when a bidding round is revealed and the player won someone. */
+  private hearAwards(): void {
+    const state = this.controller.state();
+    if (state.lastAwards === this.awardsHeard) return;
+    this.awardsHeard = state.lastAwards;
+    if (state.lastAwards?.some((award) => award.crewId === state.crewId) === true) {
+      this.audio.play('sign');
+    }
   }
 
   private redraw(): void {
     this.showNudge();
+    this.hearAwards();
     this.tick();
     this.layer?.destroy();
     const layer = this.add.container(0, 0);
@@ -155,9 +181,10 @@ export class HubScene extends Phaser.Scene {
         renderLeagueTab(context, this.leagueUi);
         break;
       case 'hall':
-        renderHallTab(context);
+        renderHallTab(context, this.hall);
         break;
     }
+    this.drawHint(layer);
   }
 
   private drawHeader(layer: Phaser.GameObjects.Container): void {
@@ -219,7 +246,7 @@ export class HubScene extends Phaser.Scene {
         height: 66,
         fontSize: 26,
         fill: UI.accent,
-        hoverFill: 0xff5d6a,
+        hoverFill: UI.accentHover,
         target: 'hub-lock-in',
       },
     );
@@ -242,6 +269,41 @@ export class HubScene extends Phaser.Scene {
       },
     );
     layer.add(quit.container);
+  }
+
+  /** An onboarding hint for the first rounds (T-056), beside the tab bar, until closed. */
+  private drawHint(layer: Phaser.GameObjects.Container): void {
+    const hint = onboardingHint(this.controller.state(), this.tab);
+    if (hint === null || CLOSED_HINTS.has(hint.id)) return;
+    const left = 872;
+    const top = 90;
+    const width = 368;
+    const height = 58;
+    const pen = this.add.graphics();
+    roundedRect(pen, left, top, width, height, 8, UI.button, INK);
+    const text = addBody(this, left + 10, top + 5, hint.text, 12, UI.textDark, width - 50)
+      .setFontStyle('bold')
+      .setLineSpacing(-1);
+    const close = addButton(
+      this,
+      left + width - 20,
+      top + 16,
+      'OK',
+      () => {
+        CLOSED_HINTS.add(hint.id);
+        this.redraw();
+      },
+      {
+        width: 32,
+        height: 22,
+        fontSize: 11,
+        plain: true,
+        fill: UI.white,
+        target: 'hub-hint-close',
+      },
+    );
+    const note = this.add.container(0, 0, [pen, text, close.container]).setDepth(800);
+    layer.add(note);
   }
 
   private drawTabs(layer: Phaser.GameObjects.Container): void {

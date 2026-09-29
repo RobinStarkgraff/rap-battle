@@ -83,7 +83,21 @@ describe('league save', () => {
     });
   });
 
+  it('migrates a version 1 save, which knew only the clash', () => {
+    const v1 = Object.fromEntries(Object.entries(league).filter(([key]) => key !== 'battleStyle'));
+    expect(parseLeague(envelope(v1, 1))).toEqual({
+      ok: true,
+      value: { ...league, battleStyle: 'frontMcsClash' },
+    });
+  });
+
+  it('keeps the battle style a league was founded with', () => {
+    const mixed: League = { ...league, battleStyle: 'mixed' };
+    expect(parseLeague(serializeLeague(mixed))).toEqual({ ok: true, value: mixed });
+  });
+
   it.each([
+    ['an unknown battle style', (data: League) => ({ ...data, battleStyle: 'danceOff' })],
     ['a missing field', (data: League) => ({ ...data, market: undefined })],
     [
       'a negative wallet',

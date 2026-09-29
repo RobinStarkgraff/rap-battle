@@ -153,10 +153,10 @@ machine in T-023). Crews run by an AI (see [AI managers](#ai-managers)) go throu
 phases, with the AI making the shop decisions:
 
 1. **Upkeep** (automatic)
-   1. Income: `BASE_INCOME = 16` gold, plus `WIN_BONUS = 2` if the crew won its last battle.
+   1. Income: `BASE_INCOME = 18` gold, plus `WIN_BONUS = 2` if the crew won its last battle.
       There is no catch-up income for losing crews (see [Pillars](#pillars)).
    2. `upkeep` abilities trigger (for example Negotiator's gold or Studio Session's xp).
-   3. The wallet is capped at `WALLET_CAP = 20`, and anything above is lost.
+   3. The wallet is capped at `WALLET_CAP = 25`, and anything above is lost.
    4. New rookies enter the player market (see [Supply](#supply)). This step runs once per
       league round for the whole league, not once per crew.
 2. **Shop**: the [player market](#4-shop-phase-the-player-market) runs its bidding rounds;
@@ -188,8 +188,8 @@ phases, with the AI making the shop decisions:
    the result is saved the round is complete, and it's a clean place to stop.
 
 A brand new crew has no units, `STARTING_GOLD = 40` gold (above the wallet cap once, so it
-can sign about five average units at their ask, about 24 gold, and pay its first payroll,
-about 14) and skips its first upkeep. The league's first round has no upkeep at all: the start
+can sign about five average units at their ask, about 26 gold, and pay its first payroll,
+about 12) and skips its first upkeep. The league's first round has no upkeep at all: the start
 pool (see [Supply](#supply)) takes the place of its rookies.
 
 ## 4. Shop phase: the player market
@@ -210,7 +210,7 @@ choice between a signing, a scout and a better unit's salary.
 | **Arrange** | Free. Units move between MC slots, support slots (by role) and the bench |
 
 There is no freeze. A unit's **value** sets both its ask and its salary (settled in T-049,
-D-046; the numbers are placeholders for T-031):
+D-046; the numbers were tuned in the balance pass, T-031):
 
 - `rating` = `flow + confidence` for an MC, `SUPPORT_BASE_RATING = 4` for a support unit,
   plus `ABILITY_RATING = 2` per point of ability `power`,
@@ -251,9 +251,12 @@ through the host, which resolves them with a pure `core/` function, so every pee
 
 - **At league creation** the public list gets `POOL_START_PER_MEMBER = 6` generated units per
   member, so every new crew can sign a first lineup with some choice left.
-- **Each upkeep** `ROOKIES_PER_ROUND = 3` new units are generated into the public list.
+- **Each upkeep** new units are generated into the public list: `ROOKIES_PER_MEMBER = 0.5` per
+  member of the league, rounded up, and at least `ROOKIES_PER_ROUND = 3` (so 3 for up to 6
+  crews and 6 for 12), so a big league's supply keeps up with its retirements (T-031, D-090).
 - **Released** units return to it as free agents. **Retired** units leave the game.
-- The list holds at most `POOL_MAX = 16` units. The cap is checked at each upkeep after the
+- The list holds at most `POOL_MAX = 16` units, or `POOL_MAX_PER_MEMBER = 2` per member in a
+  bigger league (24 for 12 crews). The cap is checked at each upkeep after the
   rookies enter (so the start pool may be larger): the units that have been on the list
   longest leave the game until it fits. They don't retire, so they don't enter a hall of fame.
 - A generated unit's **role** is drawn with the weights `MC_WEIGHT : SUPPORT_WEIGHT = 3 : 2`,
@@ -267,7 +270,7 @@ Units get better by playing (D-041):
 
 - A unit gets `+1 xp` for every battle it plays in an active slot (stage or support), win or
   lose. Benched units get none, and there is no bonus for youth.
-- Every `GROWTH_XP = 3` xp is a **growth step**. An MC gets +1 `flow` or +1 `confidence`
+- Every `GROWTH_XP = 4` xp is a **growth step**. An MC gets +1 `flow` or +1 `confidence`
   (seeded pick). A support unit gets +1 `power` on one of its abilities below `MAX_POWER`
   (seeded pick); if all are maxed, the step does nothing.
 - At `SECOND_ABILITY_XP = 12` xp a unit learns a **second ability**, drawn at random from its
@@ -279,7 +282,9 @@ Units get better by playing (D-041):
 ## 5. Battle: "front MCs clash"
 
 This is the first battle style (D-010). `simulateBattle` picks the resolver through a
-`BattleStyle` interface, so later styles (T-037) don't need special cases. Settled with the
+`BattleStyle` interface, so other styles don't need special cases; the second one is the
+[crowd vote](#52-second-style-crowd-vote), and the league picks which style its rounds use
+(see [Battle style](#battle-style)). Settled with the
 user in T-046: the MCs **take turns** like in a real rap battle (D-033), a **hype meter** per
 crew powers the abilities (D-034), and every battle has a **winner** (D-035).
 
@@ -370,8 +375,8 @@ All random choices (coin flip, random targets) come from the seed through the se
 - A battle should play back in **30 to 60 seconds** at normal speed, so a round still fits a
   coffee break. Battles are **short and punchy** (D-054): balancing (T-031) aims for a typical
   battle of about 6 to 12 turns, each with about 4 to 6 seconds of screen time, and
-  `MAX_TURNS` should almost never be reached. (The T-051 playtest saw 3 to 8 turns with the
-  current stats.)
+  `MAX_TURNS` should almost never be reached. The balance pass (T-031, D-090) measured about
+  8 to 9 turns on average (p10 6, p90 11 to 12) over AI-played leagues, and no turn limits.
 - Playback has a **2× speed** button. There is no skip, because the battle is a pillar.
 - Each beat has a fixed screen time (a render constant). A battle whose beats add up to more
   than 60 s plays faster to fit; a shorter one plays slower, by at most `MAX_STRETCH = 1.4`, so
@@ -383,18 +388,41 @@ All random choices (coin flip, random targets) come from the seed through the se
 Every unit in the crew costs its `salary` at each lock-in (D-012):
 
 - A unit's salary is set from its value when it is signed: `ceil(rating × SALARY_PER_RATING)`,
-  with `SALARY_PER_RATING = 0.25` (see [The market](#the-market) for `rating`). An
-  18-year-old 3 / 3 MC with one power-1 ability (rating 10) costs 3.
+  with `SALARY_PER_RATING = 0.18` (see [The market](#the-market) for `rating`). An
+  18-year-old 3 / 3 MC with one power-1 ability (rating 10) costs 2, a typical rookie MC
+  (rating about 12) 3.
 - It stays fixed during the season and is **renegotiated at each season end**: it is
   recomputed from the unit's value then, so a unit that grew costs more next season, and the
   youth premium shrinks as the unit ages (D-042, D-046).
 - On the bench a unit costs half, rounded down (`BENCH_SALARY_FACTOR = 0.5`), so a benched
   unit with salary 1 is free.
 
-With `BASE_INCOME = 16`, five average units in active slots (salary about 3 each) cost most
-of the income and leave 1 to 3 gold, plus the win bonus, for signings; grown stars cost more
-than that (D-053). That is intended: gold is tight, and salary is the soft cap
+With `BASE_INCOME = 18`, five average units in active slots (salary about 2 to 3 each) cost
+most of the income and leave some gold, plus the win bonus, for signings; a lineup of grown
+stars (salary about 3.5 each) costs about all of it (D-053, D-090). That is intended: gold is tight, and salary is the soft cap
 on crew power (T-047, T-048).
+
+### 5.2 Second style: crowd vote
+
+Settled with the user for T-037 (D-088). The same stage, bars, abilities, hype and chokes as
+the clash, but the **crowd** decides, verse by verse. It gives the crowd builds (Hitmaker, Hype
+Man, Manager) a round where they matter most, and it rewards a different lineup than the clash.
+
+- **Setup** is the clash's (coin flip, no MCs, `beforeBattle`, `battleStart`, `takeFront`).
+- The battle is played in up to `VERSES = 3` **verses** of `TURNS_PER_VERSE = 4` turns each.
+  Turns alternate exactly as in the clash, counted over the whole battle.
+- At the end of each verse the crowd gives the verse to the crew whose **hype rose more** in
+  it (hype at the verse's end minus hype at its start, so losses count too; the first verse
+  counts from 0, so setup hype counts for it). If equal, to the crew whose MCs took more
+  confidence off the enemy in the verse; if that is equal too, to the crew that didn't open.
+- The first crew to win most of the verses (2 of 3) **wins**, and the battle ends there.
+- **Between verses** the crowd settles: each hype meter drops to `VERSE_HYPE_KEEP = 0.5` of
+  itself, rounded down, so every verse starts with room to get loud again. Crowd abilities
+  use the hype as it stands.
+- A **wipeout** still ends the battle at once and the crew with MCs left wins; so does a crew
+  with no MC at the start. There is no turn limit to reach, because a crowd vote has at most
+  12 turns.
+- **MC margin** is the winner's MCs still on stage, as in the clash.
 
 ## 6. Age and retirement
 
@@ -453,6 +481,16 @@ A **member** is a crew plus who runs it:
 | Equal, even sizes | At league creation and at each season start, bots are added until every division has the size of the largest one, rounded up to even (Q-018, D-057). So there are **no byes**, and every division plays the same number of rounds and reaches the league-wide season end together. For example 9 members split 5 + 4 and play as 6 + 6 with 3 bots |
 | Promotion | With more than one division, the top `PROMOTE_COUNT = 1` of each lower division goes up and the bottom `PROMOTE_COUNT` of each higher division goes down |
 | Titles | The winner of the top division is crowned **champion**, and every division winner gets a title. Both are cosmetic and go into the crew's `record` |
+
+### Battle style
+
+The founder of a league picks its **battle style** once, when the league is created (D-088):
+**clash** (every battle is a [front MCs clash](#5-battle-front-mcs-clash)), **crowd vote**
+(every battle is a [crowd vote](#52-second-style-crowd-vote)), or **mixed** (the default: every
+`CROWD_VOTE_EVERY = 3`rd round of a season is a crowd vote and the others are clashes). All of a
+round's battles use the same style. Every peer works it out from the league state and the
+round, so the hub shows it from the start of the shop phase. Leagues from before the setting
+existed play only clashes.
 
 ### Seasons
 
@@ -529,7 +567,7 @@ gets the same result. In detail (T-019, D-071):
 
 ### League state and hosting
 
-The **league state** is the whole league: the league seed, the members, every crew (identity,
+The **league state** is the whole league: the league seed, its battle style, the members, every crew (identity,
 units, wallet, hall of fame, record), the player market's public list, the divisions, the season
 number and schedule, the results so far, the standings and the number of the last completed round. It is also each player's save (D-031):
 
@@ -592,7 +630,7 @@ tells you the details.
 
 **Stats first, abilities spice.** Flow and confidence decide most battles. Abilities swing the
 close ones and make the combos (pillar 2), but a single ability should rarely beat a clearly
-bigger crew on its own. Every number here is a placeholder for the balance pass (T-031).
+bigger crew on its own. The numbers were tuned in the balance pass (T-031, D-090).
 
 ### MC archetypes
 
@@ -600,11 +638,11 @@ Stats are rolled uniformly within the range.
 
 | Archetype | Personality | Flow | Confidence | Pool |
 |---|---|---|---|---|
-| **Lyricist** | Wordy glass cannon: huge bars, folds under pressure | 3–5 | 1–3 | Punchliner, Wordplay, Multisyllabic, Clapback |
-| **Battle Rapper** | Aggressive opener who lives for the first exchange | 2–4 | 2–4 | Battle Kid, Headliner, Comeback Line, Clapback |
-| **Storyteller** | Slow-burning tank who protects the crew | 1–3 | 3–6 | Street Poet, The OG, Long Verse, Clapback |
-| **Freestyler** | Anything can happen: wide rolls, a clutch Closer | 1–5 | 1–5 | Off the Top, Crowd Surfer, Wildcard, Clapback |
-| **Hitmaker** | The crowd's favourite: modest stats, feeds the hype | 2–3 | 2–4 | Chart Topper, Feature Verse, Encore, Clapback |
+| **Lyricist** | Wordy glass cannon: huge bars, folds under pressure | 3–5 | 3–5 | Punchliner, Wordplay, Multisyllabic, Clapback |
+| **Battle Rapper** | Aggressive opener who lives for the first exchange | 2–4 | 4–6 | Battle Kid, Headliner, Comeback Line, Clapback |
+| **Storyteller** | Slow-burning tank who protects the crew | 1–3 | 5–8 | Street Poet, The OG, Long Verse, Clapback |
+| **Freestyler** | Anything can happen: wide rolls, a clutch Closer | 1–5 | 3–7 | Off the Top, Crowd Surfer, Wildcard, Clapback |
+| **Hitmaker** | The crowd's favourite: modest stats, feeds the hype | 2–3 | 4–6 | Chart Topper, Feature Verse, Encore, Clapback |
 
 ### Support archetypes
 
@@ -649,20 +687,20 @@ Support abilities:
 | Ability | Archetype | Trigger | Effect | Power 1 / 2 / 3 |
 |---|---|---|---|---|
 | **Drop the Beat** | DJ | `barLanded` (friend) | The MC that landed the bar gets flow | 1 / 2 / 3 |
-| **Scratch** | DJ | `takeFront` (friend) | Diss the enemy front MC | 1 / 2 / 3 |
-| **Crowd Mix** | DJ | `battleStart` | Its crew gains hype | 1 / 2 / 3 |
+| **Scratch** | DJ | `takeFront` (friend) | Diss the enemy front MC | 1 / 2 / 2 |
+| **Crowd Mix** | DJ | `battleStart` | Its crew gains hype | 2 / 3 / 4 |
 | **Get Up!** | Hype Man | `choke` (friend) | The new front MC gets confidence | 2 / 4 / 6 |
 | **Make Some Noise!** | Hype Man | `takeFront` (friend) | Its crew gains hype | 1 / 2 / 3 |
 | **Hype Wave** | Hype Man | `choke` (friend) | The new front MC gets flow | ⌊H / 3⌋ + 0 / 1 / 2 |
 | **Beatmaker** | Producer | `battleStart` | The front MC gets flow | 1 / 2 / 3 |
-| **Studio Session** | Producer | `upkeep` | A random MC in the crew (stage or bench) gets xp | 1 / 1 / 2 |
+| **Studio Session** | Producer | `upkeep` | A random MC in the crew (stage or bench) gets xp | 1 / 2 / 3 |
 | **Remix** | Producer | `choke` (friend) | The new front MC gets flow | 1 / 2 / 3 |
 | **Warm-up** | Vocal Coach | `battleStart` | The front MC gets confidence | 1 / 2 / 3 |
 | **Breathe!** | Vocal Coach | `hurt` (friend), once | The hurt MC gets confidence | 2 / 3 / 4 |
 | **Voice Lessons** | Vocal Coach | `upkeep` | A random MC in the crew (stage or bench) gets confidence, permanently | 1 / 1 / 2 |
 | **Hometown Crowd** | Manager | `beforeBattle` | Its crew gains hype, so the battle starts above 0 | 1 / 2 / 3 |
 | **Paid Hecklers** | Manager | `choke` (friend) | The enemy crew loses hype | 1 / 2 / 3 |
-| **Negotiator** | Manager | `upkeep` | The crew gains gold (the wallet cap still applies) | 1 / 1 / 2 |
+| **Negotiator** | Manager | `upkeep` | The crew gains gold (the wallet cap still applies) | 1 / 2 / 3 |
 | **Shout-out** | shared (support) | `battleStart` | A random friendly MC on stage gets confidence | 1 / 2 / 3 |
 
 Design notes:
@@ -833,9 +871,9 @@ values live in the archetype and ability tables of §8.
 | `BENCH_SIZE` | 3 | Crew |
 | `CREW_NAME_MAX` | 20 | Crew identity |
 | `STARTING_GOLD` | 40 | Round flow |
-| `BASE_INCOME` | 16 | Round flow |
+| `BASE_INCOME` | 18 | Round flow |
 | `WIN_BONUS` | 2 | Round flow |
-| `WALLET_CAP` | 20 | Round flow |
+| `WALLET_CAP` | 25 | Round flow |
 | `SCOUT_COST` / `SCOUT_COUNT` | 1 / 2 | Market |
 | `BID_ROUNDS` | 3 | Market |
 | `SUPPORT_BASE_RATING` | 4 | Market |
@@ -843,17 +881,21 @@ values live in the archetype and ability tables of §8.
 | `ASK_PER_RATING` | 0.5 (rounded up) | Market |
 | `YOUTH_SEASONS_PER_RATING` | 2 (rounded down) | Market |
 | `POOL_START_PER_MEMBER` | 6 | Market |
-| `ROOKIES_PER_ROUND` | 3 | Market |
-| `POOL_MAX` | 16 | Market |
+| `ROOKIES_PER_ROUND` / `POOL_MAX` | 3 / 16 (the least) | Market |
+| `ROOKIES_PER_MEMBER` | 0.5 (rounded up) | Market |
+| `POOL_MAX_PER_MEMBER` | 2 | Market |
 | `MC_WEIGHT` / `SUPPORT_WEIGHT` | 3 / 2 | Market |
 | `MAX_POWER` | 3 | Unit state, Growth |
-| `GROWTH_XP` | 3 | Growth |
+| `GROWTH_XP` | 4 | Growth |
 | `SECOND_ABILITY_XP` | 12 | Growth |
 | `MAX_TURNS` | 40 | Battle (a safety limit; D-054 aims for 6 to 12 turns) |
 | `HYPE_MAX` | 10 | Battle |
 | `HYPE_PER_BAR` / `HYPE_PER_DISS` / `HYPE_PER_CHOKE` | 1 / 1 / 2 | Battle |
 | `HYPE_LOSS_ON_CHOKE` | 2 | Battle |
-| `SALARY_PER_RATING` | 0.25 (rounded up) | Salary |
+| `VERSES` / `TURNS_PER_VERSE` | 3 / 4 | Crowd vote |
+| `VERSE_HYPE_KEEP` | 0.5 (rounded down) | Crowd vote |
+| `CROWD_VOTE_EVERY` | 3 | League (battle style) |
+| `SALARY_PER_RATING` | 0.18 (rounded up) | Salary |
 | `BENCH_SALARY_FACTOR` | 0.5 (rounded down) | Salary |
 | `SIGN_AGE_MIN` | 18 | Age and retirement |
 | `MC_RETIRE_AGE` / `SUPPORT_RETIRE_AGE` | 23 / 25 | Age and retirement |
@@ -912,6 +954,11 @@ and personality (§8).
   grey hair and a "Farewell tour" sash.
 - A retired unit gets a **framed portrait** in the hall of fame, with its record.
 
+**Palette** (T-058, D-092). Every colour is a named token in `src/render/palette.ts`: the crew
+colours, skin and hair tones, the street, the UI (text, panels, buttons, rows, the newsprint)
+and the art's props. Text on panels and buttons meets a contrast of at least 4.5:1 (WCAG AA).
+A test keeps colour literals out of the other render files.
+
 **Crew colours and logos.** `CREW_COLOURS` has 10 colours: red, orange, yellow, lime, green,
 teal, sky blue, royal blue, purple and pink, plus black and white as trim only. The logos are
 simple shapes: star, crown, lightning bolt, flame, diamond, heart, vinyl, spray can.
@@ -929,13 +976,22 @@ the block, your wallet, the payroll due at lock-in and the next opponent. Tabs l
   above the public list. The bidding round number and who is still shopping are shown at the top.
 - **Lineup**: drag and drop units into the 3 MC slots, the 2 support slots and the bench,
   and release units.
-- **League**: the division standings, the schedule and the other crews (with their units).
-- **Hall of Fame**: the retired units' portraits and records.
+- **League**: the division standings, the schedule and the other crews (with their units, drawn
+  as figures in the crew's colours, the bench dimmed).
+- **Hall of Fame**: the crew's titles in one line, and the retired units' portraits and
+  records, newest first, 10 to a page.
 
 The home screen is the hub's first tab, **Home**; the header above the tabs always shows the
 crew's name and logo, wallet, payroll, season and round, and the next opponent as it stood at
 the start of the round (its shop moves stay sealed until lock-in). A local league (M5) is one
 player plus 3, 5, 7 or 11 bots, picked when founding the crew (T-023, D-075).
+
+**Onboarding hints** (T-056, D-091). Until the player's crew has played 2 battles (and before
+its first season end), a yellow note beside the tab bar says what to do right now: bid on a
+first crew in the market, what a bid needs (the ask, and gold left for the payroll), that the
+bids are sealed and revealed together over up to 3 bidding rounds, how the lineup works, and
+where to lock in and what that pays. Each hint has an OK button that hides it until the page
+is reloaded.
 
 A big **Lock in** button is always visible once the bidding has ended. The title screen and
 the lobby (host or join by room code) come before the hub, and a "while you were away"
@@ -957,6 +1013,11 @@ and waves more on the side with more hype.
   ===================== stage =====================
    o o o o o o o o o o o o o o o o o o o o o o o o   crowd
 ```
+
+**Crowd vote** (§5.2). The intro says CROWD VOTE, each verse opens with its number, and at
+the end of a verse the crowd of the winning side shouts a verdict line while the verse tally
+under the turn goes up. The hub names the round's style on the Home tab and on the next
+opponent card, and the founding screen offers the three league settings.
 
 **Battle text** (pillar 3). Every hit shows a comic-style word ("BARS!", "OOF", "SNAP!",
 "CHOKED!") and the damage number. Chokes, abilities and big hype swings (a change of at
@@ -986,21 +1047,28 @@ from templates with the winner's and loser's names (D-050). Then:
 **In scope** (Q-010, D-051), built in M7 (T-030). All sound is **procedural WebAudio**, with no
 audio files.
 
-- **The beat**: one looping beat per battle, generated from a seed derived from the battle
-  seed so both peers hear the same one. It **builds with hype**: layers come in as the two
-  crews' total hype rises (kick, then snare, then hi-hats, then bass), and the beat drops out
-  for one bar when an MC chokes.
-- **SFX** for bars, disses, chokes, abilities, crowd cheers and boos, and the shop (bids,
-  signings, lock-in). The market and hub have no music.
-- **Default: on** at `DEFAULT_VOLUME = 0.4`. Mute and a volume slider are always visible, and
-  the setting is saved in the browser. The first sound waits for the first click, as browsers
-  require.
+- **The beat**: one looping bar of 16 steps per battle (84 to 96 BPM), generated from a seed
+  derived from the battle seed so both peers hear the same one. It **builds with hype**: layers
+  come in as the two crews' total hype rises (kick from the start, snare from 3, hi-hats from 7,
+  bass from 12), and the beat drops out for one bar when an MC chokes (T-030, D-089).
+- **SFX** for bars (a heavier one for huge hits), disses, buffs, abilities, chokes, crowd
+  cheers and boos, verses and verdicts, the win, and the shop: bids, passes, scouting, signings
+  (also when a won bid is revealed), releases, moves, lock-in, nudges and button clicks. The
+  result screen cheers or boos the player's result. The market and hub have no music.
+- **Default: on** at `DEFAULT_VOLUME = 0.4`. A mute button and a five-step volume bar sit in
+  the bottom-left corner of every screen, and the setting is saved in the browser. The first
+  sound waits for the first click or key press, as browsers require.
+
+**Effects** (T-030). Hits throw comic sparks (red for a huge hit), abilities send a ring out
+from the unit, a choke flashes the screen, and a verdict and the win shoot confetti in the
+crew's colours from its half of the crowd. The camera shakes a little for hits, more for huge
+hits, most for chokes. None of it changes what the beat shows.
 
 ## 12. Still open
 
 No design or technical questions are open. Q-015 (forked saves, D-079) and Q-009 (the
 signalling server, D-078) were answered for M6.
 
-Left to the balance pass (T-031), not open questions: the stat ranges and ability values, the
-economy numbers, and the power 1 / 2 / 3 values of Studio Session, Voice Lessons and
-Negotiator, where power 2 is the same as power 1 for now.
+The balance pass (T-031, D-090) set the numbers from AI-played leagues; `make balance` prints
+the statistics again. Voice Lessons stays at 1 / 1 / 2 on purpose: its confidence is permanent
+and comes every round, so it compounds.

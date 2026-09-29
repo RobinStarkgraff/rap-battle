@@ -9,6 +9,7 @@ import { allUnits, type BattleEvent } from '../model';
 import { playRound, type RoundPlayed } from '../round';
 import { parseLeague, serializeLeague } from '../save';
 import { TUNABLES } from '../tunables';
+import { balanceStats } from './balance';
 import { AI_MANAGER } from './manager';
 
 function newLeague(players: number, bots: number, seed: number): League {
@@ -119,12 +120,39 @@ describe('a headless league of AI managers', () => {
     expect(average).toBeGreaterThan(2);
   });
 
+  it('meets the balance targets of T-031 (§5 Pacing, D-054, D-090)', () => {
+    const stats = balanceStats(rounds);
+    const clash = stats.styles.frontMcsClash;
+    if (clash === undefined) throw new Error('no clash battles');
+    expect(clash.turns.mean).toBeGreaterThanOrEqual(6);
+    expect(clash.turns.mean).toBeLessThanOrEqual(12);
+    expect(clash.setupKnockouts).toBeLessThan(0.03);
+    expect(clash.turnLimit).toBeLessThan(0.01);
+    // Skill-led with some luck: the stronger lineup wins most of the time, not always.
+    expect(clash.strongerWins).toBeGreaterThan(0.55);
+    expect(clash.strongerWins).toBeLessThan(0.9);
+    for (const season of stats.seasons) expect(season.filledSlots).toBeGreaterThan(4.4);
+  });
+
   it('saves and loads the league after four seasons', () => {
     expect(parseLeague(serializeLeague(league))).toEqual({ ok: true, value: league });
   });
 
   it('is deterministic', () => {
     expect(playSeasons(newLeague(3, 6, 2026), 1).league).toEqual(playSeasons(start, 1).league);
+  });
+});
+
+describe('a headless crowd vote league', () => {
+  const start = newLeague(2, 4, 11);
+  const { rounds } = playSeasons({ ...start, battleStyle: 'crowdVote' }, 2);
+
+  it('lets the crowd decide a good share of battles, which stay short', () => {
+    const votes = balanceStats(rounds).styles.crowdVote;
+    if (votes === undefined) throw new Error('no crowd votes');
+    expect(votes.endReasons['crowdVote'] ?? 0).toBeGreaterThan(0.1);
+    expect(votes.turns.mean).toBeGreaterThanOrEqual(6);
+    expect(votes.turns.p90).toBeLessThanOrEqual(12);
   });
 });
 

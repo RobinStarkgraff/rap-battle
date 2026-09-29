@@ -4,3 +4,4 @@ export * from './battleText';
 export * from './headlines';
 export * from './template';
 export { problemText } from './problems';
+export * from './battleStyles';

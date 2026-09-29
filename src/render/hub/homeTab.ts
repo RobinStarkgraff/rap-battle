@@ -15,7 +15,8 @@ import { addButton } from '../ui/button';
 import { addBody, addHeading, addPanel, fitWidth } from '../ui/panel';
 import { CONTENT, type TabContext } from './tab';
 import type { PlayerStatus } from './types';
-import { awardLines, biddingView, nextOpponent, playerShop, standingOf } from './view';
+import { BATTLE_STYLE_TEXT } from '../text';
+import { awardLines, biddingView, nextOpponent, playerShop, roundStyle, standingOf } from './view';
 
 const BLOCK = { width: 850, height: 540 };
 const FEET_Y = CONTENT.top + 470;
@@ -106,12 +107,12 @@ function drawCrew(context: TabContext, crew: Crew): void {
       addBody(scene, spot.x, FEET_Y - 190, spot.label, 13, UI.text)
         .setOrigin(0.5)
         .setFontStyle('bold')
-        .setBackgroundColor('#1b1b2f')
+        .setBackgroundColor(UI.textDark)
         .setPadding(5, 2, 5, 2),
     );
     if (spot.unit === null) {
       const empty = scene.add.graphics();
-      empty.lineStyle(3, 0xffffff, 0.6);
+      empty.lineStyle(3, UI.white, 0.6);
       empty.strokeRoundedRect(spot.x - 36, FEET_Y - 150, 72, 146, 14);
       layer.add(empty);
       layer.add(
@@ -160,6 +161,9 @@ function drawReport(context: TabContext): void {
   };
   layer.add(addHeading(scene, left + 16, y, `ROUND ${String(state.round.round)}`, 24, UI.textGold));
   y += 38;
+  const style = BATTLE_STYLE_TEXT[roundStyle(state)];
+  line(`This round's battle: ${style.name}.`, UI.textGold, 17);
+  line(style.blurb, UI.textMuted, 13);
   const upkeep = state.start.upkeep.find((entry) => entry.crewId === state.crewId);
   if (upkeep === undefined) {
     line(
@@ -235,7 +239,8 @@ function drawOpponent(
     CREW_COLOUR_HEX[opponent.identity.trimColour],
   );
   layer.add(pen);
-  layer.add(addBody(scene, x + 80, y + 14, 'NEXT OPPONENT', 12, UI.text).setFontStyle('bold'));
+  const heading = `NEXT OPPONENT · ${BATTLE_STYLE_TEXT[roundStyle(state)].name}`;
+  layer.add(addBody(scene, x + 80, y + 14, heading, 12, UI.text).setFontStyle('bold'));
   layer.add(
     fitWidth(
       scene.add.text(

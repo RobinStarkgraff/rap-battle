@@ -26,23 +26,27 @@ function withStints<T extends Unit>(unit: T, ...crewIds: string[]): T {
 
 describe('upkeep', () => {
   it('pays BASE_INCOME, plus WIN_BONUS after a win', () => {
-    expect(upkeep(crew({ wallet: 1 }), false, rng)).toMatchObject({ income: 16, lostToCap: 0 });
-    expect(upkeep(crew({ wallet: 1 }), false, rng).crew.wallet).toBe(17);
-    expect(upkeep(crew({ wallet: 1 }), true, rng).crew.wallet).toBe(19);
+    const { BASE_INCOME, WIN_BONUS } = TUNABLES;
+    expect(upkeep(crew({ wallet: 1 }), false, rng)).toMatchObject({
+      income: BASE_INCOME,
+      lostToCap: 0,
+    });
+    expect(upkeep(crew({ wallet: 1 }), false, rng).crew.wallet).toBe(1 + BASE_INCOME);
+    expect(upkeep(crew({ wallet: 1 }), true, rng).crew.wallet).toBe(1 + BASE_INCOME + WIN_BONUS);
   });
 
   it('resolves upkeep abilities before the wallet cap', () => {
     const manager = support({ id: 'boss', archetype: 'manager', abilities: [['negotiator', 3]] });
-    const subject = crew({ wallet: 2, supports: [manager] });
+    const subject = crew({ wallet: 5, supports: [manager] });
     const outcome = upkeep(subject, true, rng);
-    // 2 + 16 + 2 + Negotiator's 2 = 22, capped at 20.
+    // 5 + 18 + 2 + Negotiator's 3 = 28, capped at 25.
     expect(outcome.crew.wallet).toBe(TUNABLES.WALLET_CAP);
-    expect(outcome.lostToCap).toBe(2);
+    expect(outcome.lostToCap).toBe(3);
     expect(outcome.events).toContainEqual({
       kind: 'gold',
       unitId: 'boss',
       abilityId: 'negotiator',
-      amount: 2,
+      amount: 3,
     });
   });
 
@@ -52,15 +56,18 @@ describe('upkeep', () => {
       archetype: 'producer',
       abilities: [['studio-session', 3]],
     });
-    const subject = crew({ supports: [producer], bench: [mc({ id: 'm', xp: 1 })] });
+    const subject = crew({ supports: [producer], bench: [mc({ id: 'm', xp: 1, flow: 2 })] });
     const after = upkeep(subject, false, rng).crew;
-    expect(findUnit(after, 'm')?.xp).toBe(3);
+    const grown = findUnit(after, 'm');
+    expect(grown?.xp).toBe(4);
+    if (grown?.role !== 'mc') throw new Error('not an MC');
+    expect(grown.flow + grown.confidence).toBe(2 + 3 + 1);
   });
 });
 
 describe('applyBattleResult', () => {
   const opener = mc({ id: 'm1' });
-  const closer = mc({ id: 'm3', xp: 2 });
+  const closer = mc({ id: 'm3', xp: TUNABLES.GROWTH_XP - 1 });
   const dj = support({ id: 's1', abilities: ['scratch'] });
   const benched = mc({ id: 'b1' });
   const subject = crew({ id: 'c', mcs: [opener, null, closer], supports: [dj], bench: [benched] });
@@ -93,7 +100,7 @@ describe('applyBattleResult', () => {
     const { crew: after, growth } = applyBattleResult(subject, events, true, createRng(4));
     expect(findUnit(after, 'm1')?.xp).toBe(1);
     const grown = findUnit(after, 'm3');
-    expect(grown?.xp).toBe(3);
+    expect(grown?.xp).toBe(TUNABLES.GROWTH_XP);
     expect(growth).toHaveLength(1);
     expect(growth[0]).toMatchObject({ kind: 'statUp', unitId: 'm3' });
     if (grown?.role !== 'mc') throw new Error('not an MC');

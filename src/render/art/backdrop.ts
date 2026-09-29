@@ -5,7 +5,7 @@
  */
 
 import { createRng, type Rng } from '../../core';
-import { INK, MURAL_COLOURS, STREET } from '../palette';
+import { ART, INK, MURAL_COLOURS, STREET } from '../palette';
 import { circle, polygon, roundedRect, starPoints, type Pen } from './pen';
 
 export interface BackdropOptions {
@@ -155,9 +155,9 @@ export function drawBoombox(pen: Pen, x: number, y: number, scale: number): void
     STREET.speaker,
     STREET.boomboxTrim,
   );
-  pen.fillStyle(0xe63946, 1);
+  pen.fillStyle(ART.red, 1);
   pen.fillCircle(x - 8 * scale, top + h - 12 * scale, 3 * scale);
-  pen.fillStyle(0xffd23f, 1);
+  pen.fillStyle(ART.yellow, 1);
   pen.fillCircle(x + 8 * scale, top + h - 12 * scale, 3 * scale);
 }
 

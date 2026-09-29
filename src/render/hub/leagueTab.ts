@@ -15,8 +15,9 @@ import {
   type Unit,
 } from '../../core';
 import { drawLogo } from '../art/logos';
+import { addUnitFigure } from '../art/unitFigure';
 import { circle } from '../art/pen';
-import { CREW_COLOUR_HEX, INK, UI } from '../palette';
+import { crewOutfit, CREW_COLOUR_HEX, INK, UI } from '../palette';
 import { addBody, addHeading, addPanel, fitWidth } from '../ui/panel';
 import { registerTarget } from '../ui/targets';
 import { CONTENT, type TabContext } from './tab';
@@ -125,7 +126,7 @@ function drawRow(
   const chosen = crew.id === (ui.selected ?? state.crewId);
   const background = scene.add.graphics();
   background.fillStyle(
-    mine ? 0x3a3a1c : chosen ? UI.panelLight : 0x000000,
+    mine ? UI.rowMine : chosen ? UI.panelLight : UI.shade,
     mine || chosen ? 1 : 0.001,
   );
   background.fillRoundedRect(left, y - 2, TABLE_WIDTH, ROW - 2, 6);
@@ -185,6 +186,10 @@ function drawCrewPanel(context: TabContext, crew: Crew, x: number, width: number
   );
   y += 26;
   const units = allUnits(crew);
+  if (units.length > 0) {
+    drawCrewFigures(context, crew, x, y + FIGURE_ROW_FEET, width);
+    y += FIGURE_ROW_HEIGHT;
+  }
   if (units.length === 0) {
     layer.add(addBody(scene, x, y, 'No units signed yet.', 15));
     y += 24;
@@ -201,6 +206,33 @@ function drawCrewPanel(context: TabContext, crew: Crew, x: number, width: number
     layer.add(addBody(scene, x, y, line, 14, UI.text, width));
     y += 20;
   }
+}
+
+/** How far below the panel line the figures stand, and how much room their row takes. */
+const FIGURE_ROW_FEET = 90;
+const FIGURE_ROW_HEIGHT = 102;
+const FIGURE_SCALE = 0.62;
+
+/** The crew's units as small figures in its colours: the lineup, then the bench, dimmed. */
+function drawCrewFigures(
+  context: TabContext,
+  crew: Crew,
+  x: number,
+  feetY: number,
+  width: number,
+): void {
+  const { scene, layer } = context;
+  const outfit = crewOutfit(crew.identity);
+  const units = allUnits(crew);
+  const spacing = Math.min(84, width / units.length);
+  units.forEach((unit, index) => {
+    const figure = addUnitFigure(scene, x + spacing / 2 + index * spacing, feetY, unit, outfit, {
+      nameplate: false,
+      scale: FIGURE_SCALE,
+    });
+    if (crew.bench.includes(unit)) figure.container.setAlpha(0.55);
+    layer.add(figure.container);
+  });
 }
 
 function unitLine(unit: Unit): string {

@@ -7,6 +7,7 @@ import {
   TRIM_ONLY_COLOUR_IDS,
   TUNABLES,
   type CrewIdentity,
+  type LeagueBattleStyle,
   type LogoId,
   type MainColourId,
   type TrimColourId,
@@ -19,7 +20,7 @@ import { circle } from '../art/pen';
 import { addUnitFigure } from '../art/unitFigure';
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from '../config';
 import { crewOutfit, CREW_COLOUR_HEX, INK, UI } from '../palette';
-import { problemText } from '../text';
+import { LEAGUE_STYLE_TEXT, problemText } from '../text';
 import { addButton } from '../ui/button';
 import { addBody, addHeading, addPanel } from '../ui/panel';
 import { registerTarget } from '../ui/targets';
@@ -29,8 +30,14 @@ export interface FoundingSceneData {
   /** How many bots a new league can have; the first is the default. None when joining. */
   readonly botChoices: readonly number[];
   readonly defaultBots: number;
+  /** The battle styles a new league can be founded with; the first is the default. None when joining. */
+  readonly styleChoices: readonly LeagueBattleStyle[];
   /** Founds the crew; returns a reason code if the name is refused. */
-  readonly onFound: (identity: CrewIdentity, bots: number) => string | null;
+  readonly onFound: (
+    identity: CrewIdentity,
+    bots: number,
+    battleStyle: LeagueBattleStyle,
+  ) => string | null;
   readonly onBack: () => void;
   /** Founding a crew to join a friend's league instead of starting one (D-080). */
   readonly joining: {
@@ -76,6 +83,7 @@ export class FoundingScene extends Phaser.Scene {
     logo: 'star',
   };
   private bots = 5;
+  private battleStyle: LeagueBattleStyle = 'mixed';
   private dynamic: Phaser.GameObjects.Container | null = null;
   private problem: Phaser.GameObjects.Text | null = null;
   private data_!: FoundingSceneData;
@@ -88,8 +96,10 @@ export class FoundingScene extends Phaser.Scene {
     this.data_ = data;
     this.identity = { name: '', mainColour: 'teal', trimColour: 'white', logo: 'star' };
     this.bots = data.defaultBots;
+    this.battleStyle = data.styleChoices[0] ?? 'mixed';
     addBackdrop(this, { width: DESIGN_WIDTH, height: DESIGN_HEIGHT, groundY: 560, seed: 52 });
     addPanel(this, 40, 30, 800, 660);
+    if (data.styleChoices.length > 0) addPanel(this, 855, 564, 400, 126);
     this.add.text(
       70,
       50,
@@ -173,7 +183,7 @@ export class FoundingScene extends Phaser.Scene {
   }
 
   private found(): void {
-    const problem = this.data_.onFound(this.identity, this.bots);
+    const problem = this.data_.onFound(this.identity, this.bots, this.battleStyle);
     if (problem !== null) this.problem?.setText(problemText(problem));
   }
 
@@ -219,6 +229,7 @@ export class FoundingScene extends Phaser.Scene {
       layer.add(this.logoChoice(100 + index * 78, 456, logo));
     });
     this.drawSizes(layer);
+    this.drawStyles(layer);
     this.drawPreview(layer);
   }
 
@@ -259,6 +270,36 @@ export class FoundingScene extends Phaser.Scene {
     );
   }
 
+  /** The league's battle style (D-088), on the right under the preview. */
+  private drawStyles(layer: Phaser.GameObjects.Container): void {
+    if (this.data_.styleChoices.length === 0) return;
+    const left = 870;
+    layer.add(addHeading(this, left, 574, 'BATTLE STYLE'));
+    this.data_.styleChoices.forEach((style, index) => {
+      const button = addButton(
+        this,
+        left + 58 + index * 128,
+        622,
+        LEAGUE_STYLE_TEXT[style].name,
+        () => {
+          this.battleStyle = style;
+          this.redraw();
+        },
+        {
+          width: 120,
+          height: 40,
+          fontSize: 15,
+          fill: this.battleStyle === style ? UI.button : UI.panelEdge,
+          target: `founding-style-${style}`,
+        },
+      );
+      layer.add(button.container);
+    });
+    layer.add(
+      addBody(this, left, 648, LEAGUE_STYLE_TEXT[this.battleStyle].blurb, 13, UI.text, 380),
+    );
+  }
+
   private swatch(
     x: number,
     y: number,
@@ -271,7 +312,7 @@ export class FoundingScene extends Phaser.Scene {
     const pen = this.add.graphics();
     circle(pen, 0, 0, chosen ? 24 : 20, CREW_COLOUR_HEX[colour], INK);
     if (chosen) {
-      pen.lineStyle(4, 0xffffff, 1);
+      pen.lineStyle(4, UI.white, 1);
       pen.strokeCircle(0, 0, 29);
     }
     container.add(pen);
@@ -289,7 +330,7 @@ export class FoundingScene extends Phaser.Scene {
     const chosen = this.identity.logo === logo;
     const container = this.add.container(x, y);
     const pen = this.add.graphics();
-    circle(pen, 0, 0, 30, chosen ? UI.panelEdge : UI.panelLight, chosen ? 0xffffff : INK);
+    circle(pen, 0, 0, 30, chosen ? UI.panelEdge : UI.panelLight, chosen ? UI.white : INK);
     drawLogo(
       pen,
       logo,

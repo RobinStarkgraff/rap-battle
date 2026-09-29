@@ -126,7 +126,7 @@ function addNameplate(
         0,
         30 * plateScale,
         'FAREWELL TOUR',
-        letteringStyle(Math.round(10 * plateScale), { colour: '#ffffff' }),
+        letteringStyle(Math.round(10 * plateScale), { colour: UI.textWhite }),
       )
       .setOrigin(0.5, 0)
       .setBackgroundColor(`#${SASH_TRIM.toString(16).padStart(6, '0')}`)
@@ -156,7 +156,7 @@ function addArchetypeTooltip(
       bodyStyle(12, { wrapWidth: 200, align: 'center' }),
     )
     .setOrigin(0.5, 1)
-    .setBackgroundColor('#1b1b2f')
+    .setBackgroundColor(UI.textDark)
     .setPadding(6, 4, 6, 4)
     .setDepth(TOOLTIP_DEPTH)
     .setVisible(false);

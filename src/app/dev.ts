@@ -1,16 +1,19 @@
 /**
  * Development pages: `?gallery` shows the art, `?battle` plays a battle between two generated
- * crews. Only development builds open them.
+ * crews (`&style=crowdVote` in the second style). Only development builds open them.
  */
 
 import type Phaser from 'phaser';
 import {
+  BATTLE_STYLE_IDS,
+  BATTLE_STYLES,
   botIdentity,
   createRng,
   foundCrew,
   generateUnit,
   nameSet,
   simulateBattle,
+  type BattleStyleId,
   type Crew,
   type McUnit,
   type SupportUnit,
@@ -33,20 +36,34 @@ export function startDevPage(game: Phaser.Game, page: DevPage, search: string): 
     return;
   }
   game.scene.add(BattleScene.KEY, BattleScene, false);
-  const seed = Number(new URLSearchParams(search).get('battle')) || 1;
+  const params = new URLSearchParams(search);
+  const seed = Number(params.get('battle')) || 1;
+  const style = demoStyle(params.get('style'));
   const play = (round: number): void => {
     game.scene.start(
       BattleScene.KEY,
-      demoBattle(seed + round, () => {
-        play(round + 1);
-      }),
+      demoBattle(
+        seed + round,
+        () => {
+          play(round + 1);
+        },
+        style,
+      ),
     );
   };
   play(0);
 }
 
+function demoStyle(param: string | null): BattleStyleId {
+  return BATTLE_STYLE_IDS.find((id) => id === param) ?? 'frontMcsClash';
+}
+
 /** A battle between two crews of generated units, full lineups, from a seed. */
-export function demoBattle(seed: number, onDone: () => void): BattleSceneData {
+export function demoBattle(
+  seed: number,
+  onDone: () => void,
+  style: BattleStyleId = 'frontMcsClash',
+): BattleSceneData {
   const rng = createRng(seed);
   const names = nameSet([]);
   const taken = nameSet([]);
@@ -72,5 +89,6 @@ export function demoBattle(seed: number, onDone: () => void): BattleSceneData {
   };
   const a = crew(1);
   const b = crew(2);
-  return { crews: { a, b }, events: simulateBattle(a, b, seed), seed, onDone };
+  const events = simulateBattle(a, b, seed, BATTLE_STYLES[style]);
+  return { crews: { a, b }, events, seed, style, onDone };
 }

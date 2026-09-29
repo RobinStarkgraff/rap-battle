@@ -4,6 +4,8 @@ export { EMPTY_UNIT_RECORD, generateUnit, rollAge, rollStageName } from './gener
 export {
   addFreeAgent,
   addRookies,
+  poolMax,
+  rookieCount,
   createMarket,
   findFreeAgent,
   publicUnitId,

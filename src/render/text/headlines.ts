@@ -8,7 +8,7 @@
 import { createRng, deriveSeed, type EndReason } from '../../core';
 import { pickLine, type SlotValues } from './template';
 
-export type HeadlineKind = 'blowout' | 'close' | 'decision' | 'forfeit' | 'standard';
+export type HeadlineKind = 'blowout' | 'close' | 'crowd' | 'decision' | 'forfeit' | 'standard';
 
 export const HEADLINES: Readonly<Record<HeadlineKind, readonly string[]>> = {
   blowout: [
@@ -22,6 +22,12 @@ export const HEADLINES: Readonly<Record<HeadlineKind, readonly string[]>> = {
     'BY A WHISKER: {mvp} SAVES {winner}!',
     '{target} SO CLOSE, YET SO SPEECHLESS!',
     'PHOTO FINISH ON THE BLOCK: VICTORY FOR {winner}!',
+  ],
+  crowd: [
+    'THE CROWD HAS SPOKEN: VICTORY FOR {winner}!',
+    'BY POPULAR DEMAND: {loser} VOTED OFF THE BLOCK!',
+    '{mvp} WINS THE CROWD, {target} WINS NOTHING!',
+    'LOUDER IS BETTER: {loser} OUT-HYPED BY {winner}!',
   ],
   decision: [
     'JUDGES’ DECISION! {loser} OUTLASTED BY {winner}!',
@@ -45,6 +51,8 @@ export function headlineKind(reason: EndReason, margin: number): HeadlineKind {
       return 'forfeit';
     case 'turnLimit':
       return 'decision';
+    case 'crowdVote':
+      return 'crowd';
     case 'wipeout':
       if (margin >= 3) return 'blowout';
       return margin <= 1 ? 'close' : 'standard';

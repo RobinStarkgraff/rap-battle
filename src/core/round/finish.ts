@@ -3,11 +3,12 @@
  * records and xp, and the season end after the season's last round.
  */
 
-import { battleEnd, simulateBattle } from '../battle';
+import { BATTLE_STYLES, battleEnd, simulateBattle, type BattleStyleId } from '../battle';
 import { applyBattleResult } from '../career';
 import type { GrowthEvent } from '../growth';
 import {
   endSeason,
+  roundBattleStyle,
   seasonComplete,
   type League,
   type MatchResult,
@@ -53,6 +54,7 @@ export function roundBattles(state: RoundState): ScheduledBattle[] {
 
 export interface BattleReport extends ScheduledBattle {
   readonly seed: number;
+  readonly style: BattleStyleId;
   readonly events: readonly BattleEvent[];
   readonly winner: CrewId;
   readonly margin: number;
@@ -86,6 +88,7 @@ export function finishRound(
   const battles: BattleReport[] = [];
   const growth: CrewGrowth[] = [];
   const results: MatchResult[] = [];
+  const style = roundBattleStyle(state.league, state.seasonRound);
   for (const battle of roundBattles(state)) {
     const crewA = crews.get(battle.crewA);
     const crewB = crews.get(battle.crewB);
@@ -93,7 +96,12 @@ export function finishRound(
       throw new RangeError(`finishRound: no crew for ${battle.crewA} or ${battle.crewB}`);
     }
     const seed = seeds(battle);
-    const events = simulateBattle(battleLineup(crewA), battleLineup(crewB), seed);
+    const events = simulateBattle(
+      battleLineup(crewA),
+      battleLineup(crewB),
+      seed,
+      BATTLE_STYLES[style],
+    );
     const end = battleEnd(events);
     for (const [side, crew] of [
       ['a', crewA],
@@ -105,7 +113,7 @@ export function finishRound(
       growth.push({ crewId: crew.id, events: after.growth });
     }
     const winner: CrewId = end.winner === 'a' ? crewA.id : crewB.id;
-    battles.push({ ...battle, seed, events, winner, margin: end.margin });
+    battles.push({ ...battle, seed, style, events, winner, margin: end.margin });
     const { a, b } = battle.pairing;
     results.push({
       seasonRound: state.seasonRound,

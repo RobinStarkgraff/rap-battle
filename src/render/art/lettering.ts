@@ -31,7 +31,7 @@ export function letteringStyle(
     shadow: {
       offsetX: shadow,
       offsetY: shadow,
-      color: '#000000',
+      color: UI.shadowCss,
       blur: 0,
       fill: true,
       stroke: true,

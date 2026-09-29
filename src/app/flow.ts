@@ -16,6 +16,7 @@ import {
   type CrewIdentity,
   type CrewNameError,
   type League,
+  type LeagueBattleStyle,
   type Place,
   type Result,
   type RoundState,
@@ -87,7 +88,11 @@ export interface GameFlow {
    * Founding: create the league with the player's crew and the bots, or, when joining, ask
    * the host to add the crew (the answer comes later).
    */
-  found(identity: CrewIdentity, bots: BotCount): Result<null, CrewNameError>;
+  found(
+    identity: CrewIdentity,
+    bots: BotCount,
+    battleStyle?: LeagueBattleStyle,
+  ): Result<null, CrewNameError>;
   /** Founding: back to the title (leaving the sitting when joining). */
   cancelFounding(): void;
   /** Title: host a sitting of the saved league. */
@@ -255,13 +260,13 @@ export function createGameFlow(deps: FlowDeps): GameFlow {
       if (crewId === null) show(titleScreen('noPlayer'));
       else enterRound(loaded.value, crewId);
     },
-    found: (identity, bots) => {
+    found: (identity, bots, battleStyle) => {
       if (screen.kind !== 'founding') return { ok: true, value: null };
       if (screen.joining !== null) {
         sitting?.found(identity);
         return { ok: true, value: null };
       }
-      const created = newLocalLeague(deps.newSeed(), identity, bots);
+      const created = newLocalLeague(deps.newSeed(), identity, bots, battleStyle);
       if (!created.ok) return created;
       const crewId = crewOf(created.value) ?? 'c1';
       save(created.value, crewId);

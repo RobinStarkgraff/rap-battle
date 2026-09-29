@@ -1,6 +1,7 @@
 /** A chunky block party button: outlined, with a drop shadow and a hover colour. */
 
 import Phaser from 'phaser';
+import { soundOf } from '../audio';
 import { bodyStyle, letteringStyle } from '../art/lettering';
 import { INK, UI } from '../palette';
 import { registerTarget } from './targets';
@@ -54,7 +55,7 @@ export function addButton(
     const colour = !enabled ? UI.buttonDisabled : hovered ? hoverFill : fill;
     const radius = Math.min(12, height / 3);
     shape.clear();
-    shape.fillStyle(0x000000, 0.35);
+    shape.fillStyle(UI.shade, 0.35);
     shape.fillRoundedRect(-width / 2 + 3, -height / 2 + 4, width, height, radius);
     shape.fillStyle(colour, 1);
     shape.fillRoundedRect(-width / 2, -height / 2, width, height, radius);
@@ -72,7 +73,9 @@ export function addButton(
     draw();
   });
   container.on(Phaser.Input.Events.POINTER_UP, () => {
-    if (enabled) onClick();
+    if (!enabled) return;
+    soundOf(scene).play('click');
+    onClick();
   });
   if (options.target !== undefined) registerTarget(options.target, container);
   const button: Button = {

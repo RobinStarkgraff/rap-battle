@@ -71,6 +71,7 @@ export function startRound(league: League): RoundStarted {
       ? { market: league.market, rookies: [], leftGame: [] }
       : addRookies(
           league.market,
+          league.members.length,
           createRng(rookieSeed(league.seed, round)),
           nameSet(livingNames(crews, league.market)),
         );

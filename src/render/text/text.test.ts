@@ -9,6 +9,7 @@ import {
   hitWordsFor,
   HYPE_DROP_LINES,
   HYPE_SWING_LINES,
+  VERDICT_LINES,
   SELF_CHOKE_LINES,
   battleTextRng,
 } from './battleText';
@@ -40,6 +41,7 @@ const TABLES: readonly (readonly [string, readonly string[], readonly Slot[]])[]
   ),
   ['hype swing', HYPE_SWING_LINES, ['crew']],
   ['hype drop', HYPE_DROP_LINES, ['crew']],
+  ['verdict', VERDICT_LINES, ['crew']],
   ...Object.entries(HEADLINES).map(
     ([kind, templates]) =>
       [`headline ${kind}`, templates, ['winner', 'loser', 'mvp', 'target']] as const,
@@ -105,6 +107,7 @@ describe('headline', () => {
   it('picks the kind from the end reason and margin', () => {
     expect(headlineKind('noMcs', 0)).toBe('forfeit');
     expect(headlineKind('turnLimit', 2)).toBe('decision');
+    expect(headlineKind('crowdVote', 1)).toBe('crowd');
     expect(headlineKind('wipeout', 3)).toBe('blowout');
     expect(headlineKind('wipeout', 2)).toBe('standard');
     expect(headlineKind('wipeout', 1)).toBe('close');

@@ -3,6 +3,7 @@
  * keeps a copy of. It only changes between rounds, so it is always a clean place to stop.
  */
 
+import type { BattleStyleId } from '../battle';
 import type { Market } from '../market';
 import type { Crew, CrewId, Side } from '../model';
 
@@ -46,9 +47,17 @@ export interface Season {
   readonly results: readonly MatchResult[];
 }
 
+/**
+ * Which battle style the league's battles use, picked when the league is founded (§7, D-088):
+ * one style for every round, or `mixed`, where every `CROWD_VOTE_EVERY`th round of a season is
+ * a crowd vote and the others are a clash.
+ */
+export type LeagueBattleStyle = BattleStyleId | 'mixed';
+
 export interface League {
   /** Rolled once when the league is created; every seed outside a battle derives from it (§3). */
   readonly seed: number;
+  readonly battleStyle: LeagueBattleStyle;
   readonly members: readonly Member[];
   /** Every member's crew, and the crews of players waiting to join. */
   readonly crews: readonly Crew[];

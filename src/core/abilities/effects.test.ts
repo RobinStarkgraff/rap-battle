@@ -58,7 +58,7 @@ describe('effectOps', () => {
 
   it('gains own hype or drains the enemy', () => {
     expect(ops(ABILITIES['crowd-mix'].effect, 2)).toEqual([
-      { op: 'hype', crew: 'own', change: 2, cause: 'ability' },
+      { op: 'hype', crew: 'own', change: 3, cause: 'ability' },
     ]);
     expect(ops(ABILITIES['paid-hecklers'].effect, 3)).toEqual([
       { op: 'hype', crew: 'enemy', change: -3, cause: 'ability' },
@@ -66,8 +66,8 @@ describe('effectOps', () => {
   });
 
   it('gains gold and xp', () => {
-    expect(ops(ABILITIES.negotiator.effect, 3)).toEqual([{ op: 'gold', amount: 2 }]);
+    expect(ops(ABILITIES.negotiator.effect, 3)).toEqual([{ op: 'gold', amount: 3 }]);
     const [xp] = ops(ABILITIES['studio-session'].effect, 3);
-    expect(xp).toMatchObject({ op: 'xp', amount: 2 });
+    expect(xp).toMatchObject({ op: 'xp', amount: 3 });
   });
 });

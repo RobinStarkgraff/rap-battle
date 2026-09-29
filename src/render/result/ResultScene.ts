@@ -4,6 +4,7 @@
  */
 
 import Phaser from 'phaser';
+import { soundOf } from '../audio';
 import { crewOutfit, CREW_COLOUR_HEX, INK, UI } from '../palette';
 import { addBackdrop } from '../art/bake';
 import { letteringStyle } from '../art/lettering';
@@ -30,13 +31,14 @@ export class ResultScene extends Phaser.Scene {
 
   create(data: ResultSceneData): void {
     const view = resultView(data);
+    if (view.won !== null) soundOf(this).play(view.won ? 'cheer' : 'boo');
     addBackdrop(this, { width: DESIGN_WIDTH, height: DESIGN_HEIGHT, groundY: 470, seed: 77 });
     const shade = this.add.graphics();
-    shade.fillStyle(0x000000, 0.3);
+    shade.fillStyle(UI.shade, 0.3);
     shade.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
     // The tabloid front page.
     const paper = this.add.graphics();
-    paper.fillStyle(0xfdf6e3, 1);
+    paper.fillStyle(UI.newsprint, 1);
     paper.fillRect(40, 20, DESIGN_WIDTH - 80, 130);
     paper.lineStyle(4, INK, 1);
     paper.strokeRect(40, 20, DESIGN_WIDTH - 80, 130);
@@ -65,8 +67,8 @@ export class ResultScene extends Phaser.Scene {
         letteringStyle(38, { colour: UI.textDark, wrapWidth: DESIGN_WIDTH - 140 }),
       )
       .setOrigin(0.5)
-      .setStroke('#fdf6e3', 0)
-      .setShadow(0, 0, '#000000', 0, false, false);
+      .setStroke(UI.newsprintCss, 0)
+      .setShadow(0, 0, UI.shadowCss, 0, false, false);
     fitWidth(title, DESIGN_WIDTH - 140);
     if (title.height * title.scaleY > 100) title.setScale((100 / title.height) * 1);
     this.drawMvp(data, view.mvp);

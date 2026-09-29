@@ -8,11 +8,16 @@ import { createRng, deriveSeed } from '../rng';
 import { startPoolSeed } from '../seeds';
 import { crewId, crewNameProblem, foundCrew, type CrewNameError } from './crews';
 import { addBot, formDivisions, scheduleSeason } from './divisions';
-import type { League } from './types';
+import type { League, LeagueBattleStyle } from './types';
 
 export interface NewPlayer {
   readonly playerName: string;
   readonly identity: CrewIdentity;
+}
+
+export interface LeagueOptions {
+  /** Every battle is a clash unless the founder picks another (D-088). */
+  readonly battleStyle?: LeagueBattleStyle;
 }
 
 /**
@@ -24,6 +29,7 @@ export function createLeague(
   seed: number,
   players: readonly NewPlayer[],
   bots: number,
+  options: LeagueOptions = {},
 ): Result<League, CrewNameError> {
   const taken = nameSet([]);
   for (const player of players) {
@@ -36,6 +42,7 @@ export function createLeague(
   );
   let league: League = {
     seed,
+    battleStyle: options.battleStyle ?? 'frontMcsClash',
     members: players.map((player, index) => ({
       kind: 'player',
       crewId: crewId(index + 1),

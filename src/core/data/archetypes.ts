@@ -19,7 +19,7 @@ export const MC_ARCHETYPES: Readonly<Record<McArchetypeId, McArchetypeDef>> = {
     personality: 'Wordy glass cannon: huge bars, folds under pressure',
     role: 'mc',
     flow: { min: 3, max: 5 },
-    confidence: { min: 1, max: 3 },
+    confidence: { min: 3, max: 5 },
     abilityPool: ['punchliner', 'wordplay', 'multisyllabic', 'clapback'],
     namePrefixes: MC_PREFIXES,
     nameWords: [
@@ -43,7 +43,7 @@ export const MC_ARCHETYPES: Readonly<Record<McArchetypeId, McArchetypeDef>> = {
     personality: 'Aggressive opener who lives for the first exchange',
     role: 'mc',
     flow: { min: 2, max: 4 },
-    confidence: { min: 2, max: 4 },
+    confidence: { min: 4, max: 6 },
     abilityPool: ['battle-kid', 'headliner', 'comeback-line', 'clapback'],
     namePrefixes: MC_PREFIXES,
     nameWords: [
@@ -67,7 +67,7 @@ export const MC_ARCHETYPES: Readonly<Record<McArchetypeId, McArchetypeDef>> = {
     personality: 'Slow-burning tank who protects the crew',
     role: 'mc',
     flow: { min: 1, max: 3 },
-    confidence: { min: 3, max: 6 },
+    confidence: { min: 5, max: 8 },
     abilityPool: ['street-poet', 'the-og', 'long-verse', 'clapback'],
     namePrefixes: MC_PREFIXES,
     nameWords: [
@@ -91,7 +91,7 @@ export const MC_ARCHETYPES: Readonly<Record<McArchetypeId, McArchetypeDef>> = {
     personality: 'Anything can happen: wide rolls, a clutch Closer',
     role: 'mc',
     flow: { min: 1, max: 5 },
-    confidence: { min: 1, max: 5 },
+    confidence: { min: 3, max: 7 },
     abilityPool: ['off-the-top', 'crowd-surfer', 'wildcard', 'clapback'],
     namePrefixes: MC_PREFIXES,
     nameWords: [
@@ -115,7 +115,7 @@ export const MC_ARCHETYPES: Readonly<Record<McArchetypeId, McArchetypeDef>> = {
     personality: "The crowd's favourite: modest stats, feeds the hype",
     role: 'mc',
     flow: { min: 2, max: 3 },
-    confidence: { min: 2, max: 4 },
+    confidence: { min: 4, max: 6 },
     abilityPool: ['chart-topper', 'feature-verse', 'encore', 'clapback'],
     namePrefixes: MC_PREFIXES,
     nameWords: [

@@ -14,7 +14,7 @@ import { bodyStyle, letteringStyle } from '../art/lettering';
 import { drawLogo } from '../art/logos';
 import { addUnitFigure } from '../art/unitFigure';
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from '../config';
-import { CREW_COLOUR_HEX, FREE_AGENT_OUTFIT, INK } from '../palette';
+import { ART, CREW_COLOUR_HEX, FREE_AGENT_OUTFIT, INK, PAPER } from '../palette';
 
 /**
  * A development page that shows the art side by side: figures with rolled looks, bling and
@@ -62,13 +62,13 @@ export class GalleryScene extends Phaser.Scene {
   private drawBadgesAndLogos(): void {
     const pen = this.add.graphics();
     [...MC_ARCHETYPE_IDS, ...SUPPORT_ARCHETYPE_IDS].forEach((archetype, index) => {
-      drawArchetypeBadge(pen, archetype, 60 + index * 60, 640, 22, 0xfff4d6);
+      drawArchetypeBadge(pen, archetype, 60 + index * 60, 640, 22, PAPER);
     });
     LOGO_IDS.forEach((logo, index) => {
       const x = 700 + index * 70;
       pen.fillStyle(INK, 1);
       pen.fillCircle(x, 640, 28);
-      drawLogo(pen, logo, x, 640, 22, CREW_COLOUR_HEX[MAIN_COLOUR_IDS[index] ?? 'red'], 0xf8f8f2);
+      drawLogo(pen, logo, x, 640, 22, CREW_COLOUR_HEX[MAIN_COLOUR_IDS[index] ?? 'red'], ART.white);
     });
     this.add.text(20, 690, 'Badges: the 10 archetypes. Logos: the 8 crew logos.', bodyStyle(14));
   }

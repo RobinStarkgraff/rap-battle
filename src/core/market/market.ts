@@ -1,6 +1,6 @@
 /**
  * The public list (§4 The market, §4 Supply): the league-wide pool of free agents, fed by
- * the start pool, the rookies of each upkeep and released units, and capped at `POOL_MAX`.
+ * the start pool, the rookies of each upkeep and released units, and capped at `poolMax`.
  */
 
 import type { Unit, UnitId } from '../model';
@@ -37,10 +37,28 @@ export interface RookiesEntered {
   readonly leftGame: readonly Unit[];
 }
 
-/** Upkeep step 4: `ROOKIES_PER_ROUND` rookies enter, then the list is capped (§3, §4). */
-export function addRookies(market: Market, rng: Rng, taken: NameSet): RookiesEntered {
-  const { market: grown, generated } = generateInto(market, TUNABLES.ROOKIES_PER_ROUND, rng, taken);
-  const excess = Math.max(0, grown.publicList.length - TUNABLES.POOL_MAX);
+/**
+ * How many rookies enter at each upkeep: `ROOKIES_PER_MEMBER` per member, rounded up, and at
+ * least `ROOKIES_PER_ROUND`, so a big league's supply keeps up with its retirements (T-031).
+ */
+export function rookieCount(memberCount: number): number {
+  return Math.max(TUNABLES.ROOKIES_PER_ROUND, Math.ceil(memberCount * TUNABLES.ROOKIES_PER_MEMBER));
+}
+
+/** The most units the public list keeps at upkeep: `POOL_MAX`, or more in a big league. */
+export function poolMax(memberCount: number): number {
+  return Math.max(TUNABLES.POOL_MAX, memberCount * TUNABLES.POOL_MAX_PER_MEMBER);
+}
+
+/** Upkeep step 4: the rookies enter, then the list is capped (§3, §4 Supply). */
+export function addRookies(
+  market: Market,
+  memberCount: number,
+  rng: Rng,
+  taken: NameSet,
+): RookiesEntered {
+  const { market: grown, generated } = generateInto(market, rookieCount(memberCount), rng, taken);
+  const excess = Math.max(0, grown.publicList.length - poolMax(memberCount));
   return {
     market: { ...grown, publicList: grown.publicList.slice(excess) },
     rookies: generated,

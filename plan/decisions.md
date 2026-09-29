@@ -712,4 +712,67 @@ and are marked "superseded by D-###".
   code from the target name `lobby-code-<code>` and compares the three saved leagues. In a
   sitting, the market hides its submit button once the player's bids are in, because a second
   PASS would replace them; the test relies on that to pass only where a player still has to bid.
+- **D-088 (2026-09-29): The second battle style is a crowd vote, and the league picks its style
+  (T-037, Q-019, Q-020).** The user chose *crowd vote verses* and a league setting. A crowd vote
+  shares the clash's setup and turns (`battle/opening.ts`) and plays up to `VERSES = 3` verses of
+  `TURNS_PER_VERSE = 4` turns; the crowd gives each verse to the crew whose hype *rose* more in
+  it (net, so a choke's loss counts), then to the crew that took more confidence in the verse,
+  then to the crew that didn't open, and 2 verses win. A wipeout still ends it at once. Between
+  verses both meters drop to half (`VERSE_HYPE_KEEP`), because a meter near `HYPE_MAX` could
+  otherwise barely rise and would lose every later verse; halving keeps each verse open and
+  crowd abilities still useful. The league's `battleStyle` is `frontMcsClash`, `crowdVote` or
+  `mixed` (the default on the founding screen: every `CROWD_VOTE_EVERY = 3`rd season round is a
+  crowd vote), set only at founding, so the style of a round needs no message and shows in the
+  hub from the round's start. Save version 2 adds the field; version 1 saves migrate to clash
+  only. New events `verse` and `verdict`, end reason `crowdVote`, hype cause `verseBreak`; the
+  AI manager ignores the style for now.
+- **D-089 (2026-09-29): Sound and juice are render-only, data-driven and shared through the game
+  registry (T-030).** `render/audio/`: the beat pattern, its layers (`LAYER_HYPE`), the step hits,
+  the cue and shake of each playback beat and the saved setting are pure and tested; every SFX is
+  a data recipe of tone and noise voices (`recipes.ts`), so no audio files exist (D-051). The
+  engine creates its `AudioContext` on the first pointer or key press and schedules the beat
+  ahead on the audio clock (a 25 ms timer, 120 ms lookahead), so a slow frame rate doesn't make
+  it stutter. The app creates one engine and puts it in Phaser's registry (`provideSound`);
+  scenes read it with `soundOf`, which falls back to a silent engine on development pages. The
+  controls are their own always-running `SoundScene` in the bottom-left corner, which the
+  director never stops and keeps on top. Shop sounds wrap the hub controller
+  (`withShopSounds`), so only actions that go through make a sound; every button also clicks.
+- **D-090 (2026-09-29): The balance pass sets longer battles, a roomier economy and slower growth
+  (T-031, Q-021).** Measured with `make balance` (AI managers, 3 leagues each of 12 crews in
+  both styles and of 4 crews mixed, 5 seasons) against D-054 and §5.1. Before: clashes of 5.7
+  turns on average, crowd votes decided by the crowd only 5 to 7% of the time, and lineups
+  filled 4.9 of 5 in season 1 but about 3 from season 3, because grown salaries (about 4.4)
+  broke a payroll of `BASE_INCOME = 16` and a 12-crew league retired more units than 3 rookies
+  a round replaced. Changes: every MC archetype's confidence range +2 (battles of about 8 to 9
+  turns, p90 11 to 12, crowd verdicts 15 to 30%); `SALARY_PER_RATING` 0.25 → 0.18 to pay for
+  that; `GROWTH_XP` 3 → 4 (about 2.5 growth steps a season, so stars don't outgrow any
+  payroll); `BASE_INCOME` 16 → 18 and `WALLET_CAP` 20 → 25 (crews can save to rebuild after
+  retirements); rookies scale with the league (`ROOKIES_PER_MEMBER = 0.5`, at least 3) and so
+  does the list's cap (`POOL_MAX_PER_MEMBER = 2`, at least 16), a small formula change the user
+  allowed. After: 4.6 to 5.0 active units in every season, the stronger lineup wins 66 to 81%
+  (skill-led with upsets), no setup knockouts or turn limits. Abilities: Scratch 1/2/3 → 1/2/2
+  (it fires on every friendly move-up and won 63 to 70%), Crowd Mix 1/2/3 → 2/3/4 (won about
+  40%), Studio Session and Negotiator 1/1/2 → 1/2/3, so power 2 means something; Voice Lessons
+  stays 1/1/2, because its confidence is permanent and comes every upkeep. Drop the Beat's
+  stacking (about 5 flow, p90 9, in the battles it plays) wins no more than average, so it
+  stays. Win rates per ability are noisy (a few hundred battles each) and count only battle
+  wins, which undersells Negotiator. The headless test now holds the pacing, knockout, upset and
+  lineup targets. `STARTING_GOLD` stays 40.
+- **D-091 (2026-09-29): Onboarding is one contextual hint at a time, only in a crew's first
+  rounds (T-056).** Instead of a separate tutorial, `render/hub/hints.ts` picks one hint from the
+  round's state and the open tab (first bids, a bid's ask and the payroll, bids in, the lineup,
+  the Lock in button, locked in) while the player's crew has played fewer than
+  `ONBOARDING_BATTLES = 2` battles in its first season, so a newcomer who joins a friend's league
+  mid-season gets them too. It sits in a small note beside the tab bar, the one place free on
+  every tab, so it never covers a control; hints are at most 130 characters to fit. OK closes a
+  hint for the rest of the page visit (a module-level set, not saved): the hints end by
+  themselves after two battles, so nothing needs remembering.
+- **D-092 (2026-09-29): The theme pass names every colour and checks contrast, and keeps the
+  look (T-058).** M7's exit criteria list a colour palette and theme pass, which no task covered.
+  The look itself was settled with the user (D-049), so this pass changes no colour: it moves the
+  about 60 colour literals spread over `render/` into `palette.ts` (new `UI` tokens for shades,
+  row tints, the newsprint and CSS strings, and an `ART` table for props), and adds
+  `tooling/palette.test.ts`, which fails on a colour literal outside the palette and checks that
+  text on panels and buttons has a WCAG AA contrast of 4.5:1. All current text passes, so no
+  colour had to change. A real restyle would be the user's call.
 

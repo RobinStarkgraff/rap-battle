@@ -14,6 +14,14 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 
 ## Answered
 
+- **Q-019** The second battle style (T-037) is **Crowd vote verses**: the same bars, abilities
+  and chokes, split into 3 verses of 4 turns; the crew that gains more hype in a verse wins it,
+  best of 3 wins, and a wipeout still ends the battle at once. (2026-09-29) → D-088
+- **Q-020** Which style a battle uses is a **league setting** picked when the league is founded:
+  clash only, crowd vote only, or mixed. (2026-09-29) → D-088
+- **Q-021** The balance pass (T-031) may change any tunable and ability value, plus small formula
+  changes where a number alone can't fix a problem (for example rookies scaling with the number
+  of crews), each recorded as a decision and in the design doc. (2026-09-29) → T-031
 - **Q-015** There is no forking to handle: a save file is a whole league of its own (crews,
   divisions, halls of fame). Copies of the same league are only compared by their completed
   round; on a tie the host's copy is used, with no fork detection. (2026-09-29) → D-079

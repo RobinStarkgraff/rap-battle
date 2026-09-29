@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { battleEnd } from '../battle';
 import { createLeague, joinLeague, type League } from '../league';
 import { askPrice } from '../market';
 import { allUnits, type CrewId, type CrewIdentity } from '../model';
@@ -201,6 +202,23 @@ describe('shop actions', () => {
     expect(forced.state.lockedIn).toEqual([b]);
     expect(stillBidding(forced.state)).toEqual([a]);
     expect(roundBid(forced.state, b, [])).toEqual({ ok: false, error: 'lockedIn' });
+  });
+});
+
+describe('battle styles in a round', () => {
+  it('plays the round in the style the league gives it', () => {
+    const clash = playRound(newLeague(4), () => GREEDY);
+    expect(clash.battles.map((battle) => battle.style)).toEqual(['frontMcsClash', 'frontMcsClash']);
+    const votes = playRound({ ...newLeague(4), battleStyle: 'crowdVote' }, () => GREEDY);
+    expect(votes.battles.map((battle) => battle.style)).toEqual(['crowdVote', 'crowdVote']);
+    // A crew without an MC loses before the first verse; the others play verses.
+    const withVerses = votes.battles.filter((battle) =>
+      battle.events.some((event) => event.kind === 'verse'),
+    );
+    expect(withVerses.length).toBeGreaterThan(0);
+    for (const battle of votes.battles) {
+      if (!withVerses.includes(battle)) expect(battleEnd(battle.events).reason).toBe('noMcs');
+    }
   });
 });
 

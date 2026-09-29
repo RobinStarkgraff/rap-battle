@@ -1,13 +1,13 @@
 # Tasks
 
 States: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped.
-Next free ID: **T-058**
+Next free ID: **T-059**
 
 ## Now
 
-- [ ] T-037 (M7) Add a second battle style through the `BattleStyle` interface (e.g. verse rounds scored by the crowd)
-- [ ] T-030 (M7) Effects, screen shake and procedural WebAudio sound: one seeded beat per battle that builds with hype and drops on chokes, SFX for battle and shop (and the nudge, D-086), on at 40% with mute and volume saved in the browser (D-051)
-- [ ] T-031 (M7) Balance pass using headless AI-manager statistics: battles of 6 to 12 turns (D-054), setup knockouts, Drop the Beat stacking, Studio Session speed, the power 1 / 2 / 3 values of Studio Session, Voice Lessons and Negotiator, and salary and retirement pacing. The T-019 headless run fills about 4.9 of 5 active slots in season 1 but only about 3 from season 3: renegotiated salaries of grown units (4 to 5 each) plus an ask no longer fit under `WALLET_CAP = 20`, and only 3 rookies a round enter for 12 crews
+- [ ] T-032 (M8) Deploy a static build; test P2P across two real networks; decide whether a TURN server is needed
+- [ ] T-033 (M8) Write the jam submission page and a known-issues list
+- [ ] T-041 (M8) Decide with the user whether to commit `.devcontainer/project/` (the Chromium build step, D-018, and the `node_modules` volume, D-015) so other machines get them; today all of `.devcontainer/` is gitignored
 
 ## Next
 
@@ -15,14 +15,16 @@ Next free ID: **T-058**
 
 ## Later
 
-- [ ] T-056 (M7) Onboarding hints for a first league: what to do in the market's first bidding round, what the payroll means, and where to lock in (the M7 exit criteria name a tutorial or onboarding hint)
-- [ ] T-057 (M7) Hall of Fame paging (it shows 10 portraits and counts the rest) and unit figures in the league tab's crew panel
-- [ ] T-032 (M8) Deploy a static build; test P2P across two real networks; decide whether a TURN server is needed
-- [ ] T-033 (M8) Write the jam submission page and a known-issues list
-- [ ] T-041 (M8) Decide with the user whether to commit `.devcontainer/project/` (the Chromium build step, D-018, and the `node_modules` volume, D-015) so other machines get them; today all of `.devcontainer/` is gitignored
+(none)
 
 ## Done
 
+- [x] T-058 (M7) Colour palette and theme pass (D-092): every colour of `render/` is a named token in `palette.ts` (new `UI` tokens and an `ART` table), `tooling/palette.test.ts` fails on colour literals elsewhere and checks WCAG AA contrast of text on panels and buttons; the look is unchanged (2026-09-29)
+- [x] T-057 (M7) Hall of Fame paging (`hub/hallView.ts`: `hallPage` 10 to a page newest first, `titleSummary`; `hall-prev`/`hall-next`) with frames that fit the panel and titles in one line, and unit figures in crew colours in the league tab's crew panel (bench dimmed) (2026-09-29)
+- [x] T-056 (M7) Onboarding hints (D-091): `render/hub/hints.ts` (`onboardingHint` by round state and tab until the crew has played 2 battles: first bids, a bid's ask and the payroll, bids in, the lineup, where to lock in, locked in), a yellow note beside the tab bar with OK (`hub-hint-close`) (2026-09-29)
+- [x] T-031 (M7) Balance pass (D-090): `core/ai/balance.ts` (`balanceStats`: turns per style, end reasons, setup knockouts, stronger-lineup wins, filled slots, wallet, payroll, salary, retirements, gold lost to the cap, Drop the Beat stacking, upkeep gains, per-ability win rates), `make balance` (`tooling/balance-report.test.ts`); MC confidence +2, `SALARY_PER_RATING` 0.18, `GROWTH_XP` 4, `BASE_INCOME` 18, `WALLET_CAP` 25, rookies and list cap per member, Scratch 1/2/2, Crowd Mix 2/3/4, Studio Session and Negotiator 1/2/3; the headless test holds the targets (2026-09-29)
+- [x] T-030 (M7) Effects, screen shake and procedural sound (D-089): `render/audio/` (seeded 16-step beat with kick, snare, hi-hat and bass layers by total hype and a one-bar drop on chokes, SFX recipes for the battle and the shop, the engine that starts on the first click, the saved volume and mute at 40%), `SoundScene` controls in the bottom-left of every screen, battle sparks, ability rings, choke flash, confetti and camera shake, shop sounds through `withShopSounds`, nudge and signing sounds in the hub, the result screen's cheer or boo (2026-09-29)
+- [x] T-037 (M7) Second battle style, **crowd vote** (D-088): `battle/crowdVote.ts` behind `BattleStyle` with the clash's setup and turns shared in `battle/opening.ts`, 3 verses of 4 turns won by the bigger hype rise, best of 3, a wipeout still ends it; the league's `battleStyle` (clash, crowd vote or mixed, picked on the founding screen; save version 2 with a migration) and `roundBattleStyle`; `verse`/`verdict` beats, the verse tally, verdict lines and crowd headlines in the battle and result; the round's style on the hub; `?battle=<seed>&style=crowdVote` (2026-09-29)
 - [x] T-029 (M6) Playwright `e2e/sitting.spec.ts`: a host and two friends in three browser contexts over a local PeerJS server (started by `playwright.config.ts`, with Chromium's mDNS hiding off): founding, hosting, joining by room code, founding crews that take over bots, bidding, passing, lock-in, battles, the same saved league in all three, and back to the lobby; the market hides its submit button once a sitting's bids are in (D-087) (2026-09-29)
 - [x] T-053 (M6) Who is shopping, nudges, shop timer: player statuses from each copy of the round (`bidding`, `bidIn`, `shopping`, `lockedIn`, `left`) in a hub strip with NUDGE buttons and in the lobby's seats; nudges relayed by the host (one per crew pair per 10 s) and shown in the hub; the host's lobby toggle for `SHOP_TIMER_SECONDS`, sent as time left, a countdown under Lock in, passes for slow bidders and a forced lock-in for slow lineups (D-086) (2026-09-29)
 - [x] T-028 (M6) Desyncs and disconnects: the league message carries the SHA-256 of the canonical league, a client with another result reports `outOfSync` and takes the host's league, a broken copy asks for a `resync` (the round again, or the last round and then the league); a dropped player is force-locked with a stand-in nonce and everyone is told; a host drop before the battles voids the round, and the round is saved as soon as it is played; heartbeats (5 s / 45 s) and `pagehide` leave the sitting (D-085) (2026-09-29)

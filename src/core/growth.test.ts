@@ -3,18 +3,21 @@ import { ARCHETYPES } from './data';
 import { gainXp } from './growth';
 import { createRng } from './rng';
 import { mc, support } from './testing/fixtures';
+import { TUNABLES } from './tunables';
+
+const STEP = TUNABLES.GROWTH_XP;
 
 describe('gainXp', () => {
   it('adds xp without growth below a growth step', () => {
-    const result = gainXp(mc({ id: 'm', xp: 0 }), 2, createRng(1));
-    expect(result.unit.xp).toBe(2);
+    const result = gainXp(mc({ id: 'm', xp: 0 }), STEP - 1, createRng(1));
+    expect(result.unit.xp).toBe(STEP - 1);
     expect(result.events).toEqual([]);
   });
 
   it('gives an MC +1 flow or confidence at every GROWTH_XP', () => {
-    const before = mc({ id: 'm', xp: 2, flow: 2, confidence: 3 });
-    const { unit, events } = gainXp(before, 4, createRng(1));
-    expect(unit.xp).toBe(6);
+    const before = mc({ id: 'm', xp: STEP - 1, flow: 2, confidence: 3 });
+    const { unit, events } = gainXp(before, STEP + 1, createRng(1));
+    expect(unit.xp).toBe(2 * STEP);
     expect(events).toHaveLength(2);
     expect(unit.flow + unit.confidence).toBe(before.flow + before.confidence + 2);
     for (const event of events) {
@@ -25,26 +28,26 @@ describe('gainXp', () => {
   it('picks both stats over many seeds', () => {
     const stats = new Set<string>();
     for (let seed = 0; seed < 20; seed++) {
-      const [event] = gainXp(mc({ id: 'm', xp: 2 }), 1, createRng(seed)).events;
+      const [event] = gainXp(mc({ id: 'm', xp: STEP - 1 }), 1, createRng(seed)).events;
       if (event?.kind === 'statUp') stats.add(event.stat);
     }
     expect([...stats].sort()).toEqual(['confidence', 'flow']);
   });
 
   it('gives a support unit +1 power, and nothing once every ability is maxed', () => {
-    const dj = support({ id: 's', abilities: [['scratch', 2]], xp: 2 });
+    const dj = support({ id: 's', abilities: [['scratch', 2]], xp: STEP - 1 });
     const grown = gainXp(dj, 1, createRng(1));
     expect(grown.unit.abilities).toEqual([{ id: 'scratch', power: 3 }]);
     expect(grown.events).toEqual([
       { kind: 'powerUp', unitId: 's', abilityId: 'scratch', power: 3 },
     ]);
-    const maxed = gainXp(grown.unit, 3, createRng(1));
+    const maxed = gainXp(grown.unit, STEP, createRng(1));
     expect(maxed.unit.abilities).toEqual([{ id: 'scratch', power: 3 }]);
     expect(maxed.events).toEqual([]);
   });
 
   it('raises only abilities below MAX_POWER', () => {
-    const dj = support({ id: 's', abilities: [['scratch', 3], 'crowd-mix'], xp: 2 });
+    const dj = support({ id: 's', abilities: [['scratch', 3], 'crowd-mix'], xp: STEP - 1 });
     const { unit } = gainXp(dj, 1, createRng(5));
     expect(unit.abilities).toEqual([
       { id: 'scratch', power: 3 },
@@ -78,7 +81,7 @@ describe('gainXp', () => {
     const { unit, events } = gainXp(support({ id: 's', abilities: ['remix'] }), 12, createRng(3));
     expect(unit.xp).toBe(12);
     expect(unit.abilities).toHaveLength(2);
-    // Steps at 3, 6, 9 and 12, then the second ability; the first steps take remix to 3.
+    // A step every GROWTH_XP up to 12, then the second ability; the first two take remix to 3.
     expect(events.filter((event) => event.kind === 'powerUp')).toHaveLength(2);
     expect(events.at(-1)?.kind).toBe('learn');
   });

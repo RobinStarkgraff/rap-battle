@@ -290,7 +290,7 @@ function drawRow(context: TabContext, ui: MarketUi, row: MarketRow, y: number): 
   const chosen = ui.selected === unit.id;
   const background = scene.add.graphics();
   background.fillStyle(
-    chosen ? UI.panelEdge : row.scouted ? 0x24403a : UI.panelLight,
+    chosen ? UI.panelEdge : row.scouted ? UI.rowScouted : UI.panelLight,
     chosen ? 1 : 0.6,
   );
   background.fillRoundedRect(TABLE.left + 4, y, TABLE.width - 8, TABLE.rowHeight - 3, 6);

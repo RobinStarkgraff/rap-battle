@@ -92,5 +92,37 @@ export const UI = {
   buttonHover: 0xffe27a,
   buttonDisabled: 0x6c6c7c,
   accent: 0xe63946,
+  accentHover: 0xff5d6a,
   highlight: 0x5bc0eb,
+  white: 0xffffff,
+  /** Black for shades and drop shadows, drawn with an alpha. */
+  shade: 0x000000,
+  /** The page behind the game canvas. */
+  page: 0x111018,
+  /** The player's own row, a scouted unit's row and the release bin, on dark panels. */
+  rowMine: 0x3a3a1c,
+  rowScouted: 0x24403a,
+  dropDanger: 0x4a1f2a,
+  /** The tabloid front page of the result screen. */
+  newsprint: 0xfdf6e3,
+  /** The same colours as CSS strings, for text backgrounds, strokes and shadows. */
+  buttonCss: '#ffd23f',
+  newsprintCss: '#fdf6e3',
+  shadowCss: '#000000',
+  textWhite: '#ffffff',
+} as const;
+
+/** Colours of props and details in the art: icons, logos, figures' faces, the mic. */
+export const ART = {
+  red: 0xe63946,
+  yellow: 0xffd23f,
+  orange: 0xf4892b,
+  white: 0xf8f8f2,
+  pureWhite: 0xffffff,
+  steel: 0x9a9aa6,
+  groove: 0x55556a,
+  leather: 0x6b3e1f,
+  tan: 0x8d5524,
+  pants: 0x2c2c48,
+  mouth: 0x7a1f2b,
 } as const;

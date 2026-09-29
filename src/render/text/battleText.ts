@@ -99,6 +99,16 @@ export const HYPE_SWING_LINES: readonly string[] = [
 ];
 
 /** The crowd losing interest after a big drop in a crew's hype. */
+/** Crowd vote (§5.2): the crowd gives a verse to `{crew}`; the crowd of that side shouts it. */
+export const VERDICT_LINES: readonly string[] = [
+  'That verse goes to {crew}!',
+  'The block has voted: {crew}!',
+  'Louder for {crew}! LOUDER!',
+  'Hands in the air for {crew}!',
+  'Nobody asked, but it’s {crew}!',
+  'The pigeons have voted: {crew}!',
+];
+
 export const HYPE_DROP_LINES: readonly string[] = [
   'Boooo! Come on, {crew}!',
   'The crowd is checking their phones, {crew}...',

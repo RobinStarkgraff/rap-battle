@@ -10,7 +10,14 @@ import type { UnitId } from './unit';
 /** Crew A (the first argument of `simulateBattle`) or crew B. */
 export type Side = 'a' | 'b';
 
-export type HypeCause = 'bar' | 'diss' | 'enemyChoke' | 'ownChoke' | 'ability';
+export type HypeCause =
+  | 'bar'
+  | 'diss'
+  | 'enemyChoke'
+  | 'ownChoke'
+  | 'ability'
+  /** Crowd vote (§5.2): the crowd settles down between two verses. */
+  | 'verseBreak';
 
 /** Why a battle ended (§5 End). */
 export type EndReason =
@@ -19,7 +26,9 @@ export type EndReason =
   /** A crew's last MC choked. */
   | 'wipeout'
   /** `MAX_TURNS` ran out; the crew that lost more confidence lost. */
-  | 'turnLimit';
+  | 'turnLimit'
+  /** Crowd vote (§5.2): the crew won the most verses. */
+  | 'crowdVote';
 
 export type BattleEvent =
   /** The seeded coin flip: the opening crew takes the first turn and resolves first. */
@@ -69,6 +78,19 @@ export type BattleEvent =
       readonly change: number;
       readonly hype: number;
       readonly cause: HypeCause;
+    }
+  /** Crowd vote (§5.2): a verse begins. Verses count from 1. */
+  | { readonly kind: 'verse'; readonly verse: number }
+  /**
+   * Crowd vote (§5.2): the crowd picks the verse's winner. `gain` is each crew's hype change
+   * over the verse, `verses` the verses each crew has won so far, this one included.
+   */
+  | {
+      readonly kind: 'verdict';
+      readonly verse: number;
+      readonly winner: Side;
+      readonly gain: Readonly<Record<Side, number>>;
+      readonly verses: Readonly<Record<Side, number>>;
     }
   /** An MC reached 0 confidence and left the stage. */
   | { readonly kind: 'choke'; readonly side: Side; readonly unitId: UnitId }

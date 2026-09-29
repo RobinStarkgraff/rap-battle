@@ -1,6 +1,8 @@
 /** The battle simulation (§5). */
 
+export { CROWD_VOTE } from './crowdVote';
 export { FRONT_MCS_CLASH } from './frontMcsClash';
+export { BATTLE_STYLES } from './styles';
 export { battleEnd, simulateBattle } from './simulate';
 export type { BattleEnd } from './simulate';
 export { BATTLE_STYLE_IDS } from './style';

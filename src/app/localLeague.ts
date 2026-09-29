@@ -23,6 +23,7 @@ import {
   type CrewIdentity,
   type CrewNameError,
   type League,
+  type LeagueBattleStyle,
   type Result,
   type RoundFinished,
   type RoundStartReport,
@@ -39,12 +40,16 @@ export const BOT_CHOICES = [3, 5, 7, 11] as const;
 export type BotCount = (typeof BOT_CHOICES)[number];
 export const DEFAULT_BOTS: BotCount = 5;
 
+/** A new league mixes both battle styles unless the founder picks one (D-088). */
+export const DEFAULT_BATTLE_STYLE: LeagueBattleStyle = 'mixed';
+
 export function newLocalLeague(
   seed: number,
   identity: CrewIdentity,
   bots: BotCount,
+  battleStyle: LeagueBattleStyle = DEFAULT_BATTLE_STYLE,
 ): Result<League, CrewNameError> {
-  return createLeague(seed, [{ playerName: PLAYER_NAME, identity }], bots);
+  return createLeague(seed, [{ playerName: PLAYER_NAME, identity }], bots, { battleStyle });
 }
 
 /** The crew of the league's first player: the one this machine plays. */
