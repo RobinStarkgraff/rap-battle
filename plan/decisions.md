@@ -442,3 +442,94 @@ and are marked "superseded by D-###".
   - The engine keeps mutable state inside `simulateBattle` only; its inputs are never changed.
   - A queue safety limit (10 000 steps) throws, because the §9 rules bound every chain, so hitting
     it would be a data bug.
+- **D-065 (2026-09-29): How the player market generates and names units (T-016).** One reading
+  for each detail §4 and §8 leave open:
+  - Public units get the ids `u1`, `u2`, … from a counter kept in the market; scouted units get
+    `<crew>/r<round>/s<scouting>/<index>`, so they are unique without a shared counter.
+  - A unit's rolls come in a fixed order (role, archetype, flow, confidence, first ability, age,
+    `look`, stage name), and a test pins the first units, because saved leagues depend on it.
+  - Every draw outside a battle has its own labelled seed from the league seed (`core/seeds.ts`),
+    so one draw never shifts another (start pool, rookies per round, each scouting).
+  - Stage names are unique among **living** units (crews, public list, scouts), ignoring case;
+    a retired unit's name is free again. After `NAME_REROLLS` the last roll gets the numeral.
+  - A generated unit already carries the salary its value is worth, so the market can show it;
+    it is set again at signing.
+  - Units dropped to fit `POOL_MAX` leave the game without retiring, so no hall of fame.
+- **D-066 (2026-09-29): How the shop phase resolves and refuses actions (T-017).** One reading for
+  each detail §4 leaves open, all pinned by `shop.test.ts`:
+  - Shop actions return a `Result` with a reason (`breaksBids`, `cannotAfford`, …) for the UI, and
+    never throw for a refused action.
+  - A bidding round resolves units in public-list order. A winning bid its crew can no longer
+    honour (no place or gold left after earlier wins) passes to the next best bid. Crews missing
+    from the ranking rank lowest; the coin flip is only drawn for a real tie.
+  - Moving a unit onto an occupied place swaps the two if both roles fit. The bench has no gaps.
+  - Releasing never breaks an open bid (it lowers the payroll and frees a place), so it is always
+    allowed. A unit that rejoins a crew keeps its old stint in its record.
+  - A scouted unit whose stage name was taken after scouting gets the numeral when it is signed.
+  - `forceLockIn` (timer, disconnect) releases by what a unit costs at lock-in (bench halved) and
+    keeps units that cost nothing, since releasing them wouldn't help (the doc said "lowest salary").
+- **D-067 (2026-09-29): Careers across rounds and seasons (T-018).**
+  - A unit's stint with its current crew counts a season at the season end, before retirement,
+    so a retiree's last season counts too. A unit that joined in the last round counts it.
+  - Hall of fame entries are added in retirement order (crews in league order, units in slot
+    order, then free agents). A crew that no longer exists gets none.
+  - After a battle, units are matched to the event log by id; a unit without a stint for its
+    crew gets one (only possible for units placed without signing, as in tests).
+  - Upkeep reports its income and the gold lost to the cap. Gold above the cap is lost at every
+    upkeep, whatever brought it there.
+  - Free agents' listed salaries are refreshed at the season end with the crews', so the market
+    shows what they would cost (signing sets the salary again anyway).
+- **D-068 (2026-09-29): The league state and its rules (T-034).**
+  - A `League` holds the seed, members (player with a name, or bot), every crew, the market, the
+    season (divisions, a schedule per division, results) and the counters. Divisions are lists of
+    **schedule slots**, and results and pairings refer to slots, so a newcomer who takes over a
+    bot's slot keeps its points. `lastRoundWinners` gives the win bonus, `freshCrews` skip their
+    first upkeep, and `waiting` holds newcomers until the next season. Crew ids are `c1`, `c2`, …
+  - Pairings shuffle the slots with the season seed, per division, then use the circle method;
+    the second half swaps the sides. (The doc said "rotated"; a shuffle varies more.)
+  - Head-to-head counts the games between all crews tied on points. The coin flip is a fixed key
+    per crew and season from the league seed, so a table never reorders itself.
+  - A newcomer takes over the lowest-placed bot of the lowest division that has one; the bot's
+    units become free agents rather than vanishing.
+  - At the season end promoted crews rank at the bottom of their new division and relegated
+    ones at the top, then waiting newcomers; the league is split again by that ranking and each
+    division is padded with new bots at its bottom. Bots are only removed by a takeover.
+  - Typed crew names are trimmed. A bot's trim colour differs from its main colour.
+- **D-069 (2026-09-29): A league round is a set of phase functions, and `playRound()` composes
+  them (T-055).** A human shops over many clicks and the host waits for everyone, so one call
+  can't take all the shop decisions up front. `startRound` returns a `RoundState`; the shop
+  actions, `resolveBids`, `lockInCrew` and `finishRound` each return a new one (or a refusal).
+  `playRound(league, managerFor, seeds?)` drives them with a `CrewManager` per crew (`bid` before
+  each bidding round, `lineup` before lock-in), for the headless test and AI-run crews; the local
+  league (T-023) and the host (T-036) call the same phases one step at a time.
+  - Managers act in league order; a crew that hasn't bid when the bids are revealed passes.
+  - Bid ties use the standings at the start of the round.
+  - A forced lock-in works during the bidding too; the crew then passes in later rounds.
+  - Battle seeds come from a callback. `localBattleSeed` (from the league seed) serves the local
+    league and headless runs; M6 plugs in the agreed seeds (T-027).
+  - Waiting newcomers neither pay upkeep nor play until their division starts.
+- **D-070 (2026-09-29): The league save is versioned JSON checked by a zod schema in `core/save/`
+  (T-035).** The schema lives in `core/` because it describes the core league state exactly, and
+  both `app/` (the browser save) and `net/` (the league state the host sends, D-031) need it;
+  zod is pure and deterministic, so `core/` may use it. Each schema is typed `z.ZodType<CoreType>`,
+  so the compiler catches drift, and a test round-trips a league that has played a season. A
+  save is `{ format: 'mic-drop-league', version, league }`; `SAVE_VERSION` is bumped with every
+  shape change, together with a migration in `MIGRATIONS`, and saves from a newer version are
+  refused. Only completed rounds are saved: a round is replayed from its seeds after a reload.
+  `app/leagueStorage.ts` stores it in `localStorage` under one key through a small
+  `KeyValueStore` interface, and reports blocked storage as a result instead of throwing.
+- **D-071 (2026-09-29): The AI manager's policy (T-019).** The §7 greedy policy, made concrete
+  (the details are in `docs/game-design.md` §7 AI managers):
+  - **Best value** is battle strength (the rating without the youth premium) per gold of ask
+    plus one salary, with a seeded ±10% taste per crew and round so bots don't all chase the
+    same unit. Bids are the ask, one more 30% of the time, so ties are rarer.
+  - It fills MC slots before support slots (a crew with no MC loses at once; this was a real
+    failure in the headless run) and makes at most one upgrade bid per bidding round.
+  - It keeps its payroll within `BASE_INCOME` and trims it itself by strength per salary,
+    because the forced lock-in releases the *cheapest* units first and would strip a lineup
+    down to its expensive stars.
+  - **Lineup order** (the playtest's open point): confidence counts double for the Opener, flow
+    for the Closer, and an `inSlot` ability adds 4 in its slot; the best of the 6 orders wins.
+  - It is one `CrewManager` constant, so bots and absent players share it. Its tuning numbers
+    (`UPGRADE_MARGIN`, `OVERBID_CHANCE`, `VALUE_JITTER`, `MAX_SCOUTS`, `SLOT_ABILITY_BONUS`) sit
+    in `core/ai/` rather than `TUNABLES`, because they are the AI's taste, not game rules.

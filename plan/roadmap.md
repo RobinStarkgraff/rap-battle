@@ -10,8 +10,8 @@ layer on top.
 | M1 | Game design v0 | done |
 | M2 | Design iteration with the user | done |
 | M3 | Core: battle simulation | done |
-| M4 | Core: shop, crew upkeep & league | in progress |
-| M5 | Playable single-player (league vs. bots) | not started |
+| M4 | Core: shop, crew upkeep & league | done |
+| M5 | Playable single-player (league vs. bots) | in progress |
 | M6 | Peer-to-peer multiplayer | not started |
 | M7 | Juice & polish | not started |
 | M8 | Release & playtest | not started |

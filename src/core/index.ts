@@ -17,3 +17,15 @@ export type { TunableName } from './tunables';
 /** Game title shown until the final name is decided. */
 export const GAME_TITLE = 'rap-battle';
 export * from './battle';
+export * from './market';
+export { nameSet, uniqueName } from './names';
+export type { NameSet } from './names';
+export { fail, ok } from './result';
+export type { Result } from './result';
+export * from './seeds';
+export * from './shop';
+export * from './career';
+export * from './league';
+export * from './round';
+export * from './save';
+export * from './ai';

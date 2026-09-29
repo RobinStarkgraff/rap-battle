@@ -229,7 +229,9 @@ The shop phase starts with up to `BID_ROUNDS = 3` **bidding rounds** on the publ
 2. When every crew has bid or passed, the host reveals the bids. Each unit goes to its
    **highest bid**. Ties go to the crew ranked lower in the league (lower division, then
    lower position), then to a seeded coin flip. The winner pays its bid and the unit joins
-   the crew at once; the other bidders keep their gold.
+   the crew at once; the other bidders keep their gold. Units are resolved in public-list
+   order, and a winning bid the crew can no longer honour (no place or gold left) passes to
+   the next best bid (D-066).
 3. The next bidding round starts with the units that are left. Bidding ends after
    `BID_ROUNDS` rounds, or earlier when a round has no bids at all.
 
@@ -248,7 +250,7 @@ through the host, which resolves them with a pure `core/` function, so every pee
 - **Released** units return to it as free agents. **Retired** units leave the game.
 - The list holds at most `POOL_MAX = 16` units. The cap is checked at each upkeep after the
   rookies enter (so the start pool may be larger): the units that have been on the list
-  longest leave the game until it fits.
+  longest leave the game until it fits. They don't retire, so they don't enter a hall of fame.
 - A generated unit's **role** is drawn with the weights `MC_WEIGHT : SUPPORT_WEIGHT = 3 : 2`,
   matching the 3 MC and 2 support slots, then its archetype uniformly within that role. Its
   stats, first ability, age and stage name are rolled from the seeded RNG. Every ability starts
@@ -449,9 +451,9 @@ A **member** is a crew plus who runs it:
 | Topic | Rule |
 |---|---|
 | Length | A **double round robin** inside each division: every pair meets twice. If that is fewer than `MIN_SEASON_ROUNDS = 3` rounds, it repeats until the season reaches that many (2 members play 3 rounds). Every round of the season is played, even once the division winner is decided. 4 members play 6 rounds and 6 members play 10 |
-| Pairing | The circle method, rotated by the season seed (derived from the league seed and the season number), so the pairings are deterministic and fair. The second half repeats the first |
+| Pairing | The circle method over the division's slots, shuffled by the season seed (derived from the league seed and the season number), so the pairings are deterministic and fair and change each season. The second half repeats the first with the sides swapped |
 | Points | Win `POINTS_WIN = 3`, loss 0. Battles can't end drawn (D-035), so there are no draws |
-| Tiebreaks | Head-to-head points, then total MC margin, then a seeded coin flip |
+| Tiebreaks | Head-to-head points (in the games between all crews tied on points), then total MC margin, then a seeded coin flip |
 | Catch-up | None. Crews are meant to snowball (see [Pillars](#pillars)), and divisions keep strong and weak crews apart |
 
 A season usually spans several sittings, and one season is one year of the units' age. A
@@ -475,10 +477,11 @@ round, in this order:
 
 ### Joining and leaving
 
-- **New player mid-season:** if the newcomer's division has a bot, the newcomer takes over
-  that bot's schedule slot at once, with a fresh crew. The slot's points stay, and the
-  bot's crew is dropped. If no division has a bot, the newcomer joins the bottom division
-  at the next season start.
+- **New player mid-season:** if a division has a bot, the newcomer takes over the schedule
+  slot of the lowest-placed bot in the lowest division that has one, at once, with a fresh
+  crew. The slot's points stay, and the bot's crew is dropped; its units become free agents
+  (D-068). If no division has a bot, the newcomer joins the bottom division at the next
+  season start.
 - **Player leaves the league for good:** their crew becomes a bot, and an AI manager runs it
   from then on. So the counts stay even.
 - **Player misses a sitting:** nothing to do. The AI manager plays their rounds (see below).
@@ -498,7 +501,23 @@ The AI plays the real economy with a simple greedy policy: bid the ask on the be
 it can afford for its empty slots, scout when nothing fits, release the weakest unit for a clearly
 better one, and lock in once gold runs low. It should be beatable by
 a thoughtful human, but not silly. Its decisions come from seeded randomness, so every peer
-gets the same result.
+gets the same result. In detail (T-019, D-071):
+
+- **Strength** is a unit's rating without the youth premium: its stats (or
+  `SUPPORT_BASE_RATING`) plus `ABILITY_RATING` per point of power. **Best value** is strength
+  per gold of ask plus one salary, with a seeded ±10% taste per crew and round.
+- **Bidding:** it fills empty MC slots first, then support slots, best value first, and makes one
+  upgrade bid for a unit at least 3 strength above its weakest active unit of that role. Each bid
+  is the ask, sometimes one more. It keeps its payroll within `BASE_INCOME`, so it can pay again
+  next round, and before the first bidding round it releases its worst strength per salary (bench
+  first, never its last MC) until it is.
+- **Scouting:** after the bidding, while an active slot is still empty, it scouts (at most twice)
+  and signs a scouted unit that fills the slot.
+- **Lineup:** its strongest 3 MCs and 2 supports play. The MCs take the order with the best fit:
+  confidence counts double for the Opener (it takes the setup disses and the first bars), flow
+  counts double for the Closer, and an ability with an `inSlot` condition adds 4 in its slot.
+  Bench units weaker than every active unit of their role are released. If it still can't pay
+  the payroll, it releases its worst strength per salary before the lock-in.
 
 ### League state and hosting
 
@@ -532,8 +551,9 @@ locked in, so the others wait (Q-014, D-032):
   default. It runs once for each [bidding round](#bidding-rounds) (a crew that hasn't bid
   passes) and once more for the lineup after the bidding. When the last one runs out, the
   player's **current lineup** is locked in. If the wallet can't cover the payroll, units are
-  released one at a time until it can: the unit with the lowest salary first, then bench
-  before active slots, then the highest slot.
+  released one at a time until it can: the unit that costs least at lock-in first (bench
+  salaries halved), then bench before active slots, then the highest slot. Units that cost
+  nothing are kept, because releasing them wouldn't help (D-066).
 
 ## 8. Starting archetypes and abilities
 
@@ -638,8 +658,10 @@ A unit's `stageName` is rolled when it is generated (D-028, D-047): an optional 
 prefixes plus the archetype's own; the word comes from the shared words plus the archetype's
 own, uniformly. Examples: *Lil Syntax*, *MC Thunderclap*, *Big Mood*, *Beats by Snare*, *Biscuit*.
 
-- No two units in a league share a stage name. If a roll is taken, it is rolled again, up
-  to `NAME_REROLLS = 10` times; after that the smallest free numeral is added (*Biscuit II*, *Biscuit III*).
+- No two living units in a league (in crews, on the public list or scouted) share a stage
+  name, compared case-insensitively. If a roll is taken, it is rolled again, up to
+  `NAME_REROLLS = 10` times; after that the smallest free numeral is added to the last roll
+  (*Biscuit II*, *Biscuit III*). A retired unit's name is free again.
 - Names are invented and never the name of a real artist (see [Non-goals](#non-goals)). Words
   that complete a real artist's name with one of the prefixes are left out of the lists.
 

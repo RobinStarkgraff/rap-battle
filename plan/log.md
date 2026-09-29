@@ -2,6 +2,46 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-019, AI manager and the headless league; M4 done)
+- `src/core/ai/`: `value.ts` (`strength`, `valueForMoney`, `slotFit`, `payrollWith`), `lineup.ts` (`planLineup` over the 6 MC orders, `movesFor`, `surplus`), `manager.ts` (`AI_MANAGER`: MC-first best-value bids with a seeded taste, one upgrade bid, payroll within `BASE_INCOME`, scouting for empty slots, arranging, surplus release, payroll trim). Doc §7 now defines best value and the lineup order (D-071).
+- `headless.test.ts`: AI managers play 4 seasons of a 12-crew league (2 divisions) and 5 seasons of a 4-crew one through `playRound()`: titles every season, halls of fame, growth and second abilities, unique living ids and names, no crew without MCs, no turn-limit battles, save round trip, determinism.
+- Found on the way, and fixed in the AI: a crew that lost every unit at a season end spent its wallet on a support and fielded no MC; and the forced lock-in, which releases the cheapest units first, stripped lineups to their stars.
+- **Balance finding for T-031** (added to its text): active slots fill about 4.9 of 5 in season 1 but about 3 from season 3, because renegotiated salaries of grown units plus an ask don't fit under `WALLET_CAP = 20`. Battles averaged 5 to 6 turns, with 0 of 240 at the turn limit.
+- **M4 exit criteria**, checked one by one: player market with stage names, supply, scouting, sealed bidding and release ✓ (T-016, T-017); arranging slots and bench ✓ (T-017); upkeep with income, `upkeep` abilities and the wallet cap ✓ (T-018); payroll at lock-in ✓ (T-017); growth and the second ability ✓ (T-018, seen in the headless run); season end with titles, halls of fame, ageing and salaries ✓ (T-018, T-034); divisions padded with bots, double round robin, standings, promotion and relegation, joining and leaving ✓ (T-034); the AI manager ✓ (T-019); one pure function for a whole round ✓ (T-055); a versioned, zod-validated save ✓ (T-035); a headless multi-season test ✓ (T-019). `make check` (313 tests), `make build` and `make test-e2e` pass.
+- **M4 is done; M5 is in progress.** Now: T-020, T-021, T-022; Next: T-023, T-054, T-024.
+
+## 2026-09-29 (T-035, league save)
+- Added **zod 4** (`^4.6.5`). `src/core/save/`: `schema.ts` (`leagueSchema`, each part typed against its core type), `save.ts` (`serializeLeague`, `parseLeague` with the `format`/`version` envelope, `SAVE_VERSION = 1`, an empty `MIGRATIONS` table). `src/app/leagueStorage.ts`: `browserStore`, `saveLeague`, `loadLeague`, `deleteLeague` over a `KeyValueStore`.
+- Tests: a league a season in round-trips; not-JSON, not-a-save, newer versions and six kinds of corrupt league are refused; the storage copes with a missing save, a broken save and blocked storage.
+- CLAUDE.md: `core/` holds the save schema and may use zod (D-070).
+- `make check` and `make build` pass. **Next:** T-019 (AI manager and the headless league test).
+
+## 2026-09-29 (T-055, `playRound()`)
+- `src/core/round/`: `start.ts` (`startRound`: upkeep with the win bonus, skipped for fresh crews and in the league's first round; rookies; `RoundState`; `takenNames`), `actions.ts` (the shop actions, `resolveBids`, `lockInCrew`, `forceLockInCrew`, `stillBidding`, `stillShopping`), `finish.ts` (`roundBattles`, `finishRound` with battle seeds from a callback, records, xp, results and the season end), `play.ts` (`CrewManager`, `IDLE_MANAGER`, `playRound`) (D-069).
+- Tests: the first round without upkeep, upkeep and rookies later, newcomers, every refusal, payroll at lock-in, determinism, given seeds and a season end after 3 rounds.
+- `make check` passes. **Next:** T-035 (league save format).
+
+## 2026-09-29 (T-034, league rules)
+- `src/core/league/`: `types.ts` (`League`, `Member`, `Division`, `Season`, `MatchResult`), `crews.ts` (`foundCrew`, `crewNameProblem`, `botIdentity`), `divisions.ts` (`divisionSizes`, `paddedSize`, `addBot`, `formDivisions`, `scheduleSeason`), `schedule.ts` (`doubleRoundRobin`), `standings.ts` (`divisionStandings`, `leagueRanking`, `seasonComplete`), `create.ts`, `membership.ts` (`joinLeague`, `leaveLeague`), `seasonEnd.ts` (`endSeason`: titles, retirement, ageing, salaries, promotion and relegation, new split with bots, new schedule).
+- Doc: pairings shuffle the slots; head-to-head among all tied crews; which bot a newcomer replaces, and its units become free agents (D-068).
+- `make check` passes. **Next:** T-055 (`playRound()`).
+
+## 2026-09-29 (T-018, upkeep, battle results and the season end)
+- `src/core/career/`: `upkeep.ts` (`upkeep()`: income + win bonus, `upkeep` abilities, wallet cap), `battleResult.ts` (`applyBattleResult()`: records, stints and 1 xp with growth for active units), `seasonEnd.ts` (`recordSeason`, `retireUnits` into every former crew's hall of fame, `ageUnits` with the new farewell tours, `renegotiateSalaries`). The league steps of the season end (standings, titles, divisions, schedule) come with T-034 and T-055.
+- New seeds for bids, scouted signings, upkeep and growth in `core/seeds.ts` (D-067).
+- `make check` passes. **Next:** T-034 (league rules).
+
+## 2026-09-29 (T-017, bidding, signings and lock-in)
+- `src/core/shop/`: `lineup.ts` (places, `freePlaceFor`, `moveUnit` with swaps, `payroll`), `signing.ts` (`signUnit` sets the salary, starts a stint and resolves `sign` abilities; `releaseUnit`), `bidding.ts` (`bidsProblem`, `resolveBidRound`, `afterBidRound`), `shopCrew.ts` (scout, sign scouted, release, move and bid, keeping open bids valid), `lockIn.ts` (`lockIn`, `forceLockIn`).
+- Doc: bid resolution order and the fall-through to the next best bid; the forced lock-in releases by cost at lock-in (D-066).
+- `make check` passes. **Next:** T-018 (upkeep, results and the season end).
+
+## 2026-09-29 (T-016, player market)
+- `src/core/market/`: `value.ts` (`rating` with the youth premium, `askPrice`, `salaryFor`, `benchSalary`, `seasonsLeft`, `onFarewellTour`), `generate.ts` (`generateUnit` with roles 3 : 2, weighted `rollAge`, `rollStageName`), `market.ts` (start pool, rookies with `POOL_MAX`, free agents), `scouting.ts` (`scout()`). `core/names.ts` (`uniqueName`, case-insensitive `nameSet`, also for bot crew names), `core/seeds.ts` (labelled seeds), `core/result.ts` (`Result` for refused player actions).
+- Tests check the doc's rating examples, stat and age ranges, the 3 : 2 and age weights, unique names with numerals, the cap order, scouting cost, replacement and replay, and pin the first generated units.
+- Doc: capped-out units don't enter a hall of fame; names are unique among living units (D-065).
+- `make check` passes. **Next:** T-017 (bidding, signings, release, lock-in).
+
 ## 2026-09-29 (T-015, battle tests; M3 done)
 - `src/core/battle/abilities.test.ts`: one case per ability (a `Record<AbilityId, …>`, so a new ability without a test fails to compile), incl. slot conditions, crowd values, `oncePerBattle`, random targets and the 4 out-of-battle abilities, plus two abilities in learned order.
 - `src/core/battle/properties.test.ts`: 400 random battles plus 100 long ones (extra confidence) from `src/core/testing/randomLineup.ts`: same seed → same log, exactly one `end` naming a winner, turns alternate from the opener and stay within `MAX_TURNS`, end reason and margin match the stage replayed from the chokes, hype within 0–10, no bars by choked MCs, every end reason and all 28 in-battle abilities occur. One log is pinned as a snapshot.

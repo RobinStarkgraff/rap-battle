@@ -50,7 +50,8 @@ Entry point: `index.html` → `src/app/main.ts`. Unit tests sit next to the code
 
 ```
 src/
-  core/    pure game rules: units, abilities, shop, economy, battle sim, league, seeded RNG
+  core/    pure game rules: units, abilities, shop, economy, battle sim, league, seeded RNG,
+           and the zod schema of the league save
   net/     PeerJS wrapper, lobby, league host, message schemas, handshake
   render/  Phaser scenes and procedural shape art; plays back battle event logs
   app/     wiring, crew save/load and game-flow state machine (lobby → shop → lock-in → battle → result)
@@ -58,6 +59,7 @@ src/
 
 1. **`core/` is pure and deterministic.** It never imports Phaser, PeerJS, the DOM,
    `Math.random`, `Date` or timers. All randomness comes from the seeded RNG that is passed in.
+   Its only library is zod, for the league save schema (D-070).
 2. **The battle sim is a pure function**: `simulateBattle(crewA, crewB, seed) → BattleEvent[]`.
    Both peers run it locally. The only things sent over the network are crew lineups, seeds,
    lock-in messages, market bids and bid results (D-040) and the league state snapshot the host
