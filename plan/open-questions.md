@@ -17,10 +17,12 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
   host separately), so the saved league states fork at the same round number. Which copy wins,
   or can it be prevented (e.g. a lobby warns when another copy has the same round)? For M6 (T-036).
 - Q-009 Is the free public PeerJS signalling server acceptable, or should we host our own?
-- Q-010 Is sound in scope (procedural WebAudio), or should we cut it?
 
 ## Answered
 
+- **Q-010** Sound is in scope: procedural WebAudio with one seeded beat per battle that builds
+  with hype, plus SFX. It starts on at low volume, with mute always visible. Built in M7 (T-030).
+  (2026-09-29) → D-051
 - **Q-016** Hype changes abilities only through a few **crowd abilities** whose value is taken
   from the hype (`⌊H / N⌋`). There is no global step or threshold trigger. A `hype` effect gains
   hype, and on rare occasions drains the enemy's. A `beforeBattle` trigger (Manager's Hometown

@@ -1,4 +1,4 @@
-# Game design v0
+# Game design v0: Mic Drop League
 
 > **Status: draft.** M1 wrote this draft. In M2 it is reviewed with the user one topic at a
 > time (T-044 to T-052), so any section may still change.
@@ -86,6 +86,26 @@ run over many short sittings. AI players fill the league up and stand in for abs
   the MC currently at the front during the battle.
 - An empty MC slot is skipped: the next MC behind it moves up at battle start.
 
+### Crew identity
+
+Settled with the user in T-050 (D-052). When a player founds a crew, they give it:
+
+- a **name**, typed in, at most `CREW_NAME_MAX = 20` characters and unique in the league
+  (compared case-insensitively);
+- **two colours** (main and trim) from the `CREW_COLOURS` palette (see [Presentation](#11-presentation));
+- a **logo**, one of the shape logos in the same section.
+
+The crew's units wear its colours, and the logo shows on the stage banner, the standings
+and the hall of fame. **Bots** get a generated name *The ⟨adjective⟩ ⟨noun⟩*, two random
+colours and a random logo from the seeded RNG. A generated name that is taken is rolled
+again like a stage name (see [Stage names](#stage-names)). When a leaving player's crew
+becomes a bot (see [Joining and leaving](#joining-and-leaving)), it keeps its identity.
+
+| List | Entries |
+|---|---|
+| Bot crew adjectives | Midnight, Golden, Crunchy, Rowdy, Tiny, Electric, Sleepy, Cosmic, Soggy, Funky, Unstoppable, Suspicious |
+| Bot crew nouns | Biscuits, Pigeons, Bandits, Goblins, Crumbs, Raccoons, Snacks, Wizards, Pretzels, Llamas, Mixtapes, Waffles |
+
 ### Unit state
 
 Every unit is an **individual** (D-039), like a player in a sports manager. There are no
@@ -103,6 +123,7 @@ keeps this state for its whole career:
 | `xp` | Battles played in an active slot (see [Growth](#growth)) |
 | `age` | In years; one season is one year. Rolled from the seeded RNG when the unit is generated, with younger ages more likely (see [Age and retirement](#6-age-and-retirement)) |
 | `salary` | Set from the unit's value when it is signed, and renegotiated at each season end (see [Salary](#51-salary)) |
+| `look` | A 32-bit seed rolled when the unit is generated. `render/` draws the unit's whole appearance from it, so it looks the same on every peer and for its whole career (see [Presentation](#11-presentation)). It has no effect on the rules |
 | `stageName` | A generated stage name, rolled from the seeded RNG when the unit is generated and kept for its whole career (see [Stage names](#stage-names)) |
 | `record` | Career stats: battles played, bars landed, chokes, wins, and the crews it played for. Shown on the unit, and kept in the crew's hall of fame after it retires |
 
@@ -300,7 +321,7 @@ All random choices (coin flip, random targets) come from the seed through the se
   coffee break. Balancing (T-031) aims for a typical battle of about 12 to 24 turns, and
   `MAX_TURNS` should almost never be reached.
 - Playback has a **2× speed** button. There is no skip, because the battle is a pillar.
-- Every bar, choke, ability and big hype swing gets its own beat on screen (T-022, T-050).
+- Every bar, choke, ability and big hype swing gets its own beat on screen (see [Presentation](#11-presentation)).
 
 ### 5.1 Salary
 
@@ -693,6 +714,7 @@ Every name above with its default. `core/` keeps them in one typed table.
 | Name | Default | Section |
 |---|---|---|
 | `BENCH_SIZE` | 3 | Crew |
+| `CREW_NAME_MAX` | 20 | Crew identity |
 | `STARTING_GOLD` | 25 | Round flow |
 | `BASE_INCOME` | 10 | Round flow |
 | `WIN_BONUS` | 2 | Round flow |
@@ -724,6 +746,128 @@ Every name above with its default. `core/` keeps them in one typed table.
 | `PROMOTE_COUNT` | 1 | League |
 | `SHOP_TIMER_SECONDS` | 120 (off by default) | League |
 
-## 11. Still open
+## 11. Presentation
+
+Settled with the user in T-050 (D-048 to D-052). None of this changes a rule: `render/` draws
+it from core state and battle event logs (D-005). Everything is drawn at runtime from shapes
+and text, with no image or audio files. The numbers in this section are render constants, not
+`core/` tunables, so they aren't in the [Tunables](#10-tunables) table.
+
+### Title
+
+The game is called **Mic Drop League** (D-048). The repo keeps its working name `rap-battle`.
+
+### Look
+
+**Style: 90s block party** (D-049). A daytime street: a brick wall with a painted backdrop,
+blue sky, a boombox, bright primary colours and blocky lettering built from shapes (bold
+sans-serif text with a thick outline and a drop shadow, no font files). The screen is drawn
+at a design resolution of `DESIGN_WIDTH × DESIGN_HEIGHT = 1280 × 720` and scaled to fit the
+browser window, keeping the aspect ratio (desktop only, D-008).
+
+**Characters: chunky paper-cut figures.** A big round head, a rounded-rect body and stubby
+limbs, drawn as flat shapes with a dark outline. Everything else is **rolled from the unit's
+`look` seed** and has no link to its archetype: body shape (tall, round, square), skin tone,
+hair or hat, face (eyes, brows, mouth) and one accessory (shades, cap, bandana, headphones,
+chain…). The **outfit** is tinted in the crew's main and trim colours, and a free agent in
+the market wears neutral grey.
+
+**The archetype shows as a badge.** A small round badge at the unit's feet holds the
+archetype icon, next to a name plate with the stage name. Hovering shows the archetype's name
+and personality (§8).
+
+| Archetype | Icon | Archetype | Icon |
+|---|---|---|---|
+| Lyricist | quill | DJ | vinyl record |
+| Battle Rapper | boxing glove | Hype Man | megaphone |
+| Storyteller | open book | Producer | mixing knob |
+| Freestyler | die | Vocal Coach | music note |
+| Hitmaker | star | Manager | briefcase |
+
+**Careers show on the figure** (pillar 1):
+
+- Each growth step (see [Growth](#growth)) adds one visible piece of **bling**: a chain, then
+  rings, a cap badge and a gold tooth, then bigger chains. At most `BLING_MAX = 4` pieces are
+  drawn; after that the chain just gets thicker.
+- A unit in its **farewell season** (see [Age and retirement](#6-age-and-retirement)) has
+  grey hair and a "Farewell tour" sash.
+- A retired unit gets a **framed portrait** in the hall of fame, with its record.
+
+**Crew colours and logos.** `CREW_COLOURS` has 10 colours: red, orange, yellow, lime, green,
+teal, sky blue, royal blue, purple and pink, plus black and white as trim only. The logos are
+simple shapes: star, crown, lightning bolt, flame, diamond, heart, vinyl, spray can.
+
+### Screens
+
+**Home hub with tabs** (D-050). Out of battle, the home screen shows your crew hanging out on
+the block, your wallet, the payroll due at lock-in and the next opponent. Tabs lead to:
+
+- **Market**: a **scouting table** like a sports manager: one row per unit (figure thumbnail,
+  stage name, archetype badge, flow and confidence or ability power, abilities, age and
+  seasons left, ask, salary), sortable by any column and filterable by role and archetype. A
+  detail panel shows the selected unit big, with its ability text and record, and the bid
+  input. Your open bids are marked in the table. Scouted units appear in their own section
+  above the public list. The bidding round number and who is still shopping are shown at the top.
+- **Lineup**: drag and drop units into the 3 MC slots, the 2 support slots and the bench,
+  and release units.
+- **League**: the division standings, the schedule and the other crews (with their units).
+- **Hall of Fame**: the retired units' portraits and records.
+
+A big **Lock in** button is always visible once the bidding has ended. The title screen and
+the lobby (host or join by room code) come before the hub, and a "while you were away"
+summary (see [AI managers](#ai-managers)) shows there when it applies.
+
+### Battle
+
+**Side view, face-off** (D-050). The stage is seen from the side. Crew A stands on the left
+facing right, crew B on the right facing left, each under a banner with its name and logo.
+The front MCs stand at the mics in the middle, the other MCs queue behind them, and the
+support units stand on a raised stoop behind their crew. The crowd is a row of heads along
+the bottom, and each crew's hype meter sits above its half of the crowd. The crowd bounces
+and waves more on the side with more hype.
+
+```
+  [CREW A  HYPE ######....]        [CREW B  HYPE ###.......]
+      DJ  HM                                  PR  MG
+   MC3  MC2  MC1   >> bars >>   MC1  MC2  MC3
+  ===================== stage =====================
+   o o o o o o o o o o o o o o o o o o o o o o o o   crowd
+```
+
+**Battle text** (pillar 3). Every hit shows a comic-style word ("BARS!", "OOF", "SNAP!",
+"CHOKED!") and the damage number. Chokes, abilities and big hype swings (a change of at
+least `BIG_HYPE_SWING = 3` in one turn) also get a short **one-liner** in a speech bubble,
+filled from templates with stage names and crew names ("Waffle, your flow is stale!"). The
+templates are invented, in the affectionate pun style of the stage names, and never quote
+real lyrics. They are picked with a seed derived from the battle seed, so both peers see the
+same lines. An ability shows its name in a banner over the unit that triggered it.
+
+### Result screen
+
+After the battle a **headline** in tabloid style ("MC WAFFLE ROASTS BIG PRETZEL!"), filled
+from templates with the winner's and loser's names (D-050). Then:
+
+1. the **MVP**: the MC with the most damage dealt in the battle (bars and disses), with
+   ties going to the winning crew and then to the earlier slot;
+2. your xp gained, growth steps and newly learned abilities, and the gold earned;
+3. the other battles of the round, one line each;
+4. the updated standings.
+
+### Sound
+
+**In scope** (Q-010, D-051), built in M7 (T-030). All sound is **procedural WebAudio**, with no
+audio files.
+
+- **The beat**: one looping beat per battle, generated from a seed derived from the battle
+  seed so both peers hear the same one. It **builds with hype**: layers come in as the two
+  crews' total hype rises (kick, then snare, then hi-hats, then bass), and the beat drops out
+  for one bar when an MC chokes.
+- **SFX** for bars, disses, chokes, abilities, crowd cheers and boos, and the shop (bids,
+  signings, lock-in). The market and hub have no music.
+- **Default: on** at `DEFAULT_VOLUME = 0.4`. Mute and a volume slider are always visible, and
+  the setting is saved in the browser. The first sound waits for the first click, as browsers
+  require.
+
+## 12. Still open
 
 - Q-015: what happens when two sittings play the same league at the same time and their saves fork?

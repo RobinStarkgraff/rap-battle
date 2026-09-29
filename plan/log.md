@@ -2,6 +2,15 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-050, design session 7: presentation)
+- Ran design session 7 with the user over four rounds of questions. Added `docs/game-design.md` §11 **Presentation** (title, look, screens, battle, result screen, sound) and a **Crew identity** section in §2, added `look` to the unit state and `CREW_NAME_MAX` to the tunables; "Still open" is now §12.
+- **Title: Mic Drop League** (D-048); CLAUDE.md updated.
+- **Look:** a 90s block party (the user chose it over the recommended neon club) with chunky paper-cut figures. Looks are **fully random** from a new `Unit.look` seed with no link to the archetype, so the archetype shows as an icon badge by the name plate. Bling per growth step, grey hair and a sash in the farewell season, and framed hall-of-fame portraits (D-049).
+- **Screens:** a home hub with Market / Lineup / League / Hall of Fame tabs; a side-view face-off battle; the market is a **sortable scouting table** (the user chose it over cards); comic words plus seeded one-liners; a tabloid headline result screen with an MVP (D-050).
+- **Sound (Q-010 answered):** one seeded procedural beat that builds with hype, plus SFX, on at 40% by default (D-051). **Crew identity:** a typed name, two colours and a logo; bots get *The ⟨adjective⟩ ⟨noun⟩* names (D-052).
+- T-011, T-012, T-016, T-020 to T-023, T-030 and T-034 were reworded; new T-054 (comedy text tables). T-010 moved into Now.
+- **Next:** T-051 (paper playtest).
+
 ## 2026-09-28 (T-049, design session 6: roster and abilities)
 - Ran design session 6 with the user over three rounds of questions. Rewrote `docs/game-design.md` §8 (archetypes, 32 abilities, stage names) and §9 (8 triggers, conditions, values, 5 effects, targets), and updated §2, §3 (upkeep order), §4 (rating), §5 (setup, hype meter), §5.1, §10 and §11.
 - **5 MC archetypes** (Lyricist, Battle Rapper, Storyteller, Freestyler, Hitmaker) with their own stat ranges and **5 support archetypes** (DJ, Hype Man, Producer, Vocal Coach, Manager). Each pool has 3 signature abilities plus one shared ability per role. Stats first, abilities spice (D-043).

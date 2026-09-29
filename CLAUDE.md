@@ -12,10 +12,11 @@ in their friend group's league, a pyramid of divisions whose seasons span many s
 AI managers for bots and absent players (see `plan/decisions.md`, D-007 to D-013, D-029 to D-032 and D-039 to D-042).
 
 - **All code and art is AI-generated.** Art is made from simple shapes drawn procedurally
-  at runtime. There are no image assets unless a decision in `plan/decisions.md` says otherwise.
+  at runtime. There are no image or audio files unless a decision in `plan/decisions.md` says otherwise;
+  sound is procedural WebAudio (D-051).
 - **High code quality is a hard requirement**, not a nice-to-have. Nobody reviews the code
   by hand, so the type checker, linters and tests are the review.
-- The working repo name is `rap-battle`. The game's final title is still open.
+- The working repo name is `rap-battle`. The game is called **Mic Drop League** (D-048).
 
 ## Where things stand → `plan/`
 

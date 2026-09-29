@@ -303,3 +303,40 @@ and are marked "superseded by D-###".
   user wanted the broad pun style, not office in-jokes, and chose one or two parts over adding
   suffixes and over plain adjective + noun names. Taken names are rolled again, then numbered
   (*Biscuit II*). Words that would make a real artist's name with a prefix are left out.
+- **D-048 (2026-09-29): The game is called Mic Drop League (T-050).** The user chose it over
+  *Label Boss*, *Bars & Benches* and over picking the title later. The repo keeps the working
+  name `rap-battle`.
+- **D-049 (2026-09-29): 90s block party look with chunky paper-cut figures whose looks are
+  fully random; the archetype shows as an icon badge; careers show as bling and grey hair
+  (T-050).** The user chose the block party look (daytime street, brick wall, bright primary
+  colours) over a neon club night (the recommendation), cartoon pastels and a retro print look.
+  They chose paper-cut figures over bean blobs, cards and doodles. A unit's appearance is rolled
+  from a new `look` seed on `Unit` and has no link to its archetype (chosen over "archetype
+  prop plus seeded details", the recommendation, and over colour coding by archetype). The
+  outfit takes the crew's colours. So the archetype shows as an icon badge next to the name
+  plate (chosen over a text label and over hover only). Each growth step adds bling, the
+  farewell season adds grey hair and a sash, and retirees get a framed hall-of-fame portrait
+  (chosen over badges only and over a look that never changes). The design resolution is
+  1280 × 720 scaled to fit; the lettering is bold outlined text with no font files.
+- **D-050 (2026-09-29): A home hub with tabs, a side-view battle stage, a scouting-table
+  market, templated battle one-liners and a headline result screen (T-050).** The hub (Market,
+  Lineup, League, Hall of Fame and a Lock in button) was chosen over linear step screens and
+  over one busy screen. The side-view face-off was chosen over a front view and a close-up duel.
+  The market is a sortable sports-manager table with a detail panel (chosen over a card grid,
+  the recommendation, and over a toggle between both). Battle text is comic words and numbers
+  on every hit plus templated one-liners on chokes, abilities and big swings (chosen over
+  words only and over a line for every bar). The result screen has a tabloid headline, an MVP,
+  xp and gold, the other results and the standings (chosen over a plain summary and over
+  going straight to the standings). Text templates are seeded from the battle seed, so both
+  peers see the same lines.
+- **D-051 (2026-09-29): Sound is in scope: one procedural beat that builds with hype, plus
+  SFX, on by default at low volume (T-050, Q-010).** All WebAudio, no files, built in M7
+  (T-030). One seeded beat per battle adds layers as total hype rises and drops out on a
+  choke (chosen over a beat per crew that swaps each turn and over a fixed loop). Beat plus SFX
+  was chosen over SFX only and over cutting sound. Sound starts on at 40% volume with mute
+  always visible (chosen over muted by default and over asking on first start).
+- **D-052 (2026-09-29): A crew has a typed name, two colours and a shape logo; bots get
+  generated ones (T-050).** Chosen over a name plus one colour and over generated identities
+  only. The name is at most `CREW_NAME_MAX = 20` characters and unique in the league. Bot names
+  are *The ⟨adjective⟩ ⟨noun⟩* from lists in `docs/game-design.md` §2. The identity is part of
+  `Crew` and the league state, so `core/` holds it; `render/` only draws it.
