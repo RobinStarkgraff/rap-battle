@@ -202,3 +202,15 @@ function markLockedIn(state: RoundState, shop: ShopCrew, crew: Crew): RoundState
 export function stillShopping(state: RoundState): CrewId[] {
   return state.shops.map((shop) => shop.crew.id).filter((id) => !state.lockedIn.includes(id));
 }
+
+/**
+ * Locks the crew in if it can pay, and forces the lock-in otherwise (§7): for AI-run crews
+ * after their last shop actions. A crew that is already locked in stays as it is.
+ */
+export function lockInOrForce(state: RoundState, crewId: CrewId): RoundState {
+  if (state.lockedIn.includes(crewId)) return state;
+  const locked = lockInCrew(state, crewId);
+  if (locked.ok) return locked.value;
+  const forced = forceLockInCrew(state, crewId);
+  return forced.ok ? forced.value.state : state;
+}

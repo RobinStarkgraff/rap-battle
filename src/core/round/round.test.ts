@@ -7,6 +7,7 @@ import { TUNABLES } from '../tunables';
 import {
   forceLockInCrew,
   lockInCrew,
+  lockInOrForce,
   resolveBids,
   roundBid,
   roundMove,
@@ -167,6 +168,32 @@ describe('shop actions', () => {
     const released = unwrap(roundRelease(moved, a, unit.id));
     expect(released.market.publicList.at(-1)?.id).toBe(unit.id);
     expect(allUnits(unwrap(shopOf(released, a)).crew)).toEqual([]);
+  });
+
+  it('locks in when it can pay, forces the lock-in when not, and leaves locked crews alone', () => {
+    const ended = unwrap(resolveBids(start)).state;
+    const locked = lockInOrForce(ended, a);
+    expect(locked.lockedIn).toEqual([a]);
+    expect(lockInOrForce(locked, a)).toBe(locked);
+    const star = ended.market.publicList.find((unit) => unit.role === 'mc');
+    if (star?.role !== 'mc') throw new Error('no MC in the market');
+    const poor = {
+      ...ended,
+      shops: ended.shops.map((shop) =>
+        shop.crew.id === b
+          ? {
+              ...shop,
+              crew: {
+                ...shop.crew,
+                wallet: 0,
+                mcSlots: [{ ...star, salary: 2 }, null, null] as const,
+              },
+            }
+          : shop,
+      ),
+    };
+    expect(lockInCrew(poor, b)).toEqual({ ok: false, error: 'cannotAffordPayroll' });
+    expect(lockInOrForce(poor, b).lockedIn).toEqual([b]);
   });
 
   it('forces a lock-in, and the crew passes in later bidding rounds', () => {

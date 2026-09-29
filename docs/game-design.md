@@ -368,6 +368,9 @@ All random choices (coin flip, random targets) come from the seed through the se
   `MAX_TURNS` should almost never be reached. (The T-051 playtest saw 3 to 8 turns with the
   current stats.)
 - Playback has a **2× speed** button. There is no skip, because the battle is a pillar.
+- Each beat has a fixed screen time (a render constant). A battle whose beats add up to more
+  than 60 s plays faster to fit; a shorter one plays slower, by at most `MAX_STRETCH = 1.4`, so
+  setup knockouts stay short (T-022, D-074).
 - Every bar, choke, ability and big hype swing gets its own beat on screen (see [Presentation](#11-presentation)).
 
 ### 5.1 Salary
@@ -906,6 +909,11 @@ the block, your wallet, the payroll due at lock-in and the next opponent. Tabs l
 - **League**: the division standings, the schedule and the other crews (with their units).
 - **Hall of Fame**: the retired units' portraits and records.
 
+The home screen is the hub's first tab, **Home**; the header above the tabs always shows the
+crew's name and logo, wallet, payroll, season and round, and the next opponent as it stood at
+the start of the round (its shop moves stay sealed until lock-in). A local league (M5) is one
+player plus 3, 5, 7 or 11 bots, picked when founding the crew (T-023, D-075).
+
 A big **Lock in** button is always visible once the bidding has ended. The title screen and
 the lobby (host or join by room code) come before the hub, and a "while you were away"
 summary (see [AI managers](#ai-managers)) shows there when it applies.
@@ -933,7 +941,10 @@ least `BIG_HYPE_SWING = 3` in one turn) also get a short **one-liner** in a spee
 filled from templates with stage names and crew names ("Waffle, your flow is stale!"). The
 templates are invented, in the affectionate pun style of the stage names, and never quote
 real lyrics. They are picked with a seed derived from the battle seed, so both peers see the
-same lines. An ability shows its name in a banner over the unit that triggered it.
+same lines. An ability shows its name in a banner over the unit that triggered it. The rival
+front MC says the choke line (or the choking MC its last words, if its crew has no one on stage
+to taunt it), the unit whose ability resolves says the ability line, and the crowd shouts the
+hype swing line. The tables are in `src/render/text/` (T-054, D-073).
 
 ### Result screen
 

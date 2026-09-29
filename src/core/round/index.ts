@@ -3,6 +3,7 @@
 export {
   forceLockInCrew,
   lockInCrew,
+  lockInOrForce,
   resolveBids,
   roundBid,
   roundMove,

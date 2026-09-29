@@ -5,3 +5,5 @@ export { battleEnd, simulateBattle } from './simulate';
 export type { BattleEnd } from './simulate';
 export { BATTLE_STYLE_IDS } from './style';
 export type { BattleStyle, BattleStyleId } from './style';
+export { battleMvp, damageTable } from './mvp';
+export type { DamageDealt } from './mvp';

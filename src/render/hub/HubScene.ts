@@ -1,0 +1,228 @@
+/**
+ * The home hub (§11 Screens, D-050): the crew's header with wallet, payroll, season and next
+ * opponent, the tabs, and the Lock in button once the bidding has ended.
+ */
+
+import Phaser from 'phaser';
+import { addBackdrop } from '../art/bake';
+import { letteringStyle } from '../art/lettering';
+import { drawLogo } from '../art/logos';
+import { circle, roundedRect } from '../art/pen';
+import { DESIGN_HEIGHT, DESIGN_WIDTH } from '../config';
+import { CREW_COLOUR_HEX, INK, UI } from '../palette';
+import { problemText } from '../text';
+import { addButton } from '../ui/button';
+import { addBody, fitWidth } from '../ui/panel';
+import { renderHallTab } from './hallTab';
+import { renderHomeTab } from './homeTab';
+import { createLeagueUi, renderLeagueTab, type LeagueUi } from './leagueTab';
+import { createLineupUi, renderLineupTab, type LineupUi } from './lineupTab';
+import { createMarketUi, renderMarketTab, type MarketUi } from './marketTab';
+import type { TabContext } from './tab';
+import { HUB_TABS, type HubController, type HubTab } from './types';
+import { biddingView, nextOpponent, playerShop, seasonView, walletView } from './view';
+
+export interface HubSceneData {
+  readonly controller: HubController;
+}
+
+const TAB_LABELS: Readonly<Record<HubTab, string>> = {
+  home: 'HOME',
+  market: 'MARKET',
+  lineup: 'LINEUP',
+  league: 'LEAGUE',
+  hall: 'HALL OF FAME',
+};
+
+const TONES = { good: UI.textGood, bad: UI.textBad, info: UI.text } as const;
+
+export class HubScene extends Phaser.Scene {
+  static readonly KEY = 'hub';
+
+  private controller!: HubController;
+  private tab: HubTab = 'home';
+  private layer: Phaser.GameObjects.Container | null = null;
+  private notice!: Phaser.GameObjects.Text;
+  private leagueUi: LeagueUi = createLeagueUi();
+  private market: MarketUi = createMarketUi();
+  private lineup: LineupUi = createLineupUi();
+  private unsubscribe: (() => void) | null = null;
+
+  constructor() {
+    super(HubScene.KEY);
+  }
+
+  create(data: HubSceneData): void {
+    this.controller = data.controller;
+    this.tab = 'home';
+    this.leagueUi = createLeagueUi();
+    this.market = createMarketUi();
+    this.lineup = createLineupUi();
+    addBackdrop(this, { width: DESIGN_WIDTH, height: DESIGN_HEIGHT, groundY: 520, seed: 3 });
+    const shade = this.add.graphics();
+    shade.fillStyle(0x000000, 0.35);
+    shade.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
+    this.notice = addBody(this, DESIGN_WIDTH / 2, 136, '', 16)
+      .setOrigin(0.5)
+      .setDepth(900);
+    this.unsubscribe = this.controller.subscribe(() => {
+      if (this.controller.isOpen()) this.redraw();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.unsubscribe?.();
+      this.unsubscribe = null;
+      this.layer = null;
+    });
+    this.redraw();
+  }
+
+  private redraw(): void {
+    this.layer?.destroy();
+    const layer = this.add.container(0, 0);
+    this.layer = layer;
+    this.drawHeader(layer);
+    this.drawTabs(layer);
+    const context: TabContext = {
+      scene: this,
+      layer,
+      state: this.controller.state(),
+      controller: this.controller,
+      say: (message, tone = 'info') => {
+        this.notice.setText(message).setColor(TONES[tone]);
+      },
+      refresh: () => {
+        this.redraw();
+      },
+      open: (tab) => {
+        this.tab = tab;
+        this.notice.setText('');
+        this.redraw();
+      },
+    };
+    switch (this.tab) {
+      case 'home':
+        renderHomeTab(context);
+        break;
+      case 'market':
+        renderMarketTab(context, this.market);
+        break;
+      case 'lineup':
+        renderLineupTab(context, this.lineup);
+        break;
+      case 'league':
+        renderLeagueTab(context, this.leagueUi);
+        break;
+      case 'hall':
+        renderHallTab(context);
+        break;
+    }
+  }
+
+  private drawHeader(layer: Phaser.GameObjects.Container): void {
+    const state = this.controller.state();
+    const crew = playerShop(state).crew;
+    const main = CREW_COLOUR_HEX[crew.identity.mainColour];
+    const trim = CREW_COLOUR_HEX[crew.identity.trimColour];
+    const pen = this.add.graphics();
+    roundedRect(pen, 12, 10, 380, 76, 14, main, INK);
+    circle(pen, 52, 48, 28, INK);
+    drawLogo(pen, crew.identity.logo, 52, 48, 22, main, trim);
+    roundedRect(pen, 404, 10, 610, 76, 14, UI.panel, INK);
+    layer.add(pen);
+    layer.add(
+      fitWidth(
+        this.add
+          .text(92, 48, crew.identity.name.toUpperCase(), letteringStyle(26, { align: 'left' }))
+          .setOrigin(0, 0.5),
+        290,
+      ),
+    );
+    const wallet = walletView(state);
+    const season = seasonView(state);
+    const opponent = nextOpponent(state);
+    const cells: readonly [string, string][] = [
+      ['WALLET', `${String(wallet.wallet)} g`],
+      ['PAYROLL', `${String(wallet.payroll)} g`],
+      ['SEASON', `${String(season.season)} · R${String(season.round)}/${String(season.rounds)}`],
+      ['NEXT UP', opponent === null ? '—' : opponent.identity.name],
+    ];
+    const widths = [110, 110, 140, 230];
+    let x = 420;
+    cells.forEach(([label, value], index) => {
+      layer.add(addBody(this, x, 20, label, 12, UI.textMuted).setFontStyle('bold'));
+      layer.add(
+        fitWidth(
+          this.add.text(x, 38, value, letteringStyle(20, { align: 'left' })),
+          (widths[index] ?? 100) - 12,
+        ),
+      );
+      x += widths[index] ?? 100;
+    });
+    const bidding = biddingView(state);
+    const lock = addButton(
+      this,
+      1140,
+      48,
+      bidding.kind === 'open'
+        ? `BIDDING ${String(bidding.round)}/${String(bidding.of)}`
+        : 'LOCK IN',
+      () => {
+        const refusal = this.controller.lockIn();
+        if (refusal !== null) this.notice.setText(problemText(refusal)).setColor(UI.textBad);
+      },
+      {
+        width: 220,
+        height: 66,
+        fontSize: 26,
+        fill: UI.accent,
+        hoverFill: 0xff5d6a,
+        target: 'hub-lock-in',
+      },
+    );
+    lock.setEnabled(bidding.kind === 'ended');
+    layer.add(lock.container);
+    const quit = addButton(
+      this,
+      1262,
+      106,
+      '✕',
+      () => {
+        this.controller.quitToTitle();
+      },
+      {
+        width: 30,
+        height: 30,
+        fontSize: 16,
+        fill: UI.panelEdge,
+        target: 'hub-quit',
+      },
+    );
+    layer.add(quit.container);
+  }
+
+  private drawTabs(layer: Phaser.GameObjects.Container): void {
+    HUB_TABS.forEach((tab, index) => {
+      const chosen = this.tab === tab;
+      const button = addButton(
+        this,
+        100 + index * 170,
+        110,
+        TAB_LABELS[tab],
+        () => {
+          this.tab = tab;
+          this.notice.setText('');
+          this.redraw();
+        },
+        {
+          width: 160,
+          height: 34,
+          fontSize: 16,
+          fill: chosen ? UI.button : UI.panelEdge,
+          textColour: chosen ? UI.text : UI.text,
+          target: `tab-${tab}`,
+        },
+      );
+      layer.add(button.container);
+    });
+  }
+}

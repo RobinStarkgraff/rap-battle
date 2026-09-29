@@ -533,3 +533,77 @@ and are marked "superseded by D-###".
   - It is one `CrewManager` constant, so bots and absent players share it. Its tuning numbers
     (`UPGRADE_MARGIN`, `OVERBID_CHANCE`, `VALUE_JITTER`, `MAX_SCOUTS`, `SLOT_ABILITY_BONUS`) sit
     in `core/ai/` rather than `TUNABLES`, because they are the AI's taste, not game rules.
+- **D-072 (2026-09-29): The art draws into a `Pen`, and looks are rolled with the core RNG
+  (T-020).** Every art function in `render/art/` takes a `Pen`, a small structural subset of
+  Phaser's `Graphics`, so unit tests draw with a recording pen in Node and check bounds, colours
+  and determinism without a canvas; only `unitFigure.ts` and the scenes touch Phaser at runtime.
+  `rollLook(look)` uses `createRng` from `core/` with a fixed roll order (body, skin, hair, hair
+  colour, eyes, brows, mouth, accessory, outfit) and a pinned test, because saved units must keep
+  their looks. Hats are hair styles (a hat hides the hair), and a figure faces right; crew B is
+  mirrored. Bling follows `docs/game-design.md` §11 (`BLING_MAX = 4` pieces, then a thicker
+  chain, up to 4). Crew colour hex values live in `render/palette.ts` (D-062). A development-only
+  art gallery opens with `?gallery`. Chosen over drawing straight into Phaser objects (untestable
+  in Node) and over pre-rendered textures (no image files).
+- **D-073 (2026-09-29): Who says which battle line, and how headlines are chosen (T-054).** The
+  rival front MC says a choke taunt (the choking MC says its last words if its crew has nobody on
+  stage), the unit whose ability resolves says a line picked by the ability's effect kind, and
+  the crowd shouts after a big hype swing (a rise or a drop). Headlines have five kinds picked
+  from the end reason and margin (forfeit, decision, blowout at margin 3, close at margin 1,
+  standard), are filled with the MVP, the losing crew's top MC and both crews, and fall back to
+  crew-only lines when no MC dealt damage. Lines are drawn from streams derived from the battle
+  seed (`battle-text`, `headline`), in event order, so every peer sees the same ones. Templates
+  use `{slot}` names that a test checks against the values each table gets, so a line can never
+  show a raw slot on screen.
+- **D-074 (2026-09-29): Battle playback is a pure script of beats; static art is baked into
+  textures (T-022).** `buildPlayback()` turns the event log into beats, each with its screen
+  time, its words and lines and a snapshot of the stage after it, so the Phaser scene only
+  animates and the script is unit-tested (one beat per shown event, snapshots within the rules,
+  big swings, 30 to 60 s). A crew's opening front MCs already stand at the mic, so their first
+  `front` event has no beat; `hype` events get a short beat of their own. Every beat has a fixed
+  screen time; a battle is then sped up to fit 60 s or slowed down to reach 30 s, by at most
+  1.4× (typical random battles: median about 45 s). Phaser redraws a `Graphics` object's shapes on every frame,
+  which made the backdrop and a dozen figures crawl in software WebGL (about 7 fps headless), so
+  backdrops, figures and crowd heads are drawn once into textures (`art/bake.ts`, at 2× for
+  figures) and shown as images. Named buttons are registered in `ui/targets.ts` so browser tests
+  can find them (for T-024). A development page at `?battle=<seed>` plays demo battles back to back.
+- **D-075 (2026-09-29): How the local league and the game flow work (T-023).**
+  - A local league is one player (named "You") plus 3, 5, 7 or 11 bots, picked when founding
+    (default 5, so one division of 6). The seed comes from `Math.random` in `app/`.
+  - The bots bid as soon as a bidding round opens (so their releases already show in the
+    market), the player's bids reveal the round, and the bots set their lineups and lock in when
+    the player does. Replaying a round after a reload gives the same bot moves.
+  - The league is saved as soon as the round's battles are played, before the playback, so
+    closing the tab during a battle can't lose or change the round; founding saves the new
+    league at once, replacing the old save (the title screen says so).
+  - The flow (`app/flow.ts`) is a plain state machine without Phaser, tested in Node; the
+    director starts one Phaser scene per screen, and the hub scene subscribes to the hub's
+    controller for changes within a round. The hub interface (`HubController`) is declared in
+    `render/`, so `render/` never imports `app/`.
+  - The hub's first tab is **Home** (the crew on the block and the round report); the header
+    shows the next opponent as it stood at the round start, so shop moves stay sealed (D-004).
+  - The MVP rule of §11 is `battleMvp()` in `core/battle/` (pure, from the event log); the
+    headline's second MC is the losing crew's top damage dealer. Headlines never put a verb after
+    a crew name, because crew names may be singular or plural.
+  - `window.micDropTargets()` lists the named buttons on screen for browser tests. A container is
+    clicked at its origin, because Phaser's `Container.getBounds` ignores `Graphics` children.
+- **D-076 (2026-09-29): How the market and lineup tabs work (T-021).** The market collects a
+  **draft** of bids that is checked with the core `bidsProblem` as each bid is added, so an
+  impossible bid is refused with its reason before the player submits; **Submit bids** (or
+  **Pass** with no draft) places them as the crew's sealed bids for the round. The table sorts
+  by ask with the priciest first by default, shows 13 lines per page with the scouted units
+  (signed at the ask with no bidding) above the public list, and filters by role and then
+  archetype. Free agents wear the neutral grey outfit. In the lineup, units can be dragged, or
+  picked with a click and put down with a click on a place (for mice that don't drag well and
+  for browser tests); a drop onto an occupied place swaps if both roles fit (core `moveUnit`);
+  any empty bench box appends to the bench, which has no gaps. Releasing needs a second click
+  ("YES, RELEASE …"), because it has no refund. Each tab keeps its view state (sort, page,
+  selection, draft) in the hub scene, so it survives redraws within a round.
+- **D-077 (2026-09-29): Browser tests click named targets, with a fixed league seed (T-024).**
+  The game is one canvas, so `e2e/` finds buttons through `window.micDropTargets()` (the named
+  objects on screen, their centres and whether they are enabled) and clicks them at their
+  position scaled to the canvas, waiting on targets rather than on fixed times, because the
+  container's headless Chromium renders at 15 to 20 fps. A disabled button also switches its
+  input off, so a test sees it as disabled. `?seed=<n>` fixes a new league's seed, so the round
+  test plays the same league every run (it bids 2 over the ask, because the bots bid the ask or
+  one more). The round test takes about a minute; it has a 4 minute limit. The `e2e/` tsconfig
+  now includes the DOM lib for `page.evaluate` code, and failures keep a screenshot.

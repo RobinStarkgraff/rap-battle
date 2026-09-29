@@ -1,11 +1,6 @@
-/** Fixed landscape layout for desktop browsers (D-008). */
-export const GAME_WIDTH = 1280;
-export const GAME_HEIGHT = 720;
+/** The design resolution (§11 Look): drawn at 1280 × 720 and scaled to fit the window (D-008). */
+export const DESIGN_WIDTH = 1280;
+export const DESIGN_HEIGHT = 720;
 
-export const COLORS = {
-  background: 0x111018,
-  stage: 0x2a2140,
-  spotlight: 0xffd23f,
-  mic: 0xe8e8f0,
-  text: '#f5f0ff',
-} as const;
+/** The page background behind the scaled canvas. */
+export const PAGE_BACKGROUND = 0x111018;

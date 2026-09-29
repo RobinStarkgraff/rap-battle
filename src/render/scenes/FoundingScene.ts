@@ -1,0 +1,306 @@
+import Phaser from 'phaser';
+import {
+  COLOUR_NAMES,
+  LOGO_IDS,
+  LOGO_NAMES,
+  MAIN_COLOUR_IDS,
+  TRIM_ONLY_COLOUR_IDS,
+  TUNABLES,
+  type CrewIdentity,
+  type LogoId,
+  type MainColourId,
+  type TrimColourId,
+  type Unit,
+} from '../../core';
+import { addBackdrop } from '../art/bake';
+import { letteringStyle } from '../art/lettering';
+import { drawLogo } from '../art/logos';
+import { circle } from '../art/pen';
+import { addUnitFigure } from '../art/unitFigure';
+import { DESIGN_HEIGHT, DESIGN_WIDTH } from '../config';
+import { crewOutfit, CREW_COLOUR_HEX, INK, UI } from '../palette';
+import { problemText } from '../text';
+import { addButton } from '../ui/button';
+import { addBody, addHeading, addPanel } from '../ui/panel';
+import { registerTarget } from '../ui/targets';
+import { addTextInput } from '../ui/textInput';
+
+export interface FoundingSceneData {
+  /** How many bots a new league can have; the first is the default. */
+  readonly botChoices: readonly number[];
+  readonly defaultBots: number;
+  /** Founds the crew; returns a reason code if the name is refused. */
+  readonly onFound: (identity: CrewIdentity, bots: number) => string | null;
+  readonly onBack: () => void;
+}
+
+/** A preview model for the crew's colours: always the same two figures. */
+const PREVIEW_UNITS: readonly Unit[] = [11, 42].map((look, index) => ({
+  id: `preview${String(index)}`,
+  role: 'mc',
+  archetype: 'lyricist',
+  flow: 3,
+  confidence: 3,
+  abilities: [{ id: 'clapback', power: 1 }],
+  xp: index * 6,
+  age: 19,
+  salary: 2,
+  look: 90210 + look,
+  stageName: index === 0 ? 'Your MC' : 'Your other MC',
+  record: { battles: 0, barsLanded: 0, chokes: 0, wins: 0, crews: [] },
+}));
+
+/** Crew founding (§2 Crew identity, D-052): a name, two colours, a logo and the league size. */
+export class FoundingScene extends Phaser.Scene {
+  static readonly KEY = 'founding';
+
+  private identity: {
+    name: string;
+    mainColour: MainColourId;
+    trimColour: TrimColourId;
+    logo: LogoId;
+  } = {
+    name: '',
+    mainColour: 'teal',
+    trimColour: 'white',
+    logo: 'star',
+  };
+  private bots = 5;
+  private dynamic: Phaser.GameObjects.Container | null = null;
+  private problem: Phaser.GameObjects.Text | null = null;
+  private data_!: FoundingSceneData;
+
+  constructor() {
+    super(FoundingScene.KEY);
+  }
+
+  create(data: FoundingSceneData): void {
+    this.data_ = data;
+    this.identity = { name: '', mainColour: 'teal', trimColour: 'white', logo: 'star' };
+    this.bots = data.defaultBots;
+    addBackdrop(this, { width: DESIGN_WIDTH, height: DESIGN_HEIGHT, groundY: 560, seed: 52 });
+    addPanel(this, 40, 30, 800, 660);
+    this.add.text(
+      70,
+      50,
+      'FOUND YOUR CREW',
+      letteringStyle(40, { colour: UI.textGold, align: 'left' }),
+    );
+    addHeading(this, 70, 120, 'CREW NAME');
+    addTextInput(
+      this,
+      70,
+      152,
+      520,
+      TUNABLES.CREW_NAME_MAX,
+      (value) => {
+        this.identity.name = value;
+        this.problem?.setText('');
+        this.redraw();
+      },
+      'founding-name',
+    );
+    addBody(
+      this,
+      600,
+      166,
+      `up to ${String(TUNABLES.CREW_NAME_MAX)} letters — just type`,
+      14,
+      UI.textMuted,
+    );
+    addHeading(this, 70, 222, 'MAIN COLOUR');
+    addHeading(this, 70, 312, 'TRIM');
+    addHeading(this, 70, 402, 'LOGO');
+    addHeading(this, 70, 492, 'LEAGUE SIZE');
+    this.problem = addBody(this, 70, 600, '', 18, UI.textBad);
+    addButton(
+      this,
+      700,
+      640,
+      'FOUND CREW',
+      () => {
+        this.found();
+      },
+      {
+        width: 220,
+        height: 60,
+        target: 'founding-found',
+      },
+    );
+    addButton(
+      this,
+      160,
+      640,
+      'BACK',
+      () => {
+        data.onBack();
+      },
+      {
+        width: 140,
+        height: 48,
+        fill: UI.panelEdge,
+        target: 'founding-back',
+      },
+    );
+    this.redraw();
+  }
+
+  private found(): void {
+    const problem = this.data_.onFound(this.identity, this.bots);
+    if (problem !== null) this.problem?.setText(problemText(problem));
+  }
+
+  /** Redraws the pickers and the preview after every choice. */
+  private redraw(): void {
+    this.dynamic?.destroy();
+    const layer = this.add.container(0, 0);
+    this.dynamic = layer;
+    MAIN_COLOUR_IDS.forEach((colour, index) => {
+      layer.add(
+        this.swatch(
+          90 + index * 62,
+          276,
+          'main',
+          colour,
+          this.identity.mainColour === colour,
+          () => {
+            this.identity.mainColour = colour;
+            if (this.identity.trimColour === colour)
+              this.identity.trimColour = colour === 'yellow' ? 'black' : 'white';
+          },
+        ),
+      );
+    });
+    const trims: TrimColourId[] = [...MAIN_COLOUR_IDS, ...TRIM_ONLY_COLOUR_IDS].filter(
+      (colour) => colour !== this.identity.mainColour,
+    );
+    trims.forEach((colour, index) => {
+      layer.add(
+        this.swatch(
+          90 + index * 62,
+          366,
+          'trim',
+          colour,
+          this.identity.trimColour === colour,
+          () => {
+            this.identity.trimColour = colour;
+          },
+        ),
+      );
+    });
+    LOGO_IDS.forEach((logo, index) => {
+      layer.add(this.logoChoice(100 + index * 78, 456, logo));
+    });
+    [3, 5, 7, 11]
+      .filter((bots) => this.data_.botChoices.includes(bots))
+      .forEach((bots, index) => {
+        const chosen = this.bots === bots;
+        const button = addButton(
+          this,
+          140 + index * 170,
+          546,
+          `${String(bots + 1)} CREWS`,
+          () => {
+            this.bots = bots;
+            this.redraw();
+          },
+          {
+            width: 150,
+            height: 42,
+            fontSize: 18,
+            fill: chosen ? UI.button : UI.panelEdge,
+            target: `founding-size-${String(bots + 1)}`,
+          },
+        );
+        layer.add(button.container);
+      });
+    layer.add(
+      addBody(
+        this,
+        70,
+        572,
+        `You and ${String(this.bots)} bot crews. Bigger leagues play in divisions.`,
+        14,
+        UI.textMuted,
+      ),
+    );
+    this.drawPreview(layer);
+  }
+
+  private swatch(
+    x: number,
+    y: number,
+    kind: 'main' | 'trim',
+    colour: TrimColourId,
+    chosen: boolean,
+    pick: () => void,
+  ): Phaser.GameObjects.Container {
+    const container = this.add.container(x, y);
+    const pen = this.add.graphics();
+    circle(pen, 0, 0, chosen ? 24 : 20, CREW_COLOUR_HEX[colour], INK);
+    if (chosen) {
+      pen.lineStyle(4, 0xffffff, 1);
+      pen.strokeCircle(0, 0, 29);
+    }
+    container.add(pen);
+    container.setSize(56, 56).setInteractive({ useHandCursor: true });
+    container.on(Phaser.Input.Events.POINTER_UP, () => {
+      pick();
+      this.redraw();
+    });
+    registerTarget(`colour-${kind}-${colour}`, container);
+    container.setData('label', COLOUR_NAMES[colour]);
+    return container;
+  }
+
+  private logoChoice(x: number, y: number, logo: LogoId): Phaser.GameObjects.Container {
+    const chosen = this.identity.logo === logo;
+    const container = this.add.container(x, y);
+    const pen = this.add.graphics();
+    circle(pen, 0, 0, 30, chosen ? UI.panelEdge : UI.panelLight, chosen ? 0xffffff : INK);
+    drawLogo(
+      pen,
+      logo,
+      0,
+      0,
+      22,
+      CREW_COLOUR_HEX[this.identity.mainColour],
+      CREW_COLOUR_HEX[this.identity.trimColour],
+    );
+    container.add(pen);
+    container.setSize(64, 64).setInteractive({ useHandCursor: true });
+    container.on(Phaser.Input.Events.POINTER_UP, () => {
+      this.identity.logo = logo;
+      this.redraw();
+    });
+    registerTarget(`logo-${logo}`, container);
+    container.setData('label', LOGO_NAMES[logo]);
+    return container;
+  }
+
+  private drawPreview(layer: Phaser.GameObjects.Container): void {
+    const x = 1060;
+    const main = CREW_COLOUR_HEX[this.identity.mainColour];
+    const trim = CREW_COLOUR_HEX[this.identity.trimColour];
+    const banner = this.add.graphics();
+    banner.fillStyle(main, 1);
+    banner.fillRoundedRect(x - 190, 60, 380, 90, 14);
+    banner.lineStyle(3, INK, 1);
+    banner.strokeRoundedRect(x - 190, 60, 380, 90, 14);
+    circle(banner, x - 140, 105, 34, INK);
+    drawLogo(banner, this.identity.logo, x - 140, 105, 28, main, trim);
+    layer.add(banner);
+    const name = this.identity.name.trim() === '' ? 'YOUR CREW' : this.identity.name.toUpperCase();
+    const title = this.add
+      .text(x - 96, 105, name, letteringStyle(26, { align: 'left' }))
+      .setOrigin(0, 0.5);
+    if (title.width > 270) title.setScale(270 / title.width);
+    layer.add(title);
+    const outfit = crewOutfit(this.identity);
+    PREVIEW_UNITS.forEach((unit, index) => {
+      layer.add(
+        addUnitFigure(this, x - 70 + index * 140, 520, unit, outfit, { scale: 1.5 }).container,
+      );
+    });
+  }
+}

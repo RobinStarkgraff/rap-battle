@@ -14,8 +14,8 @@ export { gainXp } from './growth';
 export type { GrowthEvent, Grown } from './growth';
 export type { TunableName } from './tunables';
 
-/** Game title shown until the final name is decided. */
-export const GAME_TITLE = 'rap-battle';
+/** The game's name (D-048). The repo keeps its working name `rap-battle`. */
+export const GAME_TITLE = 'Mic Drop League';
 export * from './battle';
 export * from './market';
 export { nameSet, uniqueName } from './names';

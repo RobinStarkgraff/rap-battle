@@ -101,5 +101,9 @@ Each target calls the matching npm script in `package.json`.
 - The firewall also blocks Playwright's browser download. Chromium is baked into the
   container image instead (D-018), so after changing the `@playwright/test` version the
   container has to be rebuilt (`make dev-rebuild` on the host).
+- Development pages: `http://localhost:5173/?gallery` shows the art and `?battle=<seed>` plays
+  demo battles (`src/app/dev.ts`). Headless Chromium in the container renders at only about
+  15 to 20 fps (software WebGL), so browser tests wait on named targets
+  (`window.micDropTargets()`, `src/render/ui/targets.ts`) rather than on fixed times.
 - The workspace is bind-mounted from a macOS host and `node_modules` is a container-only
   volume (D-015). `make` may warn about clock skew; that is harmless.

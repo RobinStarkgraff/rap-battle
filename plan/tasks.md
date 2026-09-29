@@ -1,38 +1,40 @@
 # Tasks
 
 States: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped.
-Next free ID: **T-056**
+Next free ID: **T-058**
 
 ## Now
-
-- [ ] T-020 (M5) Procedural shape art: a paper-cut figure generator drawn from the unit's `look` seed with the outfit in crew colours, the archetype icon badge and name plate, bling per growth step, farewell grey hair and sash; crew logos; the block party backdrop (`docs/game-design.md` §11, D-049)
-- [ ] T-021 (M5) Phaser Market and Lineup tabs: the sortable scouting table with a detail panel and bid input, bidding rounds and results, scouting, and drag and drop into the MC/support slots and the bench (D-050)
-- [ ] T-022 (M5) Phaser battle scene that plays back `BattleEvent[]` with tweens: the side-view face-off, turn-by-turn bars with comic words and damage numbers, ability banners, seeded one-liners, both hype meters with a reacting crowd, 2× speed, 30–60 s per battle (D-033, D-034, D-050)
-
-## Next
-
-- [ ] T-023 (M5) Game-flow state machine in `app/`: title screen, crew founding (name, colours, logo), a new local league with bots, the home hub with its League and Hall of Fame tabs and Lock in button, and the headline result screen with MVP (D-050, D-052). Also set `GAME_TITLE` in `core/index.ts` (still `rap-battle`) to *Mic Drop League* (D-048)
-- [ ] T-054 (M5) Comedy text tables in `render/`: comic hit words, one-liner templates for chokes, abilities and big hype swings, and tabloid result headlines, picked with a seed derived from the battle seed (invented lines only, `docs/game-design.md` §11)
-- [ ] T-024 (M5) Playwright test that clicks through one full round of a local league with bots
-
-## Later
 
 - [ ] T-025 (M6) PeerJS wrapper with host/join by room code, and a lobby UI
 - [ ] T-026 (M6) zod message schemas and a protocol version handshake
 - [ ] T-036 (M6) League host: any member hosts N guests (star topology), adopts the newest league state, runs AI managers for bots and absent players, collects and resolves the bidding rounds (D-040), starts battles once all have locked in, broadcasts the league state after each round (D-031), and shows returning players a "while you were away" summary (D-030)
+
+## Next
+
 - [ ] T-027 (M6) Battle seed agreement after lock-in (commit–reveal from both peers so neither can pick it; the host stands in for AI-run crews) and simultaneous lock-in
 - [ ] T-028 (M6) Result-hash check that detects desyncs, plus disconnect handling: host drop voids the round and anyone re-hosts, player drop locks the current lineup (D-031)
 - [ ] T-053 (M6) Lobby shows who is still shopping; nudge message; optional host shop timer (`SHOP_TIMER_SECONDS`) per bidding round and for the lineup, which passes open bids and locks the current lineup, releasing the cheapest units if the payroll is unaffordable (D-032, D-040)
 - [ ] T-029 (M6) Playwright multi-tab league test (3+ tabs, PeerJS server running locally for CI)
+
+## Later
+
 - [ ] T-037 (M7) Add a second battle style through the `BattleStyle` interface (e.g. verse rounds scored by the crowd)
 - [ ] T-030 (M7) Effects, screen shake and procedural WebAudio sound: one seeded beat per battle that builds with hype and drops on chokes, SFX for battle and shop, on at 40% with mute and volume saved in the browser (D-051)
 - [ ] T-031 (M7) Balance pass using headless AI-manager statistics: battles of 6 to 12 turns (D-054), setup knockouts, Drop the Beat stacking, Studio Session speed, the power 1 / 2 / 3 values of Studio Session, Voice Lessons and Negotiator, and salary and retirement pacing. The T-019 headless run fills about 4.9 of 5 active slots in season 1 but only about 3 from season 3: renegotiated salaries of grown units (4 to 5 each) plus an ask no longer fit under `WALLET_CAP = 20`, and only 3 rookies a round enter for 12 crews
+- [ ] T-056 (M7) Onboarding hints for a first league: what to do in the market's first bidding round, what the payroll means, and where to lock in (the M7 exit criteria name a tutorial or onboarding hint)
+- [ ] T-057 (M7) Hall of Fame paging (it shows 10 portraits and counts the rest) and unit figures in the league tab's crew panel
 - [ ] T-032 (M8) Deploy a static build; test P2P across two real networks; decide whether a TURN server is needed
 - [ ] T-033 (M8) Write the jam submission page and a known-issues list
 - [ ] T-041 (M8) Decide with the user whether to commit `.devcontainer/project/` (the Chromium build step, D-018, and the `node_modules` volume, D-015) so other machines get them; today all of `.devcontainer/` is gitignored
 
 ## Done
 
+- [x] T-024 (M5) Playwright test `e2e/round.spec.ts` that clicks through one full round of a local league with bots by named targets (`e2e/targets.ts`): founding with colours, logo and size, the hub tabs, bids and passes, the lineup, lock-in, the battle at 2×, the result and the save, the next round, and continuing after a reload; `?seed=` fixes the league seed (D-077) (2026-09-29)
+- [x] T-021 (M5) Market and Lineup tabs: the scouting table (`hub/marketTab.ts`, `hub/marketView.ts`: scouted units above the public list, role and archetype filters, sort by any column, pages, figure thumbnails and badges, a detail panel with ability values and the record, a bid input with draft bids checked by `bidsProblem`, submit or pass, scouting and signing scouted units) and the lineup (`hub/lineupTab.ts`: drag and drop or click-then-place between the MC slots, support slots and bench, a release bin and a confirmed release, the payroll due) (D-076) (2026-09-29)
+- [x] T-023 (M5) Game flow: `app/flow.ts` (title → founding → hub → battle → result → hub, save after every completed round, continue a saved league, damaged or blocked saves explained), `app/localLeague.ts` (one player plus 3/5/7/11 bots; the AI manager bids when a bidding round opens and sets its lineup at the player’s lock-in), `app/director.ts` (one Phaser scene per screen); render: `TitleScene`, `FoundingScene` (typed name, colours, logo, league size, preview), `HubScene` with header, Lock in and the Home, League and Hall of Fame tabs, `ResultScene` (tabloid headline, MVP, growth, win bonus, other battles, standings, season summary); core `battleMvp`/`damageTable` and `lockInOrForce`; `GAME_TITLE` is *Mic Drop League* (D-075) (2026-09-29)
+- [x] T-022 (M5) Battle playback: `buildPlayback()` in `src/render/battle/playback.ts` turns the event log into timed beats with stage snapshots, comic words, one-liners and hype swing lines, fitted to 30–60 s; `BattleScene` plays them as the side-view face-off with banners and logos, MC stats, ability banners, speech bubbles, both hype meters, a bouncing crowd, a choke tumble, move-ups, 2× speed and the winner panel; static art is baked into textures; a dev page at `?battle` (D-074) (2026-09-29)
+- [x] T-054 (M5) Comedy text tables in `src/render/text/`: hit words by damage, choke and buff words, choke taunts and last words, ability lines per effect, hype swing and drop lines, tabloid headlines by end reason and margin, `fillTemplate`/`pickLine` and `battleTextRng`/`headline()` seeded from the battle seed (D-073) (2026-09-29)
+- [x] T-020 (M5) Procedural shape art in `src/render/art/`: `rollLook()` (a pinned look from the `look` seed), `drawFigure()` (paper-cut figure in crew colours, bling per growth step, farewell grey hair and sash), archetype icons and badges, the 8 crew logos, the block party backdrop and outlined lettering, all drawn into a `Pen` so tests run without Phaser; `addUnitFigure()` adds the name plate, badge tooltip and farewell ribbon; a dev art gallery at `?gallery` (D-072) (2026-09-29)
 - [x] T-019 (M4) AI manager in `src/core/ai/`: `AI_MANAGER` (MC-first best-value bids with a seeded taste, one upgrade bid, payroll kept within `BASE_INCOME`, scouting for empty slots, a slot-fit MC order, surplus release, payroll trim), plus headless tests where AI managers play 4 seasons of a 12-crew league and 5 seasons of a 4-crew one through `playRound()` (D-071) (2026-09-29)
 - [x] T-035 (M4) League save: zod `leagueSchema` typed against the core types, `serializeLeague`/`parseLeague` with a versioned envelope and a migration table in `src/core/save/`, and `saveLeague`/`loadLeague`/`deleteLeague` over a `KeyValueStore` (`localStorage`) in `src/app/leagueStorage.ts`; zod 4 added (D-070) (2026-09-29)
 - [x] T-055 (M4) A league round in `src/core/round/`: `startRound` (upkeep, rookies, shop phase), the shop actions (`roundScout`, `roundSignScouted`, `roundRelease`, `roundMove`, `roundBid`), `resolveBids`, `lockInCrew`/`forceLockInCrew`, `finishRound` (battles from given seeds, results, xp, season end), and `playRound()` driving them with a `CrewManager` per crew (D-069) (2026-09-29)

@@ -7,7 +7,7 @@
 import type { League } from '../league';
 import type { CrewId } from '../model';
 import type { Award } from '../shop';
-import { forceLockInCrew, lockInCrew, resolveBids } from './actions';
+import { lockInOrForce, resolveBids } from './actions';
 import { finishRound, type BattleSeeds, type RoundFinished } from './finish';
 import { startRound, type RoundStartReport, type RoundState } from './start';
 
@@ -57,7 +57,7 @@ export function playRound(
   }
   for (const crewId of crewIds) {
     state = managerFor(crewId).lineup(state, crewId);
-    state = lockOrForce(state, crewId);
+    state = lockInOrForce(state, crewId);
   }
   const finished = finishRound(state, seeds);
   if (!finished.ok) {
@@ -65,12 +65,4 @@ export function playRound(
     throw new RangeError(`playRound: ${finished.error}`);
   }
   return { ...finished.value, start: started.report, bidRounds };
-}
-
-function lockOrForce(state: RoundState, crewId: CrewId): RoundState {
-  if (state.lockedIn.includes(crewId)) return state;
-  const locked = lockInCrew(state, crewId);
-  if (locked.ok) return locked.value;
-  const forced = forceLockInCrew(state, crewId);
-  return forced.ok ? forced.value.state : state;
 }

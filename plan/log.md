@@ -2,6 +2,42 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-024, Playwright round test; M5 done)
+- `e2e/round.spec.ts` plays a whole round in Chromium through named targets (`e2e/targets.ts`, `e2e/window.d.ts`): founding with colours, logo and a 4-crew league, the hub tabs, bids 2 over the ask, passes until Lock in is enabled, won units in the lineup, lock-in, the battle at 2×, the saved round, round 2, and Continue after a reload. `?seed=` fixes the league seed (`src/app/seed.ts`, tested) (D-077).
+- Found on the way: a disabled button still reported itself as enabled (only its look changed), so the test didn't pass the later bidding rounds; `setEnabled` now switches its input off too. A hall of fame portrait moved only the figure's body into the layer (drawn at the screen's corner); fixed. The result screen's MVP no longer shows a name plate over its heading.
+- Checked a save two seasons in (made headlessly with AI managers) in the browser: titles, a season-end result (champions, a retirement, farewell tours) and a framed hall of fame portrait.
+- **M5 exit criteria**, checked one by one: title screen ✓ (T-023); crew founding with name, colours and logo ✓ (T-023); a new local league with bots ✓ (T-023); the hub with Market (scouting table, bidding rounds, scouting) ✓ (T-021), Lineup (drag and drop, release) ✓ (T-021), League and Hall of Fame ✓ (T-023) and Lock in ✓ (T-023); the battle scene with tweens and battle text ✓ (T-022, T-054); the result screen with headline and MVP ✓ (T-023); paper-cut figures from the `look` seed and crew logos ✓ (T-020); the league saved in the browser ✓ (T-023); a Playwright test that clicks through one full round ✓ (T-024). `make check` (400 tests), `make build` and `make test-e2e` (2 tests) pass.
+- **M5 is done; M6 is in progress.** Now: T-025, T-026, T-036. New M7 tasks: T-056 (onboarding hints), T-057 (hall of fame paging, figures in the league tab).
+
+## 2026-09-29 (T-021, Market and Lineup tabs)
+- `src/render/hub/marketView.ts` (tested: rows, role/archetype filters, sorting by every column with stable ties, draft bids pruned to listed units and checked with `bidsProblem`, stats and ability value texts), `marketTab.ts` (filters, sortable header, paged table with thumbnails and badges, scouting, detail panel, bid input, submit or pass), `lineupTab.ts` (drag and drop and click-then-place over MC, support and bench boxes, release bin, confirmed release, payroll). `art/unitFigure.ts` gained a baked `addBadge` (D-076).
+- Checked in Chromium: bids on six units, submit, lineup shows the won units; dragging an MC onto an occupied bench place is refused (support can't swap into an MC slot), onto an empty one moves it and halves its salary.
+- `make check` (398 tests) and `make test-e2e` pass. **Next:** T-024 (Playwright round test).
+
+## 2026-09-29 (T-023, game flow, title, founding, hub, result)
+- `src/app/`: `localLeague.ts` (`newLocalLeague`, `openRound` with the bots' first bids, `playerBids`, `lockInAndPlay` returning the player's battle with the locked-in crews), `flow.ts` (`createGameFlow`: title, founding, hub controller, battle, result, next round; saves after each completed round; explains damaged or blocked saves), `director.ts` (scene per screen), `main.ts` (all scenes, `window.micDropTargets`). Tests for both pure modules.
+- `src/render/`: `scenes/TitleScene.ts`, `scenes/FoundingScene.ts` (typed name via `ui/textInput.ts`, colour and logo pickers, league size, live preview), `hub/HubScene.ts` with `homeTab.ts`, `leagueTab.ts`, `hallTab.ts` and first versions of `marketTab.ts` (pass only) and `lineupTab.ts`, `hub/view.ts` (tested), `result/ResultScene.ts` and `result/view.ts` (tested), `text/problems.ts` (refusal texts). BootScene removed.
+- Core: `battleMvp`/`damageTable` (§11 MVP) and `lockInOrForce` (now also used by `playRound`), with tests. `GAME_TITLE` is *Mic Drop League*; the page title too.
+- Found on the way: Phaser's `Container.getBounds` ignores `Graphics` children, so test targets use a container's origin. Headlines were reworded so no verb follows a crew name (D-075).
+- Clicked through a whole round in Chromium (title, founding with colours and logo, hub tabs, three passes, lock-in, forfeit battle, result, round 2 with upkeep and the wallet cap). `make check` (393 tests) and `make test-e2e` pass. **Next:** T-021 (Market and Lineup tabs).
+
+## 2026-09-29 (T-022, battle scene)
+- `src/render/battle/`: `playback.ts` (`buildPlayback`: beats with durations, words, choke taunts, ability lines, crowd lines for swings of 3+, stage snapshots, tempo fitted to 30–60 s), `layout.ts` (stage positions), `BattleScene.ts` (backdrop, stoops and mics, banners with logos, figures with FLOW/CONF labels, hype meters, a crowd whose bounce follows the hype, lunges, hits, ability banners, speech bubbles, choke tumbles, move-ups, 2× speed, the winner panel, then `onDone`). `render/ui/`: `button.ts`, `bubble.ts` (speech bubbles, pop words), `targets.ts` (named buttons for browser tests). `art/bake.ts` bakes static art into textures (D-074). Doc §5 Pacing states the tempo rule.
+- Found on the way: Phaser redraws `Graphics` shapes every frame, so the unbaked battle ran at about 7 fps in headless Chromium and its timers seemed to stall; baking fixed it. The container's software WebGL still tops out at about 15 to 20 fps, even for static scenes.
+- Dev pages: `?battle=<seed>` plays demo battles between generated crews (`src/app/dev.ts`); checked by screenshots (setup choke, move-up, hype swing line, winner panel, about 55 s).
+- `make check` (365 tests) and `make test-e2e` pass. **Next:** T-023 (game flow, title, founding, hub, result).
+
+## 2026-09-29 (T-054, comedy text tables)
+- `src/render/text/`: `template.ts` (`{slot}` templates, `fillTemplate` that refuses missing slots, `pickLine`), `battleText.ts` (hit words by damage, choke and buff words, choke taunts, last words, ability lines per effect kind, hype swing and drop lines, `battleTextRng`), `headlines.ts` (5 headline kinds, `headline()` in capitals from a seed derived from the battle seed) (D-073). Doc §11 says who says which line.
+- Tests: every table uses only the slots it is given, fills without leftovers, names are inserted literally, seeded picks repeat, headlines fit 80 characters with the longest names.
+- `make check` (355 tests) passes. **Next:** T-022 (battle scene).
+
+## 2026-09-29 (T-020, procedural shape art)
+- `src/render/art/`: `pen.ts` (the `Pen` drawing interface and shape helpers), `look.ts` (`rollLook`), `career.ts` (bling per growth step, chain weight, farewell), `figure.ts` (`drawFigure`), `icons.ts` (10 archetype icons and the badge), `logos.ts` (8 logos), `backdrop.ts` (sky, brick wall, mural, sidewalk, boombox), `lettering.ts` (outlined text styles), `unitFigure.ts` (figure + name plate + badge tooltip + farewell ribbon). `render/palette.ts` holds the crew colour hex values. `render/config.ts` now names the design resolution `DESIGN_WIDTH × DESIGN_HEIGHT` (D-072).
+- Tests with a recording pen: every look stays in the figure box, looks are pinned and varied, bling and sash show, icons and logos stay in their circles and differ, the backdrop covers the screen.
+- A dev-only art gallery at `http://localhost:5173/?gallery`; checked by screenshot.
+- `make check` (332 tests) and `make test-e2e` pass. **Next:** T-054 (comedy text tables).
+
 ## 2026-09-29 (T-019, AI manager and the headless league; M4 done)
 - `src/core/ai/`: `value.ts` (`strength`, `valueForMoney`, `slotFit`, `payrollWith`), `lineup.ts` (`planLineup` over the 6 MC orders, `movesFor`, `surplus`), `manager.ts` (`AI_MANAGER`: MC-first best-value bids with a seeded taste, one upgrade bid, payroll within `BASE_INCOME`, scouting for empty slots, arranging, surplus release, payroll trim). Doc §7 now defines best value and the lineup order (D-071).
 - `headless.test.ts`: AI managers play 4 seasons of a 12-crew league (2 divisions) and 5 seasons of a 4-crew one through `playRound()`: titles every season, halls of fame, growth and second abilities, unique living ids and names, no crew without MCs, no turn-limit battles, save round trip, determinism.
