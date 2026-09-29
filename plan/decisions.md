@@ -776,3 +776,16 @@ and are marked "superseded by D-###".
   text on panels and buttons has a WCAG AA contrast of 4.5:1. All current text passes, so no
   colour had to change. A real restyle would be the user's call.
 
+- **D-093 (2026-09-29): `.devcontainer/` stays out of the repo; the README describes what a
+  dev container for this project needs (T-041).** The user's choice over committing
+  `.devcontainer/project/`. The container overlay is per machine, so the three project-specific
+  parts (the `node_modules` volume, D-015; Chromium baked into the image, D-018; a local PeerJS
+  server, D-078) are written down in `README.md` for others to rebuild. CI doesn't need them.
+- **D-094 (2026-09-29): The game is deployed to GitHub Pages by a GitHub Actions workflow
+  (T-032).** The user's choice over itch.io. `.github/workflows/deploy.yml` runs `make check` and
+  `make build` on every push to `master` and publishes `dist/`, so a failing tree never goes out;
+  Pages must be turned on once with "GitHub Actions" as the source. The user pushes and runs the
+  two-network playtest (T-059, checklist in `docs/release.md`); a TURN relay is decided after it
+  (Q-022). The production build passed the three-tab sitting test under `vite preview` and
+  loads under a sub-path. The chunk warning limit went from 1500 to 1800 kB, as the one bundle
+  is now 1.57 MB (440 kB gzipped).

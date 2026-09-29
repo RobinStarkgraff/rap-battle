@@ -1,13 +1,11 @@
 # Tasks
 
 States: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped.
-Next free ID: **T-059**
+Next free ID: **T-060**
 
 ## Now
 
-- [ ] T-032 (M8) Deploy a static build; test P2P across two real networks; decide whether a TURN server is needed
-- [ ] T-033 (M8) Write the jam submission page and a known-issues list
-- [ ] T-041 (M8) Decide with the user whether to commit `.devcontainer/project/` (the Chromium build step, D-018, and the `node_modules` volume, D-015) so other machines get them; today all of `.devcontainer/` is gitignored
+- [ ] T-059 (M8, needs the user) Turn on GitHub Pages (Source: GitHub Actions), push `master` so `deploy.yml` publishes the game, run the two-network playtest in `docs/release.md` (home network ↔ phone hotspot), record the result in `docs/known-issues.md` (and the jam page's short list if it changes), and answer Q-022 (own TURN relay or not)
 
 ## Next
 
@@ -19,6 +17,9 @@ Next free ID: **T-059**
 
 ## Done
 
+- [x] T-033 (M8) Jam submission text in `docs/jam-page.md` (pitch, how it plays, playing with friends, controls, made with AI) and `docs/known-issues.md` (networking, saves, platform, balance), both linked from the README (2026-09-29)
+- [x] T-032 (M8) Deploy pipeline (D-094): `.github/workflows/deploy.yml` checks, builds and publishes `dist/` to GitHub Pages on every push to `master`; `docs/release.md` has the setup, the two-network playtest checklist and what the game does for NAT traversal today (PeerJS's STUN and TURN). The production build passed the three-tab sitting test and loads under a sub-path. Pushing, the real playtest and the TURN decision moved to T-059 (the user's part) (2026-09-29)
+- [x] T-041 (M8) `.devcontainer/` stays gitignored (the user's choice, D-093); `README.md` now describes the game, the commands and the three things a dev container for this project needs (the `node_modules` volume, Chromium in the image, a local PeerJS server) (2026-09-29)
 - [x] T-058 (M7) Colour palette and theme pass (D-092): every colour of `render/` is a named token in `palette.ts` (new `UI` tokens and an `ART` table), `tooling/palette.test.ts` fails on colour literals elsewhere and checks WCAG AA contrast of text on panels and buttons; the look is unchanged (2026-09-29)
 - [x] T-057 (M7) Hall of Fame paging (`hub/hallView.ts`: `hallPage` 10 to a page newest first, `titleSummary`; `hall-prev`/`hall-next`) with frames that fit the panel and titles in one line, and unit figures in crew colours in the league tab's crew panel (bench dimmed) (2026-09-29)
 - [x] T-056 (M7) Onboarding hints (D-091): `render/hub/hints.ts` (`onboardingHint` by round state and tab until the crew has played 2 battles: first bids, a bid's ask and the payroll, bids in, the lineup, where to lock in, locked in), a yellow note beside the tab bar with OK (`hub-hint-close`) (2026-09-29)

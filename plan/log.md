@@ -2,6 +2,23 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-033, jam page and known issues; M8 open on T-059)
+- `docs/jam-page.md`: the submission text (pitch, how it plays, playing with friends step by step, controls, made with AI, the three main known issues). Every rule it mentions was checked against `docs/game-design.md`.
+- `docs/known-issues.md`: networking (strict networks and Q-022, no two-network test yet, host leaving voids the round, 45 s to notice a lost link, joining mid-round means watching, same version needed, trusted friends), saves (browser storage only, no export, one league per browser, newer saves), platform (desktop, Chromium only, basic text input, first sound on a click, 1.6 MB script) and balance from AI leagues only. README links both.
+- **M8 exit criteria:** jam page text ✓ (T-033); known issues listed ✓ (T-033; T-059 adds the playtest's findings); static build deployed ✗ (the pipeline is ready, T-032, but the user pushes and turns Pages on, T-059); a real P2P game between two networks ✗ (T-059, the user's). `make check` (525 tests) and `make build` pass. **M8 stays in progress.** Now: T-059 (needs the user).
+
+## 2026-09-29 (T-032, GitHub Pages deploy pipeline)
+- `.github/workflows/deploy.yml`: on a push to `master` (or by hand) it runs `make check` and `make build` and publishes `dist/` to GitHub Pages (D-094). The action versions (`configure-pages@v5`, `upload-pages-artifact@v4`, `deploy-pages@v4`) couldn't be checked from the container; bump them if the first run warns.
+- `docs/release.md`: the one-time Pages setup, the two-network playtest checklist (join, two rounds, the host leaving mid-round), and NAT traversal today: with the public server PeerJS's defaults bring Google STUN and PeerJS's free TURN relays. Q-022 (own TURN relay) waits for that test, the user's choice. README links the game and the doc.
+- Checked the production build: it loads with no errors under a `/rap-battle/` sub-path, and `e2e/sitting.spec.ts` passes against `vite preview` (2.7 min). The chunk warning limit is now 1800 kB (the bundle is 1.57 MB).
+- Not done here, as agreed: pushing, turning Pages on and the real playtest → T-059 (needs the user).
+- `make check` (525 tests) and `make build` pass. **Next:** T-033 (jam page and known issues).
+
+## 2026-09-29 (T-041, dev container stays local)
+- Asked the user up front for the M8 run: `.devcontainer/` stays gitignored (D-093), deploy to GitHub Pages through Actions, prepare T-032 without pushing (the user pushes and runs the two-network test), and decide on TURN after that test.
+- `README.md` (it was only a title): what the game is, the commands, and the three things a dev container for this project needs (the `node_modules` volume, Chromium in the image, a local PeerJS server).
+- `make check` (525 tests) passes. **Next:** T-032 (GitHub Pages deploy).
+
 ## 2026-09-29 (T-058, colour palette and theme pass; M7 done)
 - Added T-058 because no task covered the "colour palette and theme pass" exit criterion. About 60 colour literals in `render/` became named tokens in `palette.ts` (new `UI` tokens, an `ART` table for props; `PAGE_BACKGROUND` is `UI.page`). `tooling/palette.test.ts` fails on any colour literal outside the palette and checks WCAG AA contrast (4.5:1) of text on panels, secondary buttons, buttons and the newsprint; every pair passes, so the look is unchanged (D-092). Doc §11 Look.
 - **M7 exit criteria**, checked one by one: balance tuning from headless AI-manager statistics (battle length, economy, salary and retirement pacing) ✓ (T-031, `make balance`, held by the headless test); hit and ability effects ✓ (T-030); screen shake ✓ (T-030); the procedural beat and SFX ✓ (T-030; they can't be heard in headless Chromium, but the page runs them with no errors); a tutorial or onboarding hint ✓ (T-056); a colour palette and theme pass ✓ (T-058); a second battle style through `BattleStyle` ✓ (T-037). Also T-057. `make check` (525 tests), `make build` and `make test-e2e` (3 tests) pass.

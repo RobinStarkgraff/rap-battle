@@ -1066,8 +1066,9 @@ hits, most for chokes. None of it changes what the beat shows.
 
 ## 12. Still open
 
-No design or technical questions are open. Q-015 (forked saves, D-079) and Q-009 (the
-signalling server, D-078) were answered for M6.
+No design questions are open. One technical question is: Q-022, whether the game needs a TURN
+relay of its own, is decided after the two-network playtest (T-059, `docs/release.md`). Q-015
+(forked saves, D-079) and Q-009 (the signalling server, D-078) were answered for M6.
 
 The balance pass (T-031, D-090) set the numbers from AI-played leagues; `make balance` prints
 the statistics again. Voice Lessons stays at 1 / 1 / 2 on purpose: its confidence is permanent

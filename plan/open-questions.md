@@ -10,7 +10,11 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 (none)
 
 ### Tech / scope
-(none)
+- **Q-022** (M8, answer after the two-network playtest of T-059) Does the game need a TURN relay
+  of its own? Today the default uses PeerJS's free STUN and TURN servers (`docs/release.md`).
+  Options if the playtest fails on a strict network: a `?turn=user:pass@host:port` setting for a
+  relay the group provides; a hosted relay with credentials in the build; or nothing, listed as
+  a known issue. The user chose to decide after the test.
 
 ## Answered
 
