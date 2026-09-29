@@ -1,8 +1,9 @@
-.PHONY: help install dev check test test-e2e build format dev-bootstrap
+.PHONY: help install dev peer-server check test test-e2e build format dev-bootstrap
 help:
 	@echo "Project targets:"
 	@echo "  make install                        Install dependencies (npm ci)"
 	@echo "  make dev                            Start the Vite dev server on port 5173"
+	@echo "  make peer-server                    Start a local PeerJS signalling server on port 9000"
 	@echo "  make check                          Typecheck, lint, format check and unit tests"
 	@echo "  make test                           Unit tests only (Vitest)"
 	@echo "  make test-e2e                       Browser tests (Playwright)"
@@ -20,6 +21,9 @@ install:
 
 dev:
 	npm run dev
+
+peer-server:
+	npm run peer-server
 
 check:
 	npm run check

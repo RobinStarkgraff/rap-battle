@@ -58,3 +58,15 @@ export function parseLeague(text: string): Result<League, LoadError> {
   const parsed = leagueSchema.safeParse(league);
   return parsed.success ? ok(parsed.data) : fail('invalid');
 }
+
+/**
+ * The league as JSON with every object's keys sorted, so two equal leagues give the same text
+ * however they were built (a parsed save has its keys in schema order). For comparing copies.
+ */
+export function canonicalLeague(league: League): string {
+  return JSON.stringify(league, (_key, value: unknown) => {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) return value;
+    const entries = Object.entries(value).sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0));
+    return Object.fromEntries(entries);
+  });
+}

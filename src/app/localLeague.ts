@@ -121,7 +121,16 @@ export function lockInAndPlay(
     // Unreachable: the player and every bot were locked in above.
     throw new RangeError(`lockInAndPlay: ${finished.error}`);
   }
-  const report = finished.value.battles.find(
+  return ok(playedRound(finished.value, lockedCrews, playerId));
+}
+
+/** The round as the player saw it: the results, and their own battle for the playback. */
+export function playedRound(
+  finished: RoundFinished,
+  lockedCrews: ReadonlyMap<CrewId, Crew>,
+  playerId: CrewId,
+): PlayedRound {
+  const report = finished.battles.find(
     (battle) => battle.crewA === playerId || battle.crewB === playerId,
   );
   const crewA = report === undefined ? undefined : lockedCrews.get(report.crewA);
@@ -134,7 +143,7 @@ export function lockInAndPlay(
           crews: { a: crewA, b: crewB },
           playerSide: report.crewA === playerId ? 'a' : 'b',
         };
-  return ok({ finished: finished.value, battle });
+  return { finished, battle };
 }
 
 /** Every crew in the round except the player's, in league order. */

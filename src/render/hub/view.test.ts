@@ -38,6 +38,7 @@ function hubState(bots = 3): HubState {
     crewId: 'c1',
     start: started.report,
     lastAwards: null,
+    sitting: null,
   };
 }
 

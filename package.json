@@ -18,9 +18,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
+    "peer-server": "peerjs --port 9000"
   },
   "dependencies": {
+    "peerjs": "^1.5.5",
     "phaser": "^3.90.0",
     "zod": "^4.6.5"
   },
@@ -31,6 +33,7 @@
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
+    "peer": "^1.0.2",
     "prettier": "^3.9.9",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.70.1",

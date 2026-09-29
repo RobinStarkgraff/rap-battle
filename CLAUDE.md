@@ -43,7 +43,7 @@ Entry point: `index.html` → `src/app/main.ts`. Unit tests sit next to the code
 - **TypeScript 5.9** with `strict` plus extra flags (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, …), built and served by **Vite 8**
 - **Phaser 3** (3.90, not Phaser 4) for rendering, input and tweens. All visuals are drawn with `Graphics`/shapes/text.
 - **PeerJS** (WebRTC data channels) for P2P. **zod** validates every network message.
-- **Vitest 4** for unit tests (Vitest 5 needs Node 22) and **Playwright** for end-to-end tests (multi-tab P2P league)
+- **Vitest 4** for unit tests (Vitest 5 needs Node 22) and **Playwright** for end-to-end tests (a three-tab P2P sitting over a local `peer` server)
 - **ESLint 10** (typescript-eslint `strictTypeChecked`) and **Prettier 3**. `eslint.config.js` also enforces the layer rules below (D-016).
 
 ## Architecture rules
@@ -87,17 +87,19 @@ Each target calls the matching npm script in `package.json`.
 |---|---|
 | `make install` | install dependencies (`npm ci`) |
 | `make dev` | start the Vite dev server on http://localhost:5173 |
+| `make peer-server` | start a local PeerJS signalling server on port 9000 (open the game with `?peer=localhost:9000`) |
 | `make check` | typecheck (`tsc -b`) + lint + format check + unit tests. Run it before calling any task done |
 | `make test` | unit tests only (Vitest) |
-| `make test-e2e` | Playwright tests; starts the dev server itself (or reuses a running one) |
+| `make test-e2e` | Playwright tests; starts the dev server and a local PeerJS server itself (or reuses running ones) |
 | `make build` | typecheck + production build to `dist/` |
 | `make format` | fix formatting and auto-fixable lint errors |
 
 ## Environment notes
 
-- The dev container provides Node 20 and has an outbound firewall. Real P2P tests that go
-  through the public PeerJS signalling server (`0.peerjs.com`) may need to be allowlisted,
-  or run from the host browser.
+- The dev container provides Node 20 and has an outbound firewall that blocks the public PeerJS
+  signalling server (`0.peerjs.com`). Multiplayer runs in the container go through a local one:
+  `make peer-server` and `?peer=localhost:9000` (D-078). Headless Chromium needs
+  `--disable-features=WebRtcHideLocalIpsWithMdns` to connect two of its own tabs.
 - The firewall also blocks Playwright's browser download. Chromium is baked into the
   container image instead (D-018), so after changing the `@playwright/test` version the
   container has to be rebuilt (`make dev-rebuild` on the host).

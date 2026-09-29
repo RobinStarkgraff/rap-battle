@@ -59,3 +59,18 @@ export function localBattleSeed(
 ): number {
   return deriveSeed(leagueSeed, 'battle', round, division, crewA);
 }
+
+/**
+ * A battle seed agreed by its two crews in a sitting (T-027, D-084): each crew commits to a
+ * secret nonce at lock-in and reveals it once everyone has locked in, so neither crew alone
+ * chooses the seed and nobody knows it while shopping.
+ */
+export function agreedBattleSeed(
+  leagueSeed: number,
+  round: number,
+  division: number,
+  nonceA: string,
+  nonceB: string,
+): number {
+  return deriveSeed(leagueSeed, 'agreed-battle', round, division, nonceA, nonceB);
+}

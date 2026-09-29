@@ -10,13 +10,15 @@ answer down. If the answer is a decision, also add it to `decisions.md`.
 (none)
 
 ### Tech / scope
-- Q-015 Two sittings could play the same league at the same time (e.g. two pairs of colleagues
-  host separately), so the saved league states fork at the same round number. Which copy wins,
-  or can it be prevented (e.g. a lobby warns when another copy has the same round)? For M6 (T-036).
-- Q-009 Is the free public PeerJS signalling server acceptable, or should we host our own?
+(none)
 
 ## Answered
 
+- **Q-015** There is no forking to handle: a save file is a whole league of its own (crews,
+  divisions, halls of fame). Copies of the same league are only compared by their completed
+  round; on a tie the host's copy is used, with no fork detection. (2026-09-29) → D-079
+- **Q-009** The free public PeerJS server by default, with a setting that points at another
+  one; tests run a local PeerJS server. (2026-09-29) → D-078
 - **Q-018** Bots pad every division to the size of the largest one, rounded up to even, so
   all divisions play the same number of rounds and end the season together. (2026-09-29) → D-057
 - **Q-010** Sound is in scope: procedural WebAudio with one seeded beat per battle that builds

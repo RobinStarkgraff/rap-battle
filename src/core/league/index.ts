@@ -1,5 +1,7 @@
 /** The league (§7): members, divisions, seasons, standings, joining and leaving. */
 
+export { awaySummary } from './away';
+export type { AwaySummary } from './away';
 export { createLeague } from './create';
 export type { NewPlayer } from './create';
 export { botIdentity, crewId, crewNameProblem, foundCrew } from './crews';

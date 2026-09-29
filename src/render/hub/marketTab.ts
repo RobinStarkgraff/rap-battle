@@ -358,6 +358,13 @@ function drawFooter(context: TabContext, ui: MarketUi): void {
     );
     return;
   }
+  if (bidding.placed && state.sitting !== null) {
+    // In a sitting the reveal waits for everyone; a second submit would replace the bids.
+    const waiting = state.sitting.waitingFor;
+    const line = `Your bids for round ${String(bidding.round)} are in.${waiting.length > 0 ? ` Waiting for ${waiting.join(', ')}.` : ''}`;
+    layer.add(addBody(scene, TABLE.left + 16, y, line, 14, UI.textGood, 760));
+    return;
+  }
   const summary =
     bids.length === 0
       ? `Bidding round ${String(bidding.round)} of ${String(bidding.of)}: no bids yet. Pass, or pick units and bid.`
@@ -381,7 +388,11 @@ function drawFooter(context: TabContext, ui: MarketUi): void {
         context.say(problemText(refusal), 'bad');
         return;
       }
-      context.say(awardLines(context.controller.state()).join(' '), 'good');
+      const after = context.controller.state();
+      context.say(
+        after.sitting === null ? awardLines(after).join(' ') : 'Your bids are in.',
+        'good',
+      );
     },
     {
       width: 190,

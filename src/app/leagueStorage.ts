@@ -8,6 +8,7 @@ import {
   ok,
   parseLeague,
   serializeLeague,
+  type CrewId,
   type League,
   type LoadError,
   type Result,
@@ -21,6 +22,8 @@ export interface KeyValueStore {
 }
 
 export const LEAGUE_SAVE_KEY = 'mic-drop-league/league';
+/** Which crew of the saved league this browser's player plays (a league can have many). */
+export const CREW_KEY = 'mic-drop-league/crew';
 
 export type StorageError = 'noSave' | 'unavailable' | LoadError;
 
@@ -33,10 +36,19 @@ export function browserStore(): KeyValueStore | null {
   }
 }
 
-/** Saves the league, replacing the saved one. Fails if the browser refuses (for example quota). */
-export function saveLeague(store: KeyValueStore, league: League): Result<null, 'unavailable'> {
+/**
+ * Saves the league, replacing the saved one, and the player's crew in it if given. Fails if
+ * the browser refuses (for example quota).
+ */
+export function saveLeague(
+  store: KeyValueStore,
+  league: League,
+  crewId?: CrewId,
+): Result<null, 'unavailable'> {
   try {
     store.setItem(LEAGUE_SAVE_KEY, serializeLeague(league));
+    if (crewId === undefined) store.removeItem(CREW_KEY);
+    else store.setItem(CREW_KEY, crewId);
     return ok(null);
   } catch {
     return fail('unavailable');
@@ -54,9 +66,26 @@ export function loadLeague(store: KeyValueStore): Result<League, StorageError> {
   return text === null ? fail('noSave') : parseLeague(text);
 }
 
+/**
+ * The player's crew in the saved league: the one saved with it if it is still a player crew
+ * there, else the league's first player (a league founded on this machine).
+ */
+export function savedCrewId(store: KeyValueStore, league: League): CrewId | null {
+  let saved: string | null = null;
+  try {
+    saved = store.getItem(CREW_KEY);
+  } catch {
+    // Blocked storage has no crew saved.
+  }
+  const member = league.members.find((candidate) => candidate.crewId === saved);
+  if (member?.kind === 'player') return member.crewId;
+  return league.members.find((candidate) => candidate.kind === 'player')?.crewId ?? null;
+}
+
 export function deleteLeague(store: KeyValueStore): void {
   try {
     store.removeItem(LEAGUE_SAVE_KEY);
+    store.removeItem(CREW_KEY);
   } catch {
     // Nothing to delete if the storage is blocked.
   }

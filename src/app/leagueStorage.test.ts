@@ -4,6 +4,7 @@ import {
   deleteLeague,
   LEAGUE_SAVE_KEY,
   loadLeague,
+  savedCrewId,
   saveLeague,
   type KeyValueStore,
 } from './leagueStorage';
@@ -57,6 +58,34 @@ describe('league storage', () => {
     expect(loadLeague(store)).toEqual({ ok: true, value: league() });
     deleteLeague(store);
     expect(store.items.size).toBe(0);
+  });
+
+  it('remembers which crew this browser plays, falling back to the first player', () => {
+    const store = memoryStore();
+    const saved = league();
+    const created = createLeague(
+      9,
+      [
+        {
+          playerName: 'A',
+          identity: { name: 'A', mainColour: 'red', trimColour: 'white', logo: 'star' },
+        },
+        {
+          playerName: 'B',
+          identity: { name: 'B', mainColour: 'lime', trimColour: 'white', logo: 'star' },
+        },
+      ],
+      0,
+    );
+    if (!created.ok) throw new Error(created.error);
+    saveLeague(store, created.value, 'c2');
+    expect(savedCrewId(store, created.value)).toBe('c2');
+    saveLeague(store, saved);
+    expect(savedCrewId(store, saved)).toBe('c1');
+    // A saved crew that isn't a player crew of the league doesn't count.
+    store.setItem('mic-drop-league/crew', 'c2');
+    expect(savedCrewId(store, saved)).toBe('c1');
+    expect(savedCrewId(blocked, saved)).toBe('c1');
   });
 
   it('reports a broken save', () => {

@@ -15,6 +15,7 @@ import {
   SUPPORT_ARCHETYPE_IDS,
   TRIM_ONLY_COLOUR_IDS,
   type Crew,
+  type CrewIdentity,
   type LearnedAbility,
   type McUnit,
   type SupportUnit,
@@ -77,14 +78,17 @@ const supportUnit: z.ZodType<SupportUnit> = z.object({
 
 const unit: z.ZodType<Unit> = z.union([mcUnit, supportUnit]);
 
+/** A crew's name, colours and logo; the network protocol checks them with it too. */
+export const crewIdentitySchema: z.ZodType<CrewIdentity> = z.object({
+  name: z.string().min(1),
+  mainColour: z.enum(MAIN_COLOUR_IDS),
+  trimColour: z.enum([...MAIN_COLOUR_IDS, ...TRIM_ONLY_COLOUR_IDS]),
+  logo: z.enum(LOGO_IDS),
+});
+
 const crew: z.ZodType<Crew> = z.object({
   id,
-  identity: z.object({
-    name: z.string().min(1),
-    mainColour: z.enum(MAIN_COLOUR_IDS),
-    trimColour: z.enum([...MAIN_COLOUR_IDS, ...TRIM_ONLY_COLOUR_IDS]),
-    logo: z.enum(LOGO_IDS),
-  }),
+  identity: crewIdentitySchema,
   mcSlots: z.tuple([mcUnit.nullable(), mcUnit.nullable(), mcUnit.nullable()]).readonly(),
   supportSlots: z.tuple([supportUnit.nullable(), supportUnit.nullable()]).readonly(),
   bench: z.array(unit).max(TUNABLES.BENCH_SIZE),

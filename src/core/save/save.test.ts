@@ -3,7 +3,7 @@ import { createLeague, type League } from '../league';
 import { askPrice } from '../market';
 import { playRound, roundBid, shopOf, type CrewManager } from '../round';
 import { bidsProblem, type Bid } from '../shop';
-import { parseLeague, SAVE_FORMAT, SAVE_VERSION, serializeLeague } from './save';
+import { canonicalLeague, parseLeague, SAVE_FORMAT, SAVE_VERSION, serializeLeague } from './save';
 
 /** Bids the ask on every unit it can add, oldest first. */
 const BUYER: CrewManager = {
@@ -55,6 +55,15 @@ describe('league save', () => {
     expect(league.season.number).toBe(2);
     expect(league.crews.some((crew) => crew.record.titles.length > 0)).toBe(true);
     expect(parseLeague(serializeLeague(league))).toEqual({ ok: true, value: league });
+  });
+
+  it('writes the same canonical text for equal leagues, however their keys are ordered', () => {
+    const parsed = parseLeague(serializeLeague(league));
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect(canonicalLeague(parsed.value)).toBe(canonicalLeague(league));
+    const reordered = Object.fromEntries(Object.entries(league).reverse()) as unknown as League;
+    expect(canonicalLeague(reordered)).toBe(canonicalLeague(league));
+    expect(canonicalLeague({ ...league, completedRounds: 99 })).not.toBe(canonicalLeague(league));
   });
 
   it('refuses text that is not a save', () => {

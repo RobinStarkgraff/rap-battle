@@ -26,12 +26,19 @@ import { registerTarget } from '../ui/targets';
 import { addTextInput } from '../ui/textInput';
 
 export interface FoundingSceneData {
-  /** How many bots a new league can have; the first is the default. */
+  /** How many bots a new league can have; the first is the default. None when joining. */
   readonly botChoices: readonly number[];
   readonly defaultBots: number;
   /** Founds the crew; returns a reason code if the name is refused. */
   readonly onFound: (identity: CrewIdentity, bots: number) => string | null;
   readonly onBack: () => void;
+  /** Founding a crew to join a friend's league instead of starting one (D-080). */
+  readonly joining: {
+    /** The name of the league saved in this browser that joining replaces, if any. */
+    readonly replaces: string | null;
+  } | null;
+  /** A reason code to show at once, e.g. why the host refused the last name. */
+  readonly notice: string | null;
 }
 
 /** A preview model for the crew's colours: always the same two figures. */
@@ -50,7 +57,10 @@ const PREVIEW_UNITS: readonly Unit[] = [11, 42].map((look, index) => ({
   record: { battles: 0, barsLanded: 0, chokes: 0, wins: 0, crews: [] },
 }));
 
-/** Crew founding (§2 Crew identity, D-052): a name, two colours, a logo and the league size. */
+/**
+ * Crew founding (§2 Crew identity, D-052): a name, two colours, a logo and the league size,
+ * or, when joining a friend's league, no size.
+ */
 export class FoundingScene extends Phaser.Scene {
   static readonly KEY = 'founding';
 
@@ -83,7 +93,7 @@ export class FoundingScene extends Phaser.Scene {
     this.add.text(
       70,
       50,
-      'FOUND YOUR CREW',
+      data.joining === null ? 'FOUND YOUR CREW' : 'JOIN THE LEAGUE',
       letteringStyle(40, { colour: UI.textGold, align: 'left' }),
     );
     addHeading(this, 70, 120, 'CREW NAME');
@@ -111,13 +121,30 @@ export class FoundingScene extends Phaser.Scene {
     addHeading(this, 70, 222, 'MAIN COLOUR');
     addHeading(this, 70, 312, 'TRIM');
     addHeading(this, 70, 402, 'LOGO');
-    addHeading(this, 70, 492, 'LEAGUE SIZE');
+    if (data.joining === null) {
+      addHeading(this, 70, 492, 'LEAGUE SIZE');
+    } else {
+      const replaces =
+        data.joining.replaces === null
+          ? ''
+          : ` It replaces your saved league with ${data.joining.replaces}.`;
+      addBody(
+        this,
+        70,
+        496,
+        `Your crew joins the host's league, taking over a bot's place if there is one.${replaces}`,
+        16,
+        data.joining.replaces === null ? UI.text : UI.textGold,
+        740,
+      );
+    }
     this.problem = addBody(this, 70, 600, '', 18, UI.textBad);
+    if (data.notice !== null) this.problem.setText(problemText(data.notice));
     addButton(
       this,
       700,
       640,
-      'FOUND CREW',
+      data.joining === null ? 'FOUND CREW' : 'JOIN',
       () => {
         this.found();
       },
@@ -191,6 +218,12 @@ export class FoundingScene extends Phaser.Scene {
     LOGO_IDS.forEach((logo, index) => {
       layer.add(this.logoChoice(100 + index * 78, 456, logo));
     });
+    this.drawSizes(layer);
+    this.drawPreview(layer);
+  }
+
+  private drawSizes(layer: Phaser.GameObjects.Container): void {
+    if (this.data_.joining !== null) return;
     [3, 5, 7, 11]
       .filter((bots) => this.data_.botChoices.includes(bots))
       .forEach((bots, index) => {
@@ -224,7 +257,6 @@ export class FoundingScene extends Phaser.Scene {
         UI.textMuted,
       ),
     );
-    this.drawPreview(layer);
   }
 
   private swatch(

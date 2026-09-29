@@ -12,8 +12,8 @@ layer on top.
 | M3 | Core: battle simulation | done |
 | M4 | Core: shop, crew upkeep & league | done |
 | M5 | Playable single-player (league vs. bots) | done |
-| M6 | Peer-to-peer multiplayer | in progress |
-| M7 | Juice & polish | not started |
+| M6 | Peer-to-peer multiplayer | done |
+| M7 | Juice & polish | in progress |
 | M8 | Release & playtest | not started |
 
 ---

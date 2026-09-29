@@ -173,7 +173,12 @@ phases, with the AI making the shop decisions:
    snapshot that is sent to the opponent (D-004).
 4. **Battle**: once **every** crew in the league has locked in, all of the round's battles
    start. Each battle's seed is agreed by its two crews only after both have locked in, so
-   nobody knows it while shopping; for a crew run by an AI manager, the host stands in (T-027).
+   nobody knows it while shopping; for a crew run by an AI manager, the host stands in (T-027,
+   D-084): at lock-in each crew commits to a secret random nonce (its SHA-256 is sent), once
+   every crew has locked in the nonces are revealed and checked against the commitments, and
+   the seed is derived from the league seed, the round, the division and both nonces. Nobody
+   sees another crew's lineup before the battle (the hub shows the opponent as it stood at the
+   round's start).
    `simulateBattle(crewA, crewB, seed)` runs on the peers and the event log is played
    back. Everyone watches their own battle at the same time.
 5. **Result**: league points are awarded, the units' `record`s are updated from the event
@@ -536,9 +541,23 @@ number and schedule, the results so far, the standings and the number of the las
 - **Host disconnects mid-round** (Q-013): that round is voided. Everyone falls back to the
   last completed round, and any member can host again. The market seeds are derived from the
   round (see [Round flow](#3-round-flow)), so the replayed round offers the same rookies and scouts.
+  A round whose battles were already played counts for everyone who saw them play: they saved
+  it, and the newest copy wins at the next sitting.
 - **Player disconnects mid-round:** they pass in any remaining bidding round, and their current
   lineup is locked in, as when the
-  [timer](#slow-players-and-the-optional-timer) runs out.
+  [timer](#slow-players-and-the-optional-timer) runs out. The host stands in for their seed
+  nonce, and everyone is told who left. Closing or reloading the tab counts as leaving at once;
+  a lost network is noticed after at most 45 s of silence (D-085).
+- **Desyncs** (D-085): after each round the host sends a hash of its league. A peer whose own
+  result differs uses the host's league and everyone is told. A peer whose copy of a round
+  breaks asks the host to send the round again.
+- **During a round** (D-083): the host puts every shop action, AI manager turn, bidding reveal
+  and lock-in in one order and sends each step to everyone, and every peer applies the same
+  steps to its own copy of the round, so the copies stay the same. Bids stay sealed: the others
+  only learn that a crew has bid, and see its bids when the bidding round is revealed. The crews
+  whose players are at the sitting when the round starts shop for themselves; the AI manager
+  runs every other crew for that whole round, so a player who arrives during a round watches and
+  plays from the next one. A newcomer founds their crew between rounds.
 - **Validation** (Q-012): friends are trusted. Incoming messages and saves are checked
   against their zod schema, so malformed data can't crash a peer, but the host doesn't check
   whether a crew is *legal*.
@@ -549,14 +568,18 @@ The shop has no clock by default (D-026). Each round's battles start only when e
 locked in, so the others wait (Q-014, D-032):
 
 - The lobby shows who is still shopping. Any player can send that player a **nudge**, a
-  friendly poke with a sound. It has no effect on the rules.
+  friendly poke with a sound. It has no effect on the rules. In the hub, a strip lists every
+  player of the round (bidding, bids in, shopping, locked in, left) with a nudge button for
+  those the round waits for; the lobby shows the same to players who watch. One crew can nudge
+  another at most once every `NUDGE_GAP_MS = 10 s` (a network constant, not a tunable) (D-086).
 - The host can turn on a **shop timer** for the sitting: `SHOP_TIMER_SECONDS = 120`, off by
   default. It runs once for each [bidding round](#bidding-rounds) (a crew that hasn't bid
   passes) and once more for the lineup after the bidding. When the last one runs out, the
   player's **current lineup** is locked in. If the wallet can't cover the payroll, units are
   released one at a time until it can: the unit that costs least at lock-in first (bench
   salaries halved), then bench before active slots, then the highest slot. Units that cost
-  nothing are kept, because releasing them wouldn't help (D-066).
+  nothing are kept, because releasing them wouldn't help (D-066). The host switches the timer
+  in the lobby; it counts down under the Lock in button (D-086).
 
 ## 8. Starting archetypes and abilities
 
@@ -975,10 +998,8 @@ audio files.
 
 ## 12. Still open
 
-No design questions are open. Two technical questions remain for M6, in `plan/open-questions.md`:
-
-- Q-015: what happens when two sittings play the same league at the same time and their saves fork?
-- Q-009: is the free public PeerJS signalling server acceptable, or do we host our own?
+No design or technical questions are open. Q-015 (forked saves, D-079) and Q-009 (the
+signalling server, D-078) were answered for M6.
 
 Left to the balance pass (T-031), not open questions: the stat ranges and ability values, the
 economy numbers, and the power 1 / 2 / 3 values of Studio Session, Voice Lessons and

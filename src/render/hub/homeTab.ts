@@ -14,6 +14,7 @@ import { crewOutfit, CREW_COLOUR_HEX, INK, UI } from '../palette';
 import { addButton } from '../ui/button';
 import { addBody, addHeading, addPanel, fitWidth } from '../ui/panel';
 import { CONTENT, type TabContext } from './tab';
+import type { PlayerStatus } from './types';
 import { awardLines, biddingView, nextOpponent, playerShop, standingOf } from './view';
 
 const BLOCK = { width: 850, height: 540 };
@@ -33,7 +34,54 @@ export function renderHomeTab(context: TabContext): void {
   });
   layer.add(addBaked(scene, CONTENT.left, CONTENT.top, key, box));
   drawCrew(context, playerShop(state).crew);
+  drawSitting(context);
   drawReport(context);
+}
+
+const STATUS_WORDS: Readonly<Record<PlayerStatus, string>> = {
+  bidding: 'BIDDING',
+  bidIn: 'BIDS IN',
+  shopping: 'SHOPPING',
+  lockedIn: 'LOCKED IN',
+  left: 'LEFT',
+};
+
+/**
+ * In a sitting: everyone who shops this round and where they are, with a nudge for those the
+ * round waits for (§7 Slow players), in a strip across the sky.
+ */
+function drawSitting(context: TabContext): void {
+  const { scene, layer, state, controller } = context;
+  const players = state.sitting?.players ?? [];
+  if (players.length === 0) return;
+  const width = Math.min(200, (BLOCK.width - 20) / players.length);
+  players.forEach((player, index) => {
+    const x = CONTENT.left + 10 + index * width;
+    const y = CONTENT.top + 8;
+    layer.add(addPanel(scene, x, y, width - 8, 58, player.isYou ? UI.panelEdge : UI.panel));
+    layer.add(
+      fitWidth(addBody(scene, x + 10, y + 6, player.name, 14).setFontStyle('bold'), width - 28),
+    );
+    const waiting = player.status === 'bidding' || player.status === 'shopping';
+    const colour = player.status === 'left' ? UI.textBad : waiting ? UI.textGold : UI.textGood;
+    layer.add(
+      addBody(scene, x + 10, y + 30, STATUS_WORDS[player.status], 13, colour).setFontStyle('bold'),
+    );
+    if (waiting && !player.isYou) {
+      const nudge = addButton(
+        scene,
+        x + width - 50,
+        y + 38,
+        'NUDGE',
+        () => {
+          controller.nudge(player.crewId);
+          context.say(`You nudged ${player.name}.`);
+        },
+        { width: 70, height: 26, fontSize: 12, plain: true, target: `hub-nudge-${player.crewId}` },
+      );
+      layer.add(nudge.container);
+    }
+  });
 }
 
 /** The crew stands in lineup order: MCs, support, then the bench a little apart. */
@@ -146,8 +194,15 @@ function drawReport(context: TabContext): void {
       17,
     );
     line(bidding.placed ? 'Your bids are in.' : 'Place your bids (or pass) in the Market.');
+  } else if (bidding.kind === 'lockedIn') {
+    line('You are locked in.', UI.textGold, 17);
   } else {
     line('Bidding is over: set your lineup, then LOCK IN.', UI.textGold, 17);
+  }
+  const waiting = state.sitting?.waitingFor ?? [];
+  if (waiting.length > 0) line(`Waiting for ${waiting.join(', ')}.`, UI.textMuted);
+  for (const crew of state.sitting?.left ?? []) {
+    line(`${crew} left the sitting; their lineup is locked in.`, UI.textBad);
   }
   for (const award of awardLines(state)) line(award);
   const opponent = nextOpponent(state);

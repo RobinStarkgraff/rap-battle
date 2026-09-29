@@ -26,6 +26,35 @@ export interface HubState {
   readonly start: RoundStartReport;
   /** The awards of the last revealed bidding round, until the next one. */
   readonly lastAwards: readonly Award[] | null;
+  /** In a sitting with friends: who the round is waiting for. `null` in a local league. */
+  readonly sitting: SittingView | null;
+}
+
+/**
+ * Where a player is in the round: `bidding` (hasn't bid or passed yet), `bidIn`, `shopping`
+ * (after the bidding, not locked in yet), `lockedIn`, or `left` (dropped out).
+ */
+export type PlayerStatus = 'bidding' | 'bidIn' | 'shopping' | 'lockedIn' | 'left';
+
+/** A player at the sitting whose crew plays this round. */
+export interface SittingPlayer {
+  readonly crewId: CrewId;
+  readonly name: string;
+  readonly status: PlayerStatus;
+  readonly isYou: boolean;
+}
+
+export interface SittingView {
+  /** The other players' crews that still have to bid (or pass), or to lock in. */
+  readonly waitingFor: readonly string[];
+  /** Crews whose players dropped out this round, so their lineups were locked in. */
+  readonly left: readonly string[];
+  /** Everyone who shops this round, in league order (§7 Slow players). */
+  readonly players: readonly SittingPlayer[];
+  /** When the shop timer runs out, in `Date.now()` milliseconds; `null` without one. */
+  readonly timerEndsAt: number | null;
+  /** The last nudge this player got: who sent it, and a number that grows with each nudge. */
+  readonly nudge: { readonly from: string; readonly count: number } | null;
 }
 
 /** `null` if the action happened, else the reason code it was refused with. */
@@ -44,5 +73,7 @@ export interface HubController {
   release(unitId: UnitId): Refusal;
   move(unitId: UnitId, to: Place): Refusal;
   lockIn(): Refusal;
+  /** Pokes another player who is still shopping (a sitting only). */
+  nudge(crewId: CrewId): void;
   quitToTitle(): void;
 }

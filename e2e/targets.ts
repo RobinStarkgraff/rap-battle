@@ -58,3 +58,23 @@ export async function clickTarget(
 export async function hasTarget(page: Page, name: string | RegExp): Promise<boolean> {
   return (await targets(page)).some((target) => target.enabled && matches(target, name));
 }
+
+/** Waits until a target with the name is on screen, enabled or not (text has no input). */
+export async function waitForShown(
+  page: Page,
+  name: string | RegExp,
+  timeout = 20_000,
+): Promise<Target> {
+  let found: Target | undefined;
+  await expect
+    .poll(
+      async () => {
+        found = (await targets(page)).find((target) => matches(target, name));
+        return found !== undefined;
+      },
+      { timeout, message: `waiting for target ${String(name)} to show` },
+    )
+    .toBe(true);
+  if (found === undefined) throw new Error(`no target ${String(name)}`);
+  return found;
+}

@@ -607,3 +607,109 @@ and are marked "superseded by D-###".
   test plays the same league every run (it bids 2 over the ask, because the bots bid the ask or
   one more). The round test takes about a minute; it has a 4 minute limit. The `e2e/` tsconfig
   now includes the DOM lib for `page.evaluate` code, and failures keep a screenshot.
+- **D-078 (2026-09-29): Signalling goes through the public PeerJS server, with an override
+  (Q-009).** The user's choice over self-hosting. The game uses PeerJS's free server
+  (`0.peerjs.com`) unless `?peer=<host>:<port>` names another one (a group's own `peer`
+  server). The dev container's firewall blocks the public server, so browser tests start a
+  local PeerJS server (the `peer` npm package) and point the tabs at it.
+- **D-079 (2026-09-29): No fork handling: a save is a whole league, and copies of the same
+  league are compared by completed round only (Q-015).** The user said there is no forking:
+  every save file is its own entire league. So the lobby doesn't try to detect two sittings
+  that played the same league separately. A league is known by its league seed; when a guest's
+  copy of the host's league has more completed rounds, the host adopts it (D-031); on a tie, or
+  when the host's is newer, the host's copy is played and sent to everyone.
+- **D-080 (2026-09-29): A guest without the host's league founds a crew and joins it; a save of
+  another league is replaced only after a confirmation.** The user's choice over keeping several
+  leagues saved side by side. The guest founds a crew in the lobby (name, colours, logo) and the
+  host adds it by the §7 newcomer rule (it takes over a bot's slot, or waits for the next
+  season). One league per group (D-029) means one save per browser.
+- **D-081 (2026-09-29): The transport is a small `Network`/`Link` interface with a PeerJS and an
+  in-memory implementation; messages are framed strings (T-025).** `net/` hides PeerJS behind
+  `Network.host(code)` / `join(code)` and ordered text `Link`s, so the league protocol is unit
+  tested over `createMemoryNetwork()` without WebRTC, and only `peerNetwork.ts` touches PeerJS.
+  Data channels use PeerJS's `raw` serialization and our own frames (`frames.ts`, 16 000 code
+  units each), because a league snapshot can pass a browser's message limit and PeerJS's own
+  chunking only covers its binary serializers. Room codes are 4 letters without I and O (about
+  330 000), registered as the peer id `mic-drop-league-<code>`; a taken code is retried with a
+  new one. With a local signalling server (`?peer=localhost:9000`, `make peer-server`) no STUN
+  server is configured. Hosting needs a saved league, because a host plays its own league
+  (D-031). Browser tests read the room code from the target name `lobby-code-<code>`.
+- **D-082 (2026-09-29): The protocol is JSON messages checked by zod on arrival, starting with a
+  versioned handshake (T-026).** Every message has a `type` and its own schema in
+  `net/protocol.ts`; text that isn't JSON or doesn't match is dropped, never thrown (Q-012). A
+  link starts with the guest's `hello` (`GAME_ID`, `PROTOCOL_VERSION` and its saved league's seed,
+  completed round and crew) and the host's `welcome` (with the guest's seat) or `refused`
+  (`protocolMismatch`, `sittingFull`). Each end closes a link whose other end has another protocol
+  version, so no half-compatible game starts; the version is bumped with every message change once
+  released. Both handshake steps time out after 10 s. A sitting takes at most 11 guests (a league of
+  12 crews). Links hand out messages a microtask later and in order, so a listener that stops after
+  the handshake leaves the following messages for the session's listener.
+- **D-083 (2026-09-29): A round in a sitting is replicated as ordered ops; the host plays
+  through its own client (T-036).** Every peer keeps its own copy of the round and applies the
+  host's ops with the pure `core/` round functions (`net/ops.ts`): shop actions, `aiBid` and
+  `aiLineup` (the AI manager is deterministic, so peers compute its moves themselves), `bidPlaced`,
+  `reveal`, `lockIn` and `forceLockIn`; `play` then runs the battles from the seeds it names. Only
+  small ops travel, never round state, and the host sends the whole league state after each round
+  (D-031). A `bidPlaced` op carries the bids only to their own crew; for everyone else it counts as
+  a pass until the `reveal` op lists every human crew's bids, which never makes a later valid
+  action invalid on their copy. The host validates each action on its own copy and only sends
+  ops it applied, and each client checks its player's actions on its copy first for an instant
+  refusal. The host's own seat is a `LeagueClient` over an in-memory link, so host and guests share
+  one code path. The crews with a seated player at the round start are the round's humans; the AI
+  manager runs every other crew (bots and absent players) for the whole round, bidding as each
+  bidding round opens and setting its lineup when the bidding ends, as in the local league (D-075).
+  Guests who arrive mid-round get the round's messages so far and watch. The host adopts a newer
+  copy only between rounds, newcomers found crews only between rounds, and two seats can't claim
+  one crew (`crewTaken`). Copies are compared with `canonicalLeague()` (JSON with sorted keys),
+  because a parsed save orders its keys by schema. A browser remembers which crew of its saved
+  league it plays (`mic-drop-league/crew`), since a joined league has several player crews. Until
+  T-027, battle seeds come from the league seed.
+- **D-084 (2026-09-29): Battle seeds by commit–reveal, with the host standing in for AI-run
+  crews (T-027).** At lock-in a player's client draws a secret 128-bit nonce
+  (`crypto.getRandomValues`) and sends only its SHA-256; the host does the same for every crew it
+  stands in for (bots, absent players, forced lock-ins). When every crew has locked in, the host
+  asks for the nonces, checks each against its commitment and sends them all in `play`; each peer
+  checks them again and derives each battle's seed with `agreedBattleSeed(leagueSeed, round,
+  division, nonceA, nonceB)`. So neither crew alone can choose its battle's seed, and no seed exists
+  while anyone is still shopping. A revealed nonce that doesn't match is replaced by the host (marked
+  `replaced`); a client that sees a nonce the host changed reports a desync, but plays the host's
+  seeds, since the host decides (friends are trusted, Q-012). SHA-256 is a small synchronous
+  implementation (`net/sha256.ts`, checked against WebCrypto), so lock-in stays synchronous and
+  works where `crypto.subtle` is missing (plain http on a LAN). "Simultaneous lock-in" is the
+  battles starting only once every crew has locked in, with no screen showing another crew's
+  changes before; the replicas do hold every crew's moves, which bid resolution needs, and that
+  is fine among trusted friends.
+- **D-085 (2026-09-29): Desyncs are found by a league hash and healed from the host; dropped
+  players are locked in; the host's drop voids an unplayed round (T-028).** The host's `league`
+  message carries the SHA-256 of its canonical league JSON. After a round, each client hashes its
+  own result: a mismatch is reported (`outOfSync`, shown to everyone) and the host's league
+  replaces its copy. A client whose copy can't apply an op or play the battles asks for a
+  `resync`: the host sends the round from its start again, or, when the round is already over, the
+  last round from its start and then the league, so the player still sees their battle. A seat
+  that closes mid-round is force-locked (`forceLockIn`, the host standing in for its nonce), or
+  its nonce is replaced if it had locked in already, and everyone gets a `playerLeft` notice. A
+  client saves the round as soon as its battles are played, so when the host drops after that, the
+  round counts for everyone who saw it (the newest copy wins at the next sitting); before that,
+  the round is void and the lobby says so. PeerJS links send a heartbeat every 5 s and close after
+  45 s of silence, because a data channel can take long to notice a lost network; the timeout is
+  long because a hidden tab's timers may run rarely. A tab that closes or reloads leaves the
+  sitting on `pagehide`, so the others know within seconds.
+- **D-086 (2026-09-29): Who is shopping, nudges and the shop timer (T-053).** Every peer derives
+  each human crew's status from its copy of the round (a sealed bid shows as "bids in" without its
+  amounts), so no extra messages are needed; the hub shows it as a strip with NUDGE buttons, and the
+  lobby shows it to players who watch. A nudge goes through the host, which drops repeats from one
+  crew to another within 10 s; the sound comes with the SFX (T-030). The host toggles the timer in
+  the lobby between off and `SHOP_TIMER_SECONDS`; it runs on the host only, which sends the time
+  *left* (the peers' clocks differ) each time it starts a bidding round's or the lineup's timer,
+  and to late arrivals. When a bidding round's time runs out, every human crew that hasn't bid
+  passes (a sealed empty bid), and when the lineup's runs out, the rest are force-locked with the
+  host standing in for their nonces. Turning the timer on mid-round starts it at once.
+- **D-087 (2026-09-29): The multiplayer browser test runs its own signalling server (T-029).**
+  `playwright.config.ts` starts `npx peerjs --port 9000` next to the dev server, locally and on CI
+  (D-078), and launches Chromium with `--disable-features=WebRtcHideLocalIpsWithMdns`, because
+  Chromium's mDNS host names can't be resolved between its own tabs in a container or on CI. Each
+  player is its own browser context, so each has its own saved league. The test reads the room
+  code from the target name `lobby-code-<code>` and compares the three saved leagues. In a
+  sitting, the market hides its submit button once the player's bids are in, because a second
+  PASS would replace them; the test relies on that to pass only where a player still has to bid.
+

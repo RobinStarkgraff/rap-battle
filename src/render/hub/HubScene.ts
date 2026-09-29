@@ -47,6 +47,10 @@ export class HubScene extends Phaser.Scene {
   private market: MarketUi = createMarketUi();
   private lineup: LineupUi = createLineupUi();
   private unsubscribe: (() => void) | null = null;
+  /** The shop timer's countdown under the Lock in button (a sitting with the timer on). */
+  private countdown: Phaser.GameObjects.Text | null = null;
+  /** How many nudges were shown already. */
+  private nudgesShown = 0;
 
   constructor() {
     super(HubScene.KEY);
@@ -72,11 +76,49 @@ export class HubScene extends Phaser.Scene {
       this.unsubscribe?.();
       this.unsubscribe = null;
       this.layer = null;
+      this.countdown = null;
+    });
+    this.nudgesShown = 0;
+    this.countdown = addBody(this, 1140, 92, '', 16, UI.textGold)
+      .setOrigin(0.5, 0)
+      .setFontStyle('bold')
+      .setDepth(900);
+    this.time.addEvent({
+      delay: 250,
+      loop: true,
+      callback: () => {
+        this.tick();
+      },
     });
     this.redraw();
   }
 
+  /** Counts the shop timer down, from the end time the hub state gives. */
+  private tick(): void {
+    if (this.countdown === null || !this.controller.isOpen()) return;
+    const endsAt = this.controller.state().sitting?.timerEndsAt ?? null;
+    if (endsAt === null) {
+      this.countdown.setText('');
+      return;
+    }
+    const seconds = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    const minutes = Math.floor(seconds / 60);
+    this.countdown
+      .setText(`TIMER ${String(minutes)}:${String(seconds % 60).padStart(2, '0')}`)
+      .setColor(seconds <= 15 ? UI.textBad : UI.textGold);
+  }
+
+  /** Shows a nudge from another player once. */
+  private showNudge(): void {
+    const nudge = this.controller.state().sitting?.nudge ?? null;
+    if (nudge === null || nudge.count <= this.nudgesShown) return;
+    this.nudgesShown = nudge.count;
+    this.notice.setText(`${nudge.from} nudges you: the crews are waiting!`).setColor(UI.textGold);
+  }
+
   private redraw(): void {
+    this.showNudge();
+    this.tick();
     this.layer?.destroy();
     const layer = this.add.container(0, 0);
     this.layer = layer;
@@ -165,7 +207,9 @@ export class HubScene extends Phaser.Scene {
       48,
       bidding.kind === 'open'
         ? `BIDDING ${String(bidding.round)}/${String(bidding.of)}`
-        : 'LOCK IN',
+        : bidding.kind === 'lockedIn'
+          ? 'LOCKED IN'
+          : 'LOCK IN',
       () => {
         const refusal = this.controller.lockIn();
         if (refusal !== null) this.notice.setText(problemText(refusal)).setColor(UI.textBad);

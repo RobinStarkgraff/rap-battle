@@ -15,9 +15,15 @@ export interface TitleSceneData {
   readonly notice: string | null;
   readonly onNewLeague: () => void;
   readonly onContinue: () => void;
+  /** Hosts a sitting of the saved league (only offered when there is one). */
+  readonly onHost: () => void;
+  readonly onJoin: () => void;
 }
 
-/** The title screen (§11 Screens): the game's name, a new league or the saved one. */
+/**
+ * The title screen (§11 Screens): the game's name, a new league or the saved one, and hosting
+ * or joining a sitting with friends.
+ */
 export class TitleScene extends Phaser.Scene {
   static readonly KEY = 'title';
 
@@ -89,6 +95,21 @@ export class TitleScene extends Phaser.Scene {
         UI.text,
       ).setOrigin(0.5, 0);
     }
+    const host = addButton(this, DESIGN_WIDTH / 2 - 140, 560, 'HOST A SITTING', data.onHost, {
+      width: 260,
+      height: 52,
+      fontSize: 20,
+      fill: UI.highlight,
+      target: 'title-host',
+    });
+    host.setEnabled(data.canContinue);
+    addButton(this, DESIGN_WIDTH / 2 + 140, 560, 'JOIN A SITTING', data.onJoin, {
+      width: 260,
+      height: 52,
+      fontSize: 20,
+      fill: UI.highlight,
+      target: 'title-join',
+    });
     if (data.notice !== null) {
       addBody(this, DESIGN_WIDTH / 2, y + 72, problemText(data.notice), 18, UI.textBad)
         .setOrigin(0.5, 0)

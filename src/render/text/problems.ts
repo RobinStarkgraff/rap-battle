@@ -26,6 +26,24 @@ const PROBLEMS: Readonly<Record<string, string>> = {
   invalid: 'The saved league is damaged and can’t be loaded.',
   unavailable: 'This browser blocks storage, so the league can’t be saved.',
   noPlayer: 'The saved league has no player crew.',
+  badCode: 'A room code is four letters.',
+  codeTaken: 'No free room code was found. Try again.',
+  noSuchRoom: 'No sitting has that room code.',
+  timeout: 'The connection timed out. Try again.',
+  roomLost: 'The room lost the signalling server; nobody new can join.',
+  hostLeft: 'The host left the sitting.',
+  protocolMismatch: 'You and the host run different versions of the game. Both reload the page.',
+  sittingFull: 'The sitting is full.',
+  noAnswer: 'The host didn’t answer. Try again.',
+  roundVoided:
+    'The host left mid-round, so the round didn’t count. Anyone can host again from the title screen.',
+  desync: 'Your game went out of sync with the host’s. It now uses the host’s league.',
+  resyncing: 'Your game went out of sync. The host is sending the round again.',
+  peerOutOfSync: 'A player’s game was out of sync; it now uses the host’s league.',
+  crewTaken: 'Someone at the sitting already plays your crew.',
+  roundRunning: 'A round is being played. Try again when it is over.',
+  alreadyInLeague: 'You already have a crew in this league.',
+  serverUnreachable: 'The signalling server can’t be reached. Check your connection.',
 };
 
 export function problemText(reason: string): string {

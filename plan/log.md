@@ -2,6 +2,51 @@
 
 Newest first. Keep each entry to a few lines: what was done, what's next, any problems.
 
+## 2026-09-29 (T-029, three-tab sitting test; M6 done)
+- `e2e/sitting.spec.ts`: host and two friends in three contexts over a local PeerJS server started by `playwright.config.ts` (second web server, Chromium mDNS hiding off); `e2e/targets.ts` gained `waitForShown`. The market hides its submit button once a sitting's bids are in (D-087).
+- The test takes about 3 minutes (three pages at 15 to 20 fps in the container); `make test-e2e` runs all three tests in 3 minutes with 3 workers.
+- **M6 exit criteria**, checked one by one: PeerJS lobby where any member hosts with their saved league, guests join by code and the newest league wins ✓ (T-025, T-036, D-079); a zod-validated protocol with a version handshake ✓ (T-026); the host collects and resolves the bidding rounds, runs AI managers for bots and absent players and sends the league state after each round ✓ (T-036); battle seed agreement after lock-in and simultaneous lock-in ✓ (T-027); a result-hash check that detects desyncs ✓ (T-028); who is still shopping, nudges and the optional shop timer ✓ (T-053); disconnects (a host drop voids the round, a player drop locks the lineup) with feedback ✓ (T-028); a "while you were away" summary ✓ (T-036); a Playwright test with three tabs ✓ (T-029). `make check` (463 tests), `make build` and `make test-e2e` (3 tests) pass.
+- **M6 is done; M7 is in progress.** Now: T-037, T-030, T-031. Not tested yet: P2P between two real networks over the public PeerJS server (that is T-032, M8).
+
+## 2026-09-29 (T-053, who is shopping, nudges, shop timer)
+- `src/net/`: `nudge`/`nudged` (host drops repeats within `NUDGE_GAP_MS`), `settings` (the host's timer), `timer` (time left for the running bidding round or lineup); the host's `setTimer`, `syncTimer` and `timeUp` (passes, then forced lock-ins with stand-in nonces); the client's `nudge`, `timerSeconds`, `timer` (D-086).
+- `src/app/sitting.ts`: player statuses from the copy of the round, nudges, the timer toggle. `render/`: the hub's player strip with NUDGE buttons (`hub-nudge-<crew>`), the nudge notice, the countdown under Lock in, statuses in the lobby's seats, the lobby's SHOP TIMER switch (`lobby-timer`). T-030 now includes the nudge sound.
+- Tests: nudges and their rate limit, the timer setting reaching everyone and late arrivals, a round finished by the timer alone (fake timers), statuses and nudges in the flow. Checked the lobby switch, the strip, the countdown and a nudge in two Chromium tabs.
+- `make check` (463 tests) passes. **Next:** T-029 (Playwright multi-tab league test).
+
+## 2026-09-29 (T-028, desyncs and disconnects)
+- `src/net/`: `league` messages carry the league hash; client checks its result, reports `outOfSync`, asks for a `resync` when a copy breaks (host resends the round, or the last round and then the league); host force-locks a dropped player's crew with a stand-in nonce (or replaces its nonce) and sends `notice` (`playerLeft`, `outOfSync`); `frames.ts` heartbeats (`PEER_KEEP_ALIVE` 5 s / 45 s) for PeerJS links (D-085).
+- `src/app/`: the round is saved as soon as its battles are played; a host drop before that shows `roundVoided`; the hub lists who left; `flow.shutdown()` on `pagehide`. New problem texts.
+- Tests: heartbeat keep-alive and timeout (fake timers); a tampered hash is noticed and healed; a damaged op triggers a resync and the guest still plays its battle; a player who drops before or after locking in; the host dropping mid-round voids it and the guest can host again; a guest dropping lets the host play on.
+- Checked in Chromium: the guest closes its tab mid-bidding, and the host can finish the round about 6 s later with the "left" line shown.
+- `make check` (459 tests) passes. **Next:** T-053 (who is shopping, nudges, shop timer).
+
+## 2026-09-29 (T-027, battle seed agreement)
+- `src/net/sha256.ts` (tested against the FIPS vectors and WebCrypto), `nonce.ts`; lock-in ops (`lockIn`, `forceLockIn`, `aiLineup`) carry a commitment; `agreedSeeds` from the revealed nonces; host: stand-in nonces, `revealNonce` once every crew has locked in, checks and replaces bad nonces, `play` with the nonces; client: `lockIn()` draws the nonce, reveals it when asked, checks every nonce and reports `badNonce`. Core `agreedBattleSeed` (tested). Doc §3 step 4 describes it (D-084).
+- Tests: seeds equal `agreedBattleSeed` of both crews' nonces with the host's for the bots; the reveal comes after the last lock-in; a lying guest's nonce is replaced and everyone still agrees; a nonce changed on the way is noticed.
+- `make check` (452 tests) passes; the two-tab browser round still plays. **Next:** T-028 (desync check, disconnects).
+
+## 2026-09-29 (T-036, the league host)
+- `src/net/`: `ops.ts` (the round's ops and `applyOp`; sealed bids), `leagueHost.ts` (seats and claims, adoption of a newer copy, newcomers via `joinLeague`, rounds as ordered ops with the AI manager for every crew without a seated player, reveals, `play`, league snapshots, catch-up for late arrivals), `leagueClient.ts` (each player's copy; checks actions before sending; events for the app). The T-026 `hostSession`/`guestSession` became these. Protocol messages: `act`, `found`, `offerLeague`; `league`, `requestLeague`, `refusedAction`, `roundStart`, `op`, `play` (D-083).
+- `src/core/`: `league/away.ts` (`awaySummary`, tested over a season end), `save/canonicalLeague` (sorted keys; a parsed save orders keys by schema, so plain JSON can't compare copies).
+- `src/app/`: `sitting.ts` rewritten around host and client (the host plays through its own client over an in-memory link), `flow.ts` runs a local league or a sitting, `leagueStorage` remembers the player's crew (`savedCrewId`), `localLeague.playedRound` shared. `render/`: lobby info and away panel (`lobby/view.ts`, tested), founding in join mode with the replace warning, hub waiting line and LOCKED IN.
+- Found on the way: `client?.act(action) ?? 'noRound'` turned a successful `null` into a refusal; client events before the app listens are now kept for it.
+- Checked in two headless Chromium tabs over a local PeerJS server: host, guest founds a crew, round start, waiting line, passes, lock-ins, battles, results, the guest's save.
+- `make check` (445 tests) passes. **Next:** T-027 (battle seed agreement).
+
+## 2026-09-29 (T-026, message protocol and handshake)
+- `src/net/protocol.ts` (messages and zod schemas, `PROTOCOL_VERSION = 1`), `handshake.ts` (`greetHost`, `awaitHello`, `welcomeGuest`, `refuseGuest`), `hostSession.ts` (seats, `seats` broadcast, `MAX_GUESTS`), `guestSession.ts`. `core/save` exports `crewIdentitySchema` for the protocol. Links now hand out every message asynchronously, so no message is lost between the handshake and the session (D-082).
+- `app/sitting.ts` uses the sessions: the host names a guest's crew when its saved league is the host's; the guest tells the host its save. New refusal texts.
+- Tests: messages round-trip and junk is refused; handshake success, version mismatch on both ends, refusal, silence, leaving; seats over three peers, a full sitting, leaving and the host closing. Checked the lobby in two headless Chromium tabs again.
+- `make check` (429 tests) passes. **Next:** T-036 (the league host).
+
+## 2026-09-29 (T-025, PeerJS wrapper and lobby)
+- Answered Q-015 and Q-009 with the user before the M6 run, and how newcomers join (D-078 to D-080).
+- `src/net/`: `link.ts` (`Link`, `HostRoom`, `Network`, `createLinkDriver` that keeps early messages), `frames.ts` (whole or numbered frames), `memoryNetwork.ts` (rooms in one process, async ordered delivery, `loseRoom`), `peerNetwork.ts` (PeerJS, raw strings, 15 s timeout), `roomCode.ts`, `peerServer.ts` (`?peer=`). Added `peerjs` and, for local runs and tests, the `peer` server (`make peer-server`) (D-081).
+- `src/app/sitting.ts` (host a room with the saved league's crew, retry taken codes; join by code; host-left and connection errors), flow screens `join` and `lobby`; `render/`: title buttons HOST A SITTING / JOIN A SITTING, `JoinScene`, `LobbyScene` (code, seats, Start round, Leave), new problem texts.
+- Checked in two headless Chromium contexts over a local PeerJS server: the host's lobby shows its code, the guest joins by typing it, the host sees the guest, and the guest is told when the host closes the sitting.
+- `make check` (419 tests) and `make test-e2e` pass. **Next:** T-026 (message schemas and handshake).
+
 ## 2026-09-29 (T-024, Playwright round test; M5 done)
 - `e2e/round.spec.ts` plays a whole round in Chromium through named targets (`e2e/targets.ts`, `e2e/window.d.ts`): founding with colours, logo and a 4-crew league, the hub tabs, bids 2 over the ask, passes until Lock in is enabled, won units in the lineup, lock-in, the battle at 2×, the saved round, round 2, and Continue after a reload. `?seed=` fixes the league seed (`src/app/seed.ts`, tested) (D-077).
 - Found on the way: a disabled button still reported itself as enabled (only its look changed), so the test didn't pass the later bidding rounds; `setEnabled` now switches its input off too. A hall of fame portrait moved only the figure's body into the layer (drawn at the screen's corner); fixed. The result screen's MVP no longer shows a name plate over its heading.

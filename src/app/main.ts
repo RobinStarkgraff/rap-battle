@@ -6,6 +6,7 @@ import {
   PAGE_BACKGROUND,
   visibleTargets,
 } from '../render';
+import { createPeerNetwork, peerServerFrom } from '../net';
 import { devPage, startDevPage } from './dev';
 import { startDirector } from './director';
 import { createGameFlow } from './flow';
@@ -45,8 +46,14 @@ function startGame(parent: string): Phaser.Game {
         const flow = createGameFlow({
           store: browserStore(),
           newSeed: seedSource(window.location.search),
+          network: createPeerNetwork(peerServerFrom(window.location.search)),
+          random: Math.random,
         });
         startDirector(game, flow);
+        // Closing or reloading the tab leaves the sitting, so the others know at once.
+        window.addEventListener('pagehide', () => {
+          flow.shutdown();
+        });
       },
     },
   });

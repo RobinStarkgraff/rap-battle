@@ -8,11 +8,15 @@ import {
   BattleScene,
   FoundingScene,
   HubScene,
+  JoinScene,
+  LobbyScene,
   ResultScene,
   TitleScene,
   type BattleSceneData,
   type FoundingSceneData,
   type HubSceneData,
+  type JoinSceneData,
+  type LobbySceneData,
   type ResultSceneData,
   type TitleSceneData,
 } from '../render';
@@ -36,6 +40,8 @@ export function startDirector(game: Phaser.Game, flow: GameFlow): void {
 type SceneStart =
   | readonly [typeof TitleScene.KEY, TitleSceneData]
   | readonly [typeof FoundingScene.KEY, FoundingSceneData]
+  | readonly [typeof JoinScene.KEY, JoinSceneData]
+  | readonly [typeof LobbyScene.KEY, LobbySceneData]
   | readonly [typeof HubScene.KEY, HubSceneData]
   | readonly [typeof BattleScene.KEY, BattleSceneData]
   | readonly [typeof ResultScene.KEY, ResultSceneData];
@@ -54,14 +60,41 @@ function sceneFor(screen: Screen, flow: GameFlow): SceneStart {
           onContinue: () => {
             flow.continueLeague();
           },
+          onHost: () => {
+            flow.hostSitting();
+          },
+          onJoin: () => {
+            flow.joinSitting();
+          },
         },
       ];
+    case 'join':
+      return [
+        JoinScene.KEY,
+        {
+          codeLength: screen.codeLength,
+          onJoin: (code) => {
+            const joined = flow.join(code);
+            return joined.ok ? null : joined.error;
+          },
+          onBack: () => {
+            flow.cancelJoin();
+          },
+        },
+      ];
+    case 'lobby': {
+      const controller = flow.lobby();
+      if (controller === null) throw new RangeError('director: no sitting is open');
+      return [LobbyScene.KEY, { controller }];
+    }
     case 'founding':
       return [
         FoundingScene.KEY,
         {
-          botChoices: BOT_CHOICES,
+          botChoices: screen.joining === null ? BOT_CHOICES : [],
           defaultBots: DEFAULT_BOTS,
+          joining: screen.joining,
+          notice: screen.notice,
           onFound: (identity, bots) => {
             const founded = flow.found(identity, toBotCount(bots));
             return founded.ok ? null : founded.error;
